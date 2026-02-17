@@ -56,7 +56,12 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
           dob: newPatient.dob,
           phone: newPatient.phone,
           address: newPatient.address,
-          clinic_id: clinicId
+          full_name: newPatient.name,
+          gender: newPatient.gender,
+          dob: newPatient.dob,
+          phone: newPatient.phone,
+          address: newPatient.address,
+          clinic_id: (await supabase.auth.getUser()).data.user?.id // Use user ID as clinic_id per request
         }])
         .select()
         .single();
