@@ -51,11 +51,7 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .insert([{
-          full_name: newPatient.name,
-          gender: newPatient.gender,
-          dob: newPatient.dob,
-          phone: newPatient.phone,
-          address: newPatient.address,
+
           full_name: newPatient.name,
           gender: newPatient.gender,
           dob: newPatient.dob,
