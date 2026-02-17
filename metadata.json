@@ -1,0 +1,7 @@
+{
+  "name": "ClinicOS - Advanced HealthTech System",
+  "description": "A comprehensive Clinic Operating System with modules for Front Desk receptionists, Doctors' consultations, and deep data analytics. Features smart search and AI-powered patient history summarization.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
