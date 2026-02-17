@@ -6,7 +6,11 @@ import { Visit, Patient, VisitStatus, Document, MedicalRecord } from '../../type
 import { summarizePatientHistory } from '../../services/geminiService';
 import QueueItem from './QueueItem';
 
-const DoctorDashboard: React.FC = () => {
+interface DoctorDashboardProps {
+  clinicId: string;
+}
+
+const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [queue, setQueue] = useState<Visit[]>([]);
   const [activeVisit, setActiveVisit] = useState<Visit | null>(null);
   const [activePatient, setActivePatient] = useState<Patient | null>(null);
@@ -24,6 +28,7 @@ const DoctorDashboard: React.FC = () => {
       const { data } = await supabase
         .from('appointments')
         .select('*')
+        .eq('clinic_id', clinicId)
         .eq('status', 'waiting')
         .order('created_at', { ascending: true });
       if (data) {
@@ -42,7 +47,7 @@ const DoctorDashboard: React.FC = () => {
     // Subscribe to realtime changes
     const subscription = supabase
       .channel('appointments-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'appointments' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${clinicId}` }, payload => {
         const newVisit = payload.new as any;
         if (newVisit.status === 'waiting') {
           setQueue(prev => [...prev, {
@@ -53,7 +58,7 @@ const DoctorDashboard: React.FC = () => {
           }]);
         }
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'appointments' }, payload => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${clinicId}` }, payload => {
         // Handle removals from queue if status changes from waiting
         const updatedVisit = payload.new as any;
         if (updatedVisit.status !== 'waiting') {
@@ -65,7 +70,7 @@ const DoctorDashboard: React.FC = () => {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [clinicId]);
 
   // Helper to fetch patient details on demand if not in state
   const getPatientDetails = async (patientId: string) => {
@@ -131,8 +136,9 @@ const DoctorDashboard: React.FC = () => {
         const { error: recordError } = await supabase.from('medical_records').insert([{
           patient_id: activePatient.id,
           diagnosis: diagnosis,
-          prescription: prescription, // Save separate prescription
-          doctor_notes: notes
+          prescription: prescription,
+          doctor_notes: notes,
+          clinic_id: clinicId
         }]);
 
         if (recordError) throw recordError;

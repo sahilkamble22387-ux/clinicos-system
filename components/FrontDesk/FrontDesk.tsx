@@ -4,7 +4,11 @@ import { Search, UserPlus, LogIn, FileUp, X, Check } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { Patient, Gender } from '../../types';
 
-const FrontDesk: React.FC = () => {
+interface FrontDeskProps {
+  clinicId: string;
+}
+
+const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegModal, setShowRegModal] = useState(false);
@@ -14,7 +18,12 @@ const FrontDesk: React.FC = () => {
   // Fetch patients for search (optional, or rely on search)
   useEffect(() => {
     const fetchPatients = async () => {
-      const { data, error } = await supabase.from('patients').select('*').order('created_at', { ascending: false }).limit(50);
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('clinic_id', clinicId)
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (data) {
         // Map Supabase 'full_name' to app's 'name' and ensure defaults
         const mappedPatients = data.map((p: any) => ({
@@ -46,7 +55,8 @@ const FrontDesk: React.FC = () => {
           gender: newPatient.gender,
           dob: newPatient.dob,
           phone: newPatient.phone,
-          address: newPatient.address
+          address: newPatient.address,
+          clinic_id: clinicId
         }])
         .select()
         .single();
@@ -69,7 +79,7 @@ const FrontDesk: React.FC = () => {
       alert(`Patient ${patientData.full_name} Registered & Checked In!`);
 
       // Refresh list
-      const { data } = await supabase.from('patients').select('*').order('created_at', { ascending: false }).limit(50);
+      const { data } = await supabase.from('patients').select('*').eq('clinic_id', clinicId).order('created_at', { ascending: false }).limit(50);
       if (data) setPatients(data as any);
 
     } catch (err: any) {

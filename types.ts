@@ -14,6 +14,7 @@ export enum VisitStatus {
 
 export interface Patient {
   id: string;
+  clinicId?: string;
   name: string;
   gender: Gender;
   dob: string;
@@ -25,6 +26,7 @@ export interface Patient {
 export interface Visit {
   id: string;
   patientId: string;
+  clinicId?: string;
   arrivalTime: string;
   status: VisitStatus;
   doctorNotes?: string;
@@ -61,10 +63,18 @@ export interface Medication {
 export interface MedicalRecord {
   id: string;
   patientId: string;
+  clinicId?: string;
   diagnosis: string;
   prescription: string;
   doctorNotes: string;
   createdAt: string;
+}
+
+export interface Clinic {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at: string;
 }
 
 export type ViewMode = 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS';

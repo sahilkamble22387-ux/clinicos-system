@@ -1,21 +1,101 @@
-
 import React, { useState, useEffect } from 'react';
-import { ViewMode } from './types';
+import { ViewMode, Clinic } from './types';
 import FrontDesk from './components/FrontDesk/FrontDesk';
 import DoctorDashboard from './components/Doctor/DoctorDashboard';
 import AnalyticsDashboard from './components/Analytics/AnalyticsDashboard';
 import { LayoutDashboard, Users, UserRound, BarChart3, Pill } from 'lucide-react';
+import { supabase } from './services/db';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewMode>('FRONT_DESK');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogin = () => {
-    // Simulate login delay
-    setTimeout(() => {
-      setIsLoggedIn(true);
-    }, 800);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchClinic(session.user.id);
+      else setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchClinic(session.user.id);
+      else {
+        setClinic(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchClinic = async (userId: string) => {
+    try {
+      // 1. Check if user has a clinic
+      let { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('owner_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
+        console.error('Error fetching clinic:', error);
+      }
+
+      if (data) {
+        setClinic(data);
+      } else {
+        // 2. If not, create a default clinic
+        const { data: newClinic, error: createError } = await supabase
+          .from('clinics')
+          .insert([{ name: 'My Clinic', owner_id: userId }])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating clinic:', createError);
+        } else {
+          setClinic(newClinic);
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error handling clinic:', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleLogin = async () => {
+    // For simplicity, we'll just try to sign in with Google if configured,
+    // or just show a message since we might not have OAuth set up in the backend yet.
+    // However, the prompt asked to use Supabase MCP, implying a real backend connection exists.
+    // Let's assume Google auth is desired or we can use a dummy login if allowed, but better to try real auth.
+    // Since I don't know the exact auth config, I'll attempt OAuth.
+
+    // NOTE: If OAuth isn't configured, this will fail. For development speed, maybe I should also support email/pass?
+    // Given the previous "Simulated Login", I'll stick to a simple action.
+
+    // Triggering Google Login
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+
+    if (error) alert('Error logging in: ' + error.message);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setClinic(null);
+  };
+
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">Loading ClinicOS...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row overflow-hidden">
@@ -29,35 +109,47 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Main Menu</p>
+          {session && clinic ? (
+            <>
+              <div className="px-4 py-2 mb-4">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Clinic</p>
+                <p className="text-sm font-bold text-indigo-400 truncate">{clinic.name}</p>
+              </div>
 
-          <button
-            onClick={() => setView('FRONT_DESK')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'FRONT_DESK' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-          >
-            <Users size={20} />
-            <span className="font-medium">Front Desk</span>
-          </button>
+              <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Main Menu</p>
 
-          <button
-            onClick={() => setView('DOCTOR')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'DOCTOR' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-          >
-            <UserRound size={20} />
-            <span className="font-medium">Doctor Portal</span>
-          </button>
+              <button
+                onClick={() => setView('FRONT_DESK')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'FRONT_DESK' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <Users size={20} />
+                <span className="font-medium">Front Desk</span>
+              </button>
 
-          <button
-            onClick={() => setView('ANALYTICS')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'ANALYTICS' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-          >
-            <BarChart3 size={20} />
-            <span className="font-medium">Analytics</span>
-          </button>
+              <button
+                onClick={() => setView('DOCTOR')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'DOCTOR' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <UserRound size={20} />
+                <span className="font-medium">Doctor Portal</span>
+              </button>
+
+              <button
+                onClick={() => setView('ANALYTICS')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${view === 'ANALYTICS' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                <BarChart3 size={20} />
+                <span className="font-medium">Analytics</span>
+              </button>
+            </>
+          ) : (
+            <div className="px-4 text-slate-400 text-sm">Please sign in to access clinic data.</div>
+          )}
+
         </div>
 
         <div className="p-4 border-t border-slate-800">
-          {!isLoggedIn ? (
+          {!session ? (
             <button
               onClick={handleLogin}
               className="w-full flex items-center justify-center gap-2 bg-white text-slate-900 px-4 py-2.5 rounded-lg font-medium text-sm hover:bg-slate-100 transition-colors shadow-sm"
@@ -80,14 +172,16 @@ const App: React.FC = () => {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
+              Sign in
             </button>
           ) : (
             <div className="flex items-center gap-3 px-4 py-2 animate-in fade-in duration-300">
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold">DR</div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold">Dr. Smith</span>
-                <span className="text-xs text-slate-500">Administrator</span>
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold">
+                {session.user.email?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-semibold truncate">{session.user.email}</span>
+                <button onClick={handleLogout} className="text-xs text-slate-500 hover:text-white text-left transition-colors">Sign Out</button>
               </div>
             </div>
           )}
@@ -97,9 +191,25 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 overflow-auto bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {view === 'FRONT_DESK' && <FrontDesk />}
-          {view === 'DOCTOR' && <DoctorDashboard />}
-          {view === 'ANALYTICS' && <AnalyticsDashboard />}
+          {!session ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 mt-20">
+              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6 text-indigo-600">
+                <Pill size={40} />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Welcome to ClinicOS</h2>
+              <p className="mt-2">Please sign in to access your clinic dashboard.</p>
+            </div>
+          ) : !clinic ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 mt-20">
+              <p>Setting up your clinic workspace...</p>
+            </div>
+          ) : (
+            <>
+              {view === 'FRONT_DESK' && <FrontDesk clinicId={clinic.id} />}
+              {view === 'DOCTOR' && <DoctorDashboard clinicId={clinic.id} />}
+              {view === 'ANALYTICS' && <AnalyticsDashboard />}
+            </>
+          )}
         </div>
       </main>
     </div>

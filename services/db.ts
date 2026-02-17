@@ -9,6 +9,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase Environment Variables!', { supabaseUrl, supabaseAnonKey });
 }
 
+console.log('Initializing Supabase Client...');
+console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Not Set', supabaseUrl);
+console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Not Set');
+
 export const supabase = createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
     supabaseAnonKey || 'placeholder-key'
