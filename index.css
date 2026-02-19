@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════
    CLINICOS — PREMIUM LIGHT PALETTE (Single Mode)
@@ -63,8 +61,8 @@ body {
 }
 
 /* ── Utilities ── */
-@layer components {
-  .glass-card {
-    @apply bg-white border border-slate-200 backdrop-blur-md;
-  }
+.glass-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(12px);
 }
