@@ -35,3 +35,20 @@ export const summarizePatientHistory = async (history: { visit: Visit, diagnosis
     return "Summary unavailable.";
   }
 };
+
+export const generateClinicalSuggestions = async (symptoms: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Based on these clinical notes/symptoms: "${symptoms}", suggest 3 potential diagnoses and standard treatment protocols for an Indian context. 
+      Format as a JSON array of objects with 'diagnosis' and 'protocol' keys. 
+      Keep it brief.
+      Example: [{"diagnosis": "Viral Fever", "protocol": "Paracetamol 650mg, Hydration"}]`,
+      config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text || '[]');
+  } catch (error) {
+    console.error("Gemini Suggestion Error:", error);
+    return [];
+  }
+};

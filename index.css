@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════
+   CLINICOS — PREMIUM LIGHT PALETTE (Single Mode)
+   All surfaces use a crisp, consistent light theme.
+   No dark mode — visual consistency is guaranteed.
+═══════════════════════════════════════════════════════════ */
+
 :root {
+  /* Backgrounds */
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --sidebar: #0F172A;
+
+  /* Borders */
+  --border: #E2E8F0;
+
+  /* Typography */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+
+  /* Accent */
+  --accent: #6366F1;
+  --accent-hover: #4F46E5;
+
+  /* Shadows */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+
+  /* Font */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Global Base ── */
+html {
+  background-color: #F8FAFC;
+}
+
+body {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
+
+/* ── Utilities ── */
+@layer components {
+  .glass-card {
+    @apply bg-white border border-slate-200 backdrop-blur-md;
+  }
 }

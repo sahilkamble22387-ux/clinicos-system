@@ -77,4 +77,4 @@ export interface Clinic {
   created_at: string;
 }
 
-export type ViewMode = 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS';
+export type ViewMode = 'HOME' | 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS' | 'HISTORY';

@@ -1,38 +1,23 @@
 /// <reference types="vite/client" />
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// ---------------------------------------------------------------------------
+// Environment variables — all values MUST live in .env (or Vercel env vars)
+// Required:  VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+// Optional:  VITE_SITE_URL  (set to your Vercel production URL, e.g.
+//            https://clinicos.vercel.app — used as the emailRedirectTo
+//            for auth confirmation emails. Falls back to window.location.origin.)
+// ---------------------------------------------------------------------------
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase Environment Variables!', { supabaseUrl, supabaseAnonKey });
+    // Surface as a non-dismissible error in dev; silent in prod
+    console.error(
+        '[ClinicOS] Supabase env vars missing. ' +
+        'Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in .env (dev) ' +
+        'or Vercel Environment Variables (prod).'
+    );
 }
 
-console.log('Initializing Supabase Client...');
-console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Not Set', supabaseUrl);
-console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Not Set');
-
-export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder-key'
-);
-
-// Types
-export interface Patient {
-    id: string;
-    full_name: string;
-    phone: string;
-    address: string;
-    gender: string;
-    dob: string;
-    created_at: string;
-}
-
-export interface Appointment {
-    id: string;
-    patient_id: string;
-    status: string;
-    created_at: string;
-    patients?: Patient; // For joined queries
-}
+export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '');
