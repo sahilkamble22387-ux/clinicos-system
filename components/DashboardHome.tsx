@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clinic, ViewMode } from '../types';
-import { Users, UserPlus, Calendar, Activity, Clock, ChevronRight } from 'lucide-react';
+import { Users, UserPlus, Activity, Clock, ChevronRight, QrCode } from 'lucide-react';
 import { supabase } from '../services/db';
-
 interface DashboardHomeProps {
     clinic: Clinic | null;
     onNavigate: (view: ViewMode) => void;
@@ -18,6 +17,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
         totalPatients: 0,
         waiting: 0,
         completed: 0,
+        todayRevenue: 0,
+        qrCheckins: 0,
     });
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -33,6 +34,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
         const channel = supabase
             .channel('dashboard_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'patients', filter: `clinic_id=eq.${clinicId}` }, () => fetchStats())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_records', filter: `clinic_id=eq.${clinicId}` }, () => fetchStats())
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
@@ -40,6 +42,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
 
     const fetchStats = async () => {
         const clinicId = clinic?.id || '00000000-0000-0000-0000-000000000000';
+        const today = new Date().toISOString().split('T')[0];
 
         try {
             const { count: totalPatients } = await supabase
@@ -53,7 +56,6 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                 .eq('clinic_id', clinicId)
                 .eq('status', 'waiting');
 
-            const today = new Date().toISOString().split('T')[0];
             const { count: completedCount } = await supabase
                 .from('patients')
                 .select('*', { count: 'exact', head: true })
@@ -62,10 +64,30 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                 .gte('updated_at', `${today}T00:00:00`)
                 .lte('updated_at', `${today}T23:59:59`);
 
+            // Today's revenue from medical_records
+            const { data: todayRecords } = await supabase
+                .from('medical_records')
+                .select('fee_collected')
+                .eq('clinic_id', clinicId)
+                .gte('created_at', `${today}T00:00:00`)
+                .lte('created_at', `${today}T23:59:59`);
+
+            const todayRevenue = todayRecords?.reduce((sum, r) => sum + (Number(r.fee_collected) || 0), 0) || 0;
+
+            // QR check-ins today
+            const { count: qrCount } = await supabase
+                .from('patients')
+                .select('*', { count: 'exact', head: true })
+                .eq('clinic_id', clinicId)
+                .eq('source', 'QR_Checkin')
+                .gte('created_at', `${today}T00:00:00`);
+
             setStats({
                 totalPatients: totalPatients || 0,
                 waiting: waitingCount || 0,
                 completed: completedCount || 0,
+                todayRevenue,
+                qrCheckins: qrCount || 0,
             });
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
@@ -92,18 +114,18 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
         <div className="space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
             {/* Identity Card — Gradient Header */}
             <div
-                className="rounded-3xl p-8 text-white shadow-2xl shadow-violet-900/20 flex flex-col md:flex-row justify-between items-center relative overflow-hidden"
+                className="rounded-3xl p-6 md:p-8 text-white shadow-2xl shadow-violet-900/20 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #4C1D95 100%)' }}
             >
                 <div className="absolute inset-0 backdrop-blur-md bg-white/10 rounded-3xl" />
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl" />
                 <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl" />
 
-                <div className="z-10 space-y-1">
+                <div className="z-10 space-y-1 flex-1">
                     <p className="text-indigo-200/80 text-sm font-semibold uppercase tracking-widest mb-1">
                         {clinic?.name || 'ClinicOS'}
                     </p>
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+                    <h1 className="text-2xl md:text-4xl font-bold tracking-tight leading-tight">
                         {getGreeting()}{' '}
                         <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent font-extrabold">
                             Dr. {doctorName}
@@ -112,20 +134,38 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                     <p className={`text-base font-medium mt-2 ${stats.waiting > 0 ? 'text-amber-200' : 'text-indigo-100/80'}`}>
                         {getSubtext()}
                     </p>
+
+                    {/* Live queue status pill */}
+                    {stats.waiting > 0 && (
+                        <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                            </span>
+                            <span className="text-xs font-bold text-white">{stats.waiting} in queue</span>
+                        </div>
+                    )}
                 </div>
 
-                <div className="z-10 mt-6 md:mt-0 text-right bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
-                    <div className="text-3xl font-bold tabular-nums">
-                        {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <div className="z-10 mt-4 md:mt-0 flex flex-col items-end gap-2">
+                    <div className="text-right bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
+                        <div className="text-3xl font-bold tabular-nums">
+                            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="text-indigo-200 font-medium text-sm">
+                            {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </div>
                     </div>
-                    <div className="text-indigo-200 font-medium">
-                        {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {/* Today's revenue pill */}
+                    <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20 text-right">
+                        <p className="text-[10px] text-indigo-200 font-semibold uppercase tracking-wider">Today's Revenue</p>
+                        <p className="text-lg font-black tabular-nums">₹{stats.todayRevenue.toLocaleString('en-IN')}</p>
                     </div>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 <StatCard
                     icon={<Users className="w-6 h-6 text-blue-600" />}
                     label="Total Patients"
@@ -138,24 +178,32 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                     icon={<Clock className="w-6 h-6 text-amber-500" />}
                     label="Waiting Now"
                     value={stats.waiting}
-                    trend="Avg wait: 12m"
+                    trend="Live count"
                     accent="border-amber-500"
                     iconBg="bg-amber-50"
                 />
                 <StatCard
                     icon={<Activity className="w-6 h-6 text-emerald-600" />}
-                    label="Completed Visits"
+                    label="Completed Today"
                     value={stats.completed}
-                    trend="Today's goal: 25"
+                    trend="Today's count"
                     accent="border-emerald-500"
                     iconBg="bg-emerald-50"
+                />
+                <StatCard
+                    icon={<QrCode className="w-6 h-6 text-violet-600" />}
+                    label="QR Check-ins"
+                    value={stats.qrCheckins}
+                    trend="Today via QR"
+                    accent="border-violet-500"
+                    iconBg="bg-violet-50"
                 />
             </div>
 
             {/* Quick Actions */}
             <div>
                 <h2 className="text-xl font-bold text-slate-900 mb-4 px-1">Quick Actions</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     <QuickActionBtn
                         icon={<UserPlus className="w-6 h-6" />}
                         label="New Patient"
@@ -179,28 +227,29 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                     />
                 </div>
             </div>
+
+
         </div>
     );
 };
 
 const StatCard = ({ icon, label, value, trend, accent, iconBg }: any) => (
     <div className={`
-        relative min-h-[160px] p-6 rounded-2xl flex flex-col justify-between
+        relative min-h-[140px] md:min-h-[160px] p-4 md:p-6 rounded-2xl flex flex-col justify-between
         border border-slate-200 border-l-[3px] ${accent}
         bg-white shadow-sm
         hover:scale-[1.02] hover:shadow-md transition-all duration-200
         overflow-hidden
     `}>
         <div className="flex items-start justify-between">
-            <div className={`p-2.5 ${iconBg} rounded-xl`}>{icon}</div>
-            <span className="text-[11px] font-bold px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 tracking-wide">
+            <div className={`p-2 md:p-2.5 ${iconBg} rounded-xl`}>{icon}</div>
+            <span className="hidden md:inline text-[11px] font-bold px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 tracking-wide">
                 {trend}
             </span>
         </div>
-
         <div>
-            <div className="text-4xl font-black text-slate-900 tabular-nums leading-none mb-1.5">{value}</div>
-            <div className="text-sm font-semibold text-slate-500 tracking-wide">{label}</div>
+            <div className="text-3xl md:text-4xl font-black text-slate-900 tabular-nums leading-none mb-1.5">{value}</div>
+            <div className="text-xs md:text-sm font-semibold text-slate-500 tracking-wide">{label}</div>
         </div>
     </div>
 );
@@ -208,7 +257,7 @@ const StatCard = ({ icon, label, value, trend, accent, iconBg }: any) => (
 const QuickActionBtn = ({ icon, label, desc, onClick, color, className }: any) => (
     <button
         onClick={onClick}
-        className={`group relative overflow-hidden p-6 rounded-2xl text-left transition-all duration-300 shadow-md hover:shadow-xl ${className || color}`}
+        className={`group relative overflow-hidden p-5 md:p-6 rounded-2xl text-left transition-all duration-300 shadow-md hover:shadow-xl ${className || color}`}
     >
         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-500">
             {icon}
@@ -217,8 +266,8 @@ const QuickActionBtn = ({ icon, label, desc, onClick, color, className }: any) =
             <div className="mb-3 p-2 bg-white/20 w-fit rounded-lg backdrop-blur-sm group-hover:bg-white/30 transition-colors">
                 {icon}
             </div>
-            <div className="font-bold text-lg mb-0.5">{label}</div>
-            <div className="text-sm text-white/80 font-medium">{desc}</div>
+            <div className="font-bold text-base md:text-lg mb-0.5">{label}</div>
+            <div className="text-sm text-white/80 font-medium hidden md:block">{desc}</div>
         </div>
         <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
             <ChevronRight className="text-white w-5 h-5" />

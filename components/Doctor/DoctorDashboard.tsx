@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, User, ClipboardList, History, FileText, Send, Sparkles, Eye, Banknote, Activity, Heart, Thermometer, Stethoscope } from 'lucide-react';
+import { Clock, User, ClipboardList, History, FileText, Send, Sparkles, Eye, Banknote, Activity, Heart, Thermometer, Stethoscope, Save } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { Visit, Patient, VisitStatus, Document, MedicalRecord } from '../../types';
 import { summarizePatientHistory, generateClinicalSuggestions } from '../../services/geminiService';
 import QueueItem from './QueueItem';
+import { toast } from 'react-hot-toast';
 
 const MEDICINE_LIST = [
   "Paracetamol 500mg", "Paracetamol 650mg", "Azithromycin 500mg",
@@ -18,6 +19,27 @@ interface DoctorDashboardProps {
   clinicId: string;
 }
 
+// ── Vitals Input Sub-Component ──
+const VitalInput: React.FC<{
+  label: string; unit: string; value: string;
+  onChange: (v: string) => void; color?: string;
+}> = ({ label, unit, value, onChange, color = 'indigo' }) => (
+  <div className="space-y-1">
+    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</label>
+    <div className="relative">
+      <input
+        type="number"
+        step="any"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="—"
+        className={`w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-${color}-500/20 focus:border-${color}-400 text-sm font-semibold text-slate-800 placeholder:text-slate-300`}
+      />
+      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-semibold">{unit}</span>
+    </div>
+  </div>
+);
+
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [queue, setQueue] = useState<Visit[]>([]);
   const [activeVisit, setActiveVisit] = useState<Visit | null>(null);
@@ -31,12 +53,18 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<Document | null>(null);
   const [consultationFee, setConsultationFee] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI' | 'Card'>('Cash');
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI' | 'Card' | 'Insurance'>('Cash');
   const [showMedSuggestions, setShowMedSuggestions] = useState(false);
   const [medQuery, setMedQuery] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [vitals, setVitals] = useState<{ bp_systolic: number | null; bp_diastolic: number | null; heart_rate: number | null; weight_kg: number | null; temperature_f: number | null } | null>(null);
+
+  // Vitals state — editable
+  const [vitalsForm, setVitalsForm] = useState({
+    bp_systolic: '', bp_diastolic: '', heart_rate: '', weight_kg: '', temperature_f: ''
+  });
+  const [vitalsLoaded, setVitalsLoaded] = useState(false);
+  const [savingVitals, setSavingVitals] = useState(false);
 
   const fetchQueue = async () => {
     const { data, error } = await supabase
@@ -53,7 +81,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         patientId: item.patient_id,
         arrivalTime: item.created_at,
         status: VisitStatus.WAITING,
-        patientName: item.patients?.full_name
+        patientName: item.patients?.full_name,
+        source: item.patients?.source,
       }));
       setQueue(visits);
     }
@@ -79,11 +108,43 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
       const { data: records } = await supabase.from('medical_records').select('*').eq('patient_id', patient.id).order('created_at', { ascending: false });
       setActiveVisit(visit); setActivePatient(patient); setHistory(records || []);
       setDocs([]); setAiSummary(null); setDiagnosis(''); setPrescription('');
-      setNotes(''); setConsultationFee(0); setVitals(null);
+      setNotes(''); setConsultationFee(0);
+
+      // Load existing vitals
       const { data: apptData } = await supabase.from('appointments').select('bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f').eq('id', visit.id).single();
-      if (apptData) setVitals(apptData);
-      // NOTE: We do NOT update appointment/patient status here.
-      // The patient stays in the queue until the doctor explicitly clicks "Complete & Collect".
+      if (apptData) {
+        setVitalsForm({
+          bp_systolic: apptData.bp_systolic?.toString() || '',
+          bp_diastolic: apptData.bp_diastolic?.toString() || '',
+          heart_rate: apptData.heart_rate?.toString() || '',
+          weight_kg: apptData.weight_kg?.toString() || '',
+          temperature_f: apptData.temperature_f?.toString() || '',
+        });
+      } else {
+        setVitalsForm({ bp_systolic: '', bp_diastolic: '', heart_rate: '', weight_kg: '', temperature_f: '' });
+      }
+      setVitalsLoaded(true);
+    }
+  };
+
+  const saveVitals = async () => {
+    if (!activeVisit) return;
+    setSavingVitals(true);
+    try {
+      await supabase
+        .from('appointments')
+        .update({
+          bp_systolic: vitalsForm.bp_systolic ? Number(vitalsForm.bp_systolic) : null,
+          bp_diastolic: vitalsForm.bp_diastolic ? Number(vitalsForm.bp_diastolic) : null,
+          heart_rate: vitalsForm.heart_rate ? Number(vitalsForm.heart_rate) : null,
+          weight_kg: vitalsForm.weight_kg ? Number(vitalsForm.weight_kg) : null,
+          temperature_f: vitalsForm.temperature_f ? Number(vitalsForm.temperature_f) : null,
+        })
+        .eq('id', activeVisit.id);
+    } catch (err) {
+      console.error('Error saving vitals:', err);
+    } finally {
+      setSavingVitals(false);
     }
   };
 
@@ -97,12 +158,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
       if (recordError) throw recordError;
       const { error: apptError } = await supabase.from('appointments').update({ status: 'completed' }).eq('id', activeVisit.id);
       if (apptError) throw apptError;
-      await supabase.from('patients').update({ status: 'completed', consultation_fee: consultationFee }).eq('id', activePatient.id);
-      alert(`Visit for ${activePatient.name} completed. Fee: ₹${consultationFee}`);
-      setActiveVisit(null); setActivePatient(null); fetchQueue();
+      await supabase.from('patients').update({
+        status: 'completed',
+        consultation_fee: consultationFee,
+        is_active: false,
+        updated_at: new Date().toISOString()
+      }).eq('id', activePatient.id);
+      toast.success(`✅ Consultation complete. Fee collected: ₹${consultationFee}`);
+      setActiveVisit(null); setActivePatient(null); setVitalsLoaded(false); fetchQueue();
     } catch (err: any) {
       console.error('Error completing visit:', err);
-      alert('Failed to save record: ' + err.message);
+      toast.error('Failed to save record: ' + err.message);
     }
   };
 
@@ -115,7 +181,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   };
 
   const handleSmartSuggest = async () => {
-    if (!notes) { alert("Please enter some clinical notes/symptoms first."); return; }
+    if (!notes) { toast.error('Please enter some clinical notes/symptoms first.'); return; }
     setLoadingSuggestions(true);
     const suggestions = await generateClinicalSuggestions(notes);
     setAiSuggestions(suggestions);
@@ -129,11 +195,13 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
 
   const filteredMeds = MEDICINE_LIST.filter(m => m.toLowerCase().includes(medQuery.toLowerCase()));
 
+  const hasVitals = vitalsForm.bp_systolic || vitalsForm.heart_rate || vitalsForm.temperature_f || vitalsForm.weight_kg;
+
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
 
       {/* ── Sidebar Queue (fixed width) ── */}
-      <aside className="w-[350px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+      <aside className="w-full md:w-[350px] flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col max-h-[40vh] md:max-h-full">
         {/* Queue header */}
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
@@ -148,7 +216,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         {/* Queue list */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {queue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-16 px-4">
+            <div className="flex flex-col items-center justify-center h-full text-center py-10 md:py-16 px-4">
               <div className="relative mb-6">
                 <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" style={{ animationDuration: '2s' }} />
                 <div className="absolute inset-2 rounded-full bg-violet-500/15 animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.3s' }} />
@@ -161,7 +229,22 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
             </div>
           ) : (
             queue.map(visit => (
-              <QueueItem key={visit.id} visit={visit} onClick={() => startConsultation(visit)} />
+              <div key={visit.id} className="group">
+                <QueueItem visit={visit} onClick={() => startConsultation(visit)} />
+                <div className="px-3 pb-1 flex items-center gap-2">
+                  {visit.source === 'QR_Checkin' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded-full">
+                      📱 QR Check-In
+                    </span>
+                  )}
+                  {visit.source === 'Front_Desk' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-full">
+                      🖥 Front Desk
+                    </span>
+                  )}
+                  <WaitTime createdAt={visit.arrivalTime} />
+                </div>
+              </div>
             ))
           )}
         </div>
@@ -191,7 +274,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
             )}
           </div>
         ) : (
-          <div className="p-6 max-w-6xl mx-auto">
+          <div className="p-4 md:p-6 max-w-6xl mx-auto">
             {/* Patient header strip */}
             <div className="flex items-center gap-4 mb-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
@@ -203,9 +286,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                   {activePatient?.gender} · {activePatient?.dob ? new Date().getFullYear() - new Date(activePatient.dob).getFullYear() : 'N/A'} yrs · {activePatient?.phone}
                 </p>
               </div>
-              <span className="flex-shrink-0 text-xs font-bold px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">
-                In Consultation
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Source badge */}
+                {(activeVisit as any)?.source === 'QR_Checkin' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
+                    📱 QR
+                  </span>
+                )}
+                <span className="text-xs font-bold px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">
+                  In Consultation
+                </span>
+              </div>
             </div>
 
             {/* ── 2-Column Workspace Grid ── */}
@@ -327,6 +418,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                         <option value="Cash">Cash</option>
                         <option value="UPI">UPI</option>
                         <option value="Card">Card</option>
+                        <option value="Insurance">Insurance</option>
                       </select>
                     </div>
                   </div>
@@ -344,41 +436,79 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
               {/* RIGHT COL */}
               <div className="space-y-5">
 
-                {/* Vitals Card */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm min-h-[160px]">
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
-                    <Activity className="text-rose-500" size={16} /> Vitals at Check-in
-                  </h3>
-                  {!vitals || (!vitals.bp_systolic && !vitals.heart_rate && !vitals.temperature_f && !vitals.weight_kg) ? (
-                    <div className="text-xs text-slate-400 italic py-2">No vitals recorded at check-in.</div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {vitals.bp_systolic && vitals.bp_diastolic && (
-                        <div className="bg-rose-50 border border-rose-100 rounded-xl p-3">
-                          <div className="text-[10px] font-bold text-rose-400 uppercase mb-1 flex items-center gap-1"><Heart size={10} /> Blood Pressure</div>
-                          <div className="text-xl font-black text-rose-700">{vitals.bp_systolic}/{vitals.bp_diastolic}</div>
-                          <div className="text-[10px] text-rose-400">mmHg</div>
+                {/* Editable Vitals Card */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
+                      <Activity className="text-rose-500" size={16} /> Vitals
+                    </h3>
+                    {vitalsLoaded && (
+                      <button
+                        onClick={saveVitals}
+                        disabled={savingVitals}
+                        className="text-xs bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold flex items-center gap-1 hover:bg-emerald-100 transition-colors border border-emerald-200 disabled:opacity-50"
+                      >
+                        <Save size={11} />
+                        {savingVitals ? 'Saving...' : 'Save Vitals'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Display existing vitals or editable form */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Heart size={10} className="text-rose-400" /> Blood Pressure (mmHg)
+                      </label>
+                      <div className="flex gap-2 items-center mt-1">
+                        <input type="number" placeholder="Systolic"
+                          value={vitalsForm.bp_systolic}
+                          onChange={e => setVitalsForm(v => ({ ...v, bp_systolic: e.target.value }))}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-sm font-semibold text-slate-800"
+                        />
+                        <span className="text-slate-400 font-bold text-lg flex-shrink-0">/</span>
+                        <input type="number" placeholder="Diastolic"
+                          value={vitalsForm.bp_diastolic}
+                          onChange={e => setVitalsForm(v => ({ ...v, bp_diastolic: e.target.value }))}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-sm font-semibold text-slate-800"
+                        />
+                      </div>
+                    </div>
+                    <VitalInput label="Heart Rate" unit="bpm" value={vitalsForm.heart_rate}
+                      onChange={v => setVitalsForm(f => ({ ...f, heart_rate: v }))} />
+                    <VitalInput label="Temperature" unit="°F" value={vitalsForm.temperature_f}
+                      onChange={v => setVitalsForm(f => ({ ...f, temperature_f: v }))} />
+                    <div className="col-span-2">
+                      <VitalInput label="Weight" unit="kg" value={vitalsForm.weight_kg}
+                        onChange={v => setVitalsForm(f => ({ ...f, weight_kg: v }))} />
+                    </div>
+                  </div>
+
+                  {/* Quick vitals summary if filled */}
+                  {hasVitals && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+                      {vitalsForm.bp_systolic && vitalsForm.bp_diastolic && (
+                        <div className="bg-rose-50 border border-rose-100 rounded-lg p-2 text-center">
+                          <div className="text-lg font-black text-rose-700">{vitalsForm.bp_systolic}/{vitalsForm.bp_diastolic}</div>
+                          <div className="text-[9px] text-rose-400 font-bold">BP mmHg</div>
                         </div>
                       )}
-                      {vitals.heart_rate && (
-                        <div className="bg-pink-50 border border-pink-100 rounded-xl p-3">
-                          <div className="text-[10px] font-bold text-pink-400 uppercase mb-1 flex items-center gap-1"><Activity size={10} /> Heart Rate</div>
-                          <div className="text-xl font-black text-pink-700">{vitals.heart_rate}</div>
-                          <div className="text-[10px] text-pink-400">bpm</div>
+                      {vitalsForm.heart_rate && (
+                        <div className="bg-pink-50 border border-pink-100 rounded-lg p-2 text-center">
+                          <div className="text-lg font-black text-pink-700">{vitalsForm.heart_rate}</div>
+                          <div className="text-[9px] text-pink-400 font-bold">BPM</div>
                         </div>
                       )}
-                      {vitals.temperature_f && (
-                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                          <div className="text-[10px] font-bold text-amber-500 uppercase mb-1 flex items-center gap-1"><Thermometer size={10} /> Temperature</div>
-                          <div className="text-xl font-black text-amber-700">{vitals.temperature_f}°F</div>
-                          <div className="text-[10px] text-amber-400">{((Number(vitals.temperature_f) - 32) * 5 / 9).toFixed(1)}°C</div>
+                      {vitalsForm.temperature_f && (
+                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 text-center">
+                          <div className="text-lg font-black text-amber-700">{vitalsForm.temperature_f}°F</div>
+                          <div className="text-[9px] text-amber-400 font-bold">{((Number(vitalsForm.temperature_f) - 32) * 5 / 9).toFixed(1)}°C</div>
                         </div>
                       )}
-                      {vitals.weight_kg && (
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                          <div className="text-[10px] font-bold text-blue-400 uppercase mb-1 flex items-center gap-1"><Activity size={10} /> Weight</div>
-                          <div className="text-xl font-black text-blue-700">{vitals.weight_kg}</div>
-                          <div className="text-[10px] text-blue-400">kg</div>
+                      {vitalsForm.weight_kg && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center">
+                          <div className="text-lg font-black text-blue-700">{vitalsForm.weight_kg}</div>
+                          <div className="text-[9px] text-blue-400 font-bold">kg</div>
                         </div>
                       )}
                     </div>
@@ -438,5 +568,28 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     </div>
   );
 };
+
+// ── Wait Time Counter Component ──
+function WaitTime({ createdAt }: { createdAt: string }) {
+  const [mins, setMins] = React.useState(0);
+
+  React.useEffect(() => {
+    const calc = () => {
+      const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+      setMins(diff);
+    };
+    calc();
+    const interval = setInterval(calc, 30000);
+    return () => clearInterval(interval);
+  }, [createdAt]);
+
+  const color = mins < 15 ? 'text-green-600' : mins < 30 ? 'text-yellow-600' : 'text-red-600';
+
+  return (
+    <span className={`text-[10px] font-bold ${color}`}>
+      ⏱ {mins}m wait
+    </span>
+  );
+}
 
 export default DoctorDashboard;

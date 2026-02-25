@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/db';
 import { Visit } from '../../types';
-import { Clock, Activity, User } from 'lucide-react';
+import { Clock, Activity, User, Smartphone, Building2 } from 'lucide-react';
 
 interface QueueItemProps {
     visit: Visit;
@@ -16,21 +16,25 @@ const formatWaitTime = (seconds: number): string => {
 };
 
 const getWaitColor = (seconds: number) => {
-    if (seconds < 300) return { text: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' };
-    if (seconds < 900) return { text: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' };
+    if (seconds < 900) return { text: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' };
+    if (seconds < 1800) return { text: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' };
     return { text: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' };
 };
 
 const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
     const [patientName, setPatientName] = useState('Loading...');
+    const [patientSource, setPatientSource] = useState<string | null>(null);
     const [waitSeconds, setWaitSeconds] = useState(0);
 
     useEffect(() => {
-        const fetchName = async () => {
-            const { data } = await supabase.from('patients').select('full_name').eq('id', visit.patientId).single();
-            if (data) setPatientName(data.full_name);
+        const fetchInfo = async () => {
+            const { data } = await supabase.from('patients').select('full_name, source').eq('id', visit.patientId).single();
+            if (data) {
+                setPatientName(data.full_name);
+                setPatientSource(data.source);
+            }
         };
-        fetchName();
+        fetchInfo();
     }, [visit.patientId]);
 
     useEffect(() => {
@@ -58,14 +62,24 @@ const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    {/* Name + status badge */}
-                    <div className="flex items-center gap-2 mb-1">
+                    {/* Name + badges */}
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <span className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-700 transition-colors">
                             {patientName}
                         </span>
                         <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full border border-amber-200">
                             Waiting
                         </span>
+                        {/* Source badge */}
+                        {patientSource === 'QR_Checkin' ? (
+                            <span className="flex-shrink-0 inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                <Smartphone size={9} /> QR
+                            </span>
+                        ) : patientSource === 'Front_Desk' ? (
+                            <span className="flex-shrink-0 inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200">
+                                <Building2 size={9} /> Desk
+                            </span>
+                        ) : null}
                     </div>
 
                     {/* Arrival time */}

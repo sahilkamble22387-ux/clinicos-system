@@ -1,207 +1,339 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
+import { TrendingUp, Activity, Clock, IndianRupee, Sparkles, QrCode, Smartphone } from 'lucide-react';
 import { supabase } from '../../services/db';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
-import { Activity, Users, TrendingUp, IndianRupee, Brain, Sparkles, ArrowUpRight } from 'lucide-react';
-
-const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
 
 interface AnalyticsDashboardProps {
   clinicId?: string;
 }
 
+const COLORS = ['#6366F1', '#F59E0B', '#EC4899', '#10B981', '#8B5CF6', '#EF4444'];
+const PAYMENT_COLORS: Record<string, string> = {
+  Cash: '#10B981',
+  UPI: '#6366F1',
+  Card: '#F59E0B',
+  Insurance: '#EC4899',
+};
+
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    completedVisits: 0,
-    revenue: 0,
-    growth: '+12.5%'
-  });
   const [trafficData, setTrafficData] = useState<any[]>([]);
-  const [diseaseData, setDiseaseData] = useState<any[]>([]);
+  const [diagnosisData, setDiagnosisData] = useState<any[]>([]);
   const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [aiInsight, setAiInsight] = useState<string>("Analyzing clinic data...");
-
-  const fetchData = async () => {
-    try {
-      const activeClinicId = clinicId || '00000000-0000-0000-0000-000000000000';
-
-      const { data: patients } = await supabase.from('patients').select('*').eq('clinic_id', activeClinicId);
-      const { data: records } = await supabase.from('medical_records').select('*').eq('clinic_id', activeClinicId);
-
-      const total = patients?.length || 0;
-      const completed = patients?.filter(p => p.status === 'completed').length || 0;
-
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayRevenue = patients
-        ?.filter(p => p.status === 'completed' && p.updated_at?.includes(todayStr))
-        .reduce((sum, p: any) => sum + (Number(p.consultation_fee) || 0), 0) || 0;
-
-      const diseaseCounts: Record<string, number> = {};
-      records?.forEach(r => {
-        const diag = (r.diagnosis || 'General').toLowerCase();
-        let category = 'Other';
-        if (diag.includes('fever') || diag.includes('flu') || diag.includes('checkup')) category = 'General Consultations';
-        else if (diag.includes('pain') || diag.includes('back') || diag.includes('ortho')) category = 'Orthopedic';
-        else if (diag.includes('cough') || diag.includes('resp')) category = 'Respiratory';
-        else category = r.diagnosis ? r.diagnosis.split(' ')[0] : 'Consultation';
-        diseaseCounts[category] = (diseaseCounts[category] || 0) + 1;
-      });
-
-      const processedDiseaseData = Object.keys(diseaseCounts)
-        .map(name => ({ name, value: diseaseCounts[name] }))
-        .sort((a, b) => b.value - a.value).slice(0, 5);
-
-      const trafficMap: Record<string, number> = {};
-      const revenueMap: Record<string, number> = {};
-      const days = [];
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateKey = d.toISOString().split('T')[0];
-        const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-        days.push({ key: dateKey, label: dayLabel });
-        trafficMap[dateKey] = 0;
-        revenueMap[dateKey] = 0;
-      }
-
-      patients?.forEach((p: any) => {
-        const createDate = p.created_at?.split('T')[0];
-        const updateDate = p.updated_at?.split('T')[0];
-        if (trafficMap[createDate] !== undefined) trafficMap[createDate] += 1;
-        if (revenueMap[updateDate] !== undefined && p.status === 'completed') {
-          revenueMap[updateDate] += (Number(p.consultation_fee) || 0);
-        }
-      });
-
-      setTrafficData(days.map(d => ({ name: d.label, value: trafficMap[d.key] })));
-      setRevenueData(days.map(d => ({ name: d.label, revenue: revenueMap[d.key] })));
-      setDiseaseData(processedDiseaseData);
-      setStats({ totalPatients: total, completedVisits: completed, revenue: todayRevenue, growth: '15.2%' });
-
-      const topIssue = processedDiseaseData[0]?.name || 'Routine';
-      setAiInsight(`Clinic traffic is peaking. ${topIssue} is the leading diagnosis today. Revenue is up at ₹${todayRevenue.toLocaleString('en-IN')}.`);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error:', error);
-      setLoading(false);
-    }
-  };
+  const [revenueByPayment, setRevenueByPayment] = useState<any[]>([]);
+  const [checkinChannelData, setCheckinChannelData] = useState<any[]>([]);
+  const [avgWaitTime, setAvgWaitTime] = useState<string>('—');
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [aiInsight, setAiInsight] = useState('');
 
   useEffect(() => {
-    fetchData();
-    const channel = supabase.channel('analytics-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_records' }, () => fetchData())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    if (clinicId) fetchAnalytics();
+  }, [clinicId]);
 
-  const tooltipStyle = {
-    contentStyle: { backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', color: '#0f172a', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
-    labelStyle: { color: '#64748b', fontWeight: 600 },
-    itemStyle: { color: '#0f172a' }
+  const fetchAnalytics = async () => {
+    if (!clinicId) return;
+    const today = new Date();
+
+    // ── Patient traffic (last 7 days) ──
+    const trafficResult: { name: string; patients: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dayStr = d.toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('patients')
+        .select('*', { count: 'exact', head: true })
+        .eq('clinic_id', clinicId)
+        .gte('created_at', `${dayStr}T00:00:00`)
+        .lte('created_at', `${dayStr}T23:59:59`);
+      trafficResult.push({
+        name: d.toLocaleDateString(undefined, { weekday: 'short' }),
+        patients: count || 0,
+      });
+    }
+    setTrafficData(trafficResult);
+
+    // ── Diagnosis mix ── (from medical_records)
+    const { data: records } = await supabase
+      .from('medical_records')
+      .select('diagnosis, fee_collected, payment_method, created_at')
+      .eq('clinic_id', clinicId);
+
+    if (records) {
+      // Diagnosis donut
+      const diagMap: Record<string, number> = {};
+      records.forEach(r => {
+        const d = r.diagnosis || 'Other';
+        diagMap[d] = (diagMap[d] || 0) + 1;
+      });
+      const sortedDiag = Object.entries(diagMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([name, value]) => ({ name, value }));
+      setDiagnosisData(sortedDiag);
+
+      // Revenue by day (last 7 days)
+      const revResult: { name: string; revenue: number }[] = [];
+      let total = 0;
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dayStr = d.toISOString().split('T')[0];
+        const dayRecords = records.filter(r =>
+          r.created_at?.startsWith(dayStr)
+        );
+        const dayRev = dayRecords.reduce((s, r) => s + (Number(r.fee_collected) || 0), 0);
+        total += dayRev;
+        revResult.push({
+          name: d.toLocaleDateString(undefined, { weekday: 'short' }),
+          revenue: dayRev,
+        });
+      }
+      setRevenueData(revResult);
+      setTotalRevenue(total);
+
+      // Revenue by payment method (donut)
+      const paymentMap: Record<string, number> = {};
+      records.forEach(r => {
+        const pm = r.payment_method || 'Cash';
+        paymentMap[pm] = (paymentMap[pm] || 0) + (Number(r.fee_collected) || 0);
+      });
+      setRevenueByPayment(
+        Object.entries(paymentMap)
+          .filter(([_, v]) => v > 0)
+          .map(([name, value]) => ({ name, value }))
+      );
+    }
+
+    // ── Check-in channels (QR vs Front Desk) ──
+    const channelResult: { name: string; count: number; color: string }[] = [];
+    const { count: qrCount } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact', head: true })
+      .eq('clinic_id', clinicId)
+      .eq('source', 'QR_Checkin');
+    const { count: deskCount } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact', head: true })
+      .eq('clinic_id', clinicId)
+      .neq('source', 'QR_Checkin');
+    channelResult.push(
+      { name: 'QR Check-In', count: qrCount || 0, color: '#6366F1' },
+      { name: 'Front Desk', count: deskCount || 0, color: '#F59E0B' }
+    );
+    setCheckinChannelData(channelResult);
+
+    // ── Average wait time (completed today) ──
+    const todayStr = today.toISOString().split('T')[0];
+    const { data: completedAppts } = await supabase
+      .from('appointments')
+      .select('created_at, status')
+      .eq('clinic_id', clinicId)
+      .eq('status', 'completed')
+      .gte('created_at', `${todayStr}T00:00:00`);
+
+    if (completedAppts && completedAppts.length > 0) {
+      // Simplified: average time from creation to now as a proxy
+      // In a real app you'd track start/end timestamps
+      const waitTimes = completedAppts.map(a => {
+        const created = new Date(a.created_at).getTime();
+        return (Date.now() - created) / 60000; // minutes
+      });
+      const avg = waitTimes.reduce((s, v) => s + v, 0) / waitTimes.length;
+      if (avg < 60) {
+        setAvgWaitTime(`${Math.round(avg)} min`);
+      } else {
+        setAvgWaitTime(`${Math.round(avg / 60)}h ${Math.round(avg % 60)}m`);
+      }
+    }
+
+    // AI Insight
+    const busiest = trafficResult.reduce((max, day) => day.patients > max.patients ? day : max, trafficResult[0]);
+    setAiInsight(
+      busiest?.patients > 0
+        ? `${busiest.name} was your busiest day with ${busiest.patients} patients. Revenue over 7 days: ₹${totalRevenue.toLocaleString('en-IN')}.`
+        : 'Start seeing patients to generate insights!'
+    );
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans overflow-x-hidden">
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Analytics Hub</h1>
-        <div className="flex items-center gap-3 bg-white shadow-sm border border-slate-200 px-4 py-2 rounded-full text-emerald-600 font-bold text-xs">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> LIVE FEED
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-500 slide-in-from-bottom-4">
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
+        <p className="text-slate-500 mt-1 text-sm font-medium">Insights from the last 7 days</p>
       </div>
 
       {/* AI Insight */}
-      <div className="bg-white rounded-2xl p-6 border border-indigo-100 shadow-sm mb-10 flex items-start gap-5">
-        <div className="bg-gradient-to-br from-indigo-500 to-violet-600 p-3 rounded-xl shadow-lg">
-          <Brain className="w-8 h-8 text-white" />
+      {aiInsight && (
+        <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 p-5 rounded-2xl shadow-sm">
+          <p className="text-sm text-indigo-800 flex items-start gap-2">
+            <Sparkles size={16} className="text-indigo-500 flex-shrink-0 mt-0.5" />
+            <span>{aiInsight}</span>
+          </p>
         </div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            AI Clinic Optimizer <span className="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-0.5 rounded border border-indigo-100">GEMINI 1.5</span>
-          </h3>
-          <p className="text-slate-600 leading-relaxed">{aiInsight}</p>
-        </div>
+      )}
+
+      {/* Top Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <SummaryCard
+          icon={<TrendingUp className="text-indigo-600" size={20} />}
+          label="Total Revenue (7d)"
+          value={`₹${totalRevenue.toLocaleString('en-IN')}`}
+          bg="bg-indigo-50 border-indigo-200"
+        />
+        <SummaryCard
+          icon={<Clock className="text-amber-500" size={20} />}
+          label="Avg Wait Time"
+          value={avgWaitTime}
+          bg="bg-amber-50 border-amber-200"
+        />
+        <SummaryCard
+          icon={<Smartphone className="text-violet-600" size={20} />}
+          label="QR Check-Ins"
+          value={`${checkinChannelData.find(c => c.name === 'QR Check-In')?.count || 0}`}
+          bg="bg-violet-50 border-violet-200"
+        />
+        <SummaryCard
+          icon={<Activity className="text-emerald-600" size={20} />}
+          label="Today's Patients"
+          value={`${trafficData[trafficData.length - 1]?.patients || 0}`}
+          bg="bg-emerald-50 border-emerald-200"
+        />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatCard title="Total Patients" value={stats.totalPatients} icon={<Users />} color="text-indigo-600" bg="bg-indigo-50" trend={stats.growth} />
-        <StatCard title="Completed Visits" value={stats.completedVisits} icon={<Activity />} color="text-emerald-600" bg="bg-emerald-50" trend="+5%" />
-        <StatCard title="Income Today" value={`₹${stats.revenue.toLocaleString('en-IN')}`} icon={<IndianRupee />} color="text-amber-600" bg="bg-amber-50" trend="+15.2%" />
-      </div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Patient Traffic (7 Days)</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <Tooltip {...tooltipStyle} />
-                <Area type="monotone" dataKey="value" stroke="#6366f1" fill="#6366f1" fillOpacity={0.08} strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* Patient Traffic */}
+        <ChartCard title="Patient Traffic" subtitle="Daily patient count" icon={<TrendingUp size={16} className="text-indigo-500" />}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={trafficData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} allowDecimals={false} />
+              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
+              <Bar dataKey="patients" fill="#6366F1" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Diagnosis Mix</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+        {/* Revenue Trend */}
+        <ChartCard title="Revenue Trend" subtitle="Daily revenue (₹)" icon={<IndianRupee size={16} className="text-emerald-500" />}>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={revenueData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} formatter={(value: any) => [`₹${value}`, 'Revenue']} />
+              <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2.5} dot={{ r: 4, fill: '#10B981' }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Diagnosis Mix */}
+        <ChartCard title="Diagnosis Mix" subtitle="Most common diagnoses" icon={<Activity size={16} className="text-pink-500" />}>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie
+                data={diagnosisData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={85}
+                dataKey="value"
+                nameKey="name"
+                paddingAngle={3}
+              >
+                {diagnosisData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
+              <Legend
+                verticalAlign="bottom"
+                iconType="circle"
+                iconSize={8}
+                formatter={(value) => <span className="text-xs text-slate-600 font-medium">{value}</span>}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Revenue by Payment Method */}
+        <ChartCard title="Revenue by Payment Method" subtitle="Breakdown by how patients pay" icon={<IndianRupee size={16} className="text-violet-500" />}>
+          {revenueByPayment.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={diseaseData} innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                  {diseaseData.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                <Pie
+                  data={revenueByPayment}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  dataKey="value"
+                  nameKey="name"
+                  paddingAngle={3}
+                >
+                  {revenueByPayment.map((entry, i) => (
+                    <Cell key={i} fill={PAYMENT_COLORS[entry.name] || COLORS[i % COLORS.length]} />
+                  ))}
                 </Pie>
-                <Tooltip {...tooltipStyle} />
-                <Legend iconType="circle" />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }}
+                  formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Revenue']}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => <span className="text-xs text-slate-600 font-medium">{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        </div>
+          )}
+        </ChartCard>
 
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <h3 className="text-xl font-bold text-slate-800 mb-6">Revenue Performance (₹)</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <Tooltip {...tooltipStyle} />
-                <Bar dataKey="revenue" fill="#f59e0b" radius={[6, 6, 0, 0]} barSize={60} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* Check-in Channels */}
+        <ChartCard title="Check-In Channels" subtitle="QR vs Front Desk registrations" icon={<QrCode size={16} className="text-blue-500" />}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={checkinChannelData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis type="number" tick={{ fontSize: 12, fill: '#94a3b8' }} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} width={90} />
+              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
+              <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+                {checkinChannelData.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
       </div>
     </div>
   );
 };
 
-const StatCard = ({ title, value, icon, color, bg, trend }: any) => (
-  <div className="relative bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-slate-500 text-sm font-semibold mb-1">{title}</p>
-        <div className="text-3xl font-black text-slate-900 tabular-nums">{value}</div>
-      </div>
-      <div className={`p-3 rounded-xl ${bg} ${color}`}>{icon}</div>
+// ── Sub-components ──
+const SummaryCard = ({ icon, label, value, bg }: { icon: React.ReactNode; label: string; value: string; bg: string }) => (
+  <div className={`p-4 rounded-2xl border ${bg} flex flex-col gap-2`}>
+    <div className="flex items-center gap-2">
+      {icon}
+      <span className="text-xs font-semibold text-slate-500">{label}</span>
     </div>
-    <div className="mt-4 flex items-center gap-2">
-      <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">{trend}</div>
-      <span className="text-xs text-slate-400">vs last week</span>
+    <div className="text-2xl font-black text-slate-900 tabular-nums">{value}</div>
+  </div>
+);
+
+const ChartCard = ({ title, subtitle, icon, children }: { title: string; subtitle: string; icon: React.ReactNode; children: React.ReactNode }) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="px-5 pt-5 pb-3">
+      <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">{icon} {title}</h3>
+      <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
     </div>
+    <div className="px-2 pb-4">{children}</div>
   </div>
 );
 

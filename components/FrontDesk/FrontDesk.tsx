@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, FileUp, X, Check, User, Phone, MapPin, Calendar, Users, Smartphone, Activity, Thermometer, Heart } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { Patient, Gender } from '../../types';
+import { toast } from 'react-hot-toast';
 
 interface FrontDeskProps {
   clinicId: string;
@@ -55,11 +56,14 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
         .insert([{
           full_name: newPatient.name,
           gender: newPatient.gender,
-          dob: newPatient.dob,
+          dob: newPatient.dob || null,
           phone: newPatient.phone,
-          address: newPatient.address,
+          address: newPatient.address || null,
           clinic_id: clinicId,
-          status: 'waiting'
+          status: 'waiting',
+          is_active: true,
+          source: 'Front_Desk',
+          consultation_fee: 0,
         }])
         .select()
         .single();
@@ -83,14 +87,14 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
 
       setShowRegModal(false);
       setNewPatient({ name: '', gender: Gender.MALE, dob: '', phone: '', address: '', bp_systolic: '', bp_diastolic: '', heart_rate: '', weight_kg: '', temperature_f: '' });
-      alert(`Patient ${patientData.full_name} Registered & Checked In!`);
+      toast.success(`✅ ${patientData.full_name} registered & added to queue!`);
 
       const { data } = await supabase.from('patients').select('*').eq('clinic_id', clinicId).order('created_at', { ascending: false }).limit(50);
       if (data) setPatients(data as any);
 
     } catch (err: any) {
       console.error('Registration failed:', err);
-      alert('Registration failed: ' + (err.message || 'Unknown error'));
+      toast.error('Registration failed: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -100,10 +104,10 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
         .from('appointments')
         .insert([{ patient_id: patientId, clinic_id: clinicId, status: 'waiting' }]);
       if (error) throw error;
-      await supabase.from('patients').update({ status: 'waiting' }).eq('id', patientId);
-      alert("Patient Added to Doctor's Queue!");
+      await supabase.from('patients').update({ status: 'waiting', is_active: true }).eq('id', patientId);
+      toast.success("Patient added to Doctor's queue!");
     } catch (err: any) {
-      alert('Check-in failed: ' + err.message);
+      toast.error('Check-in failed: ' + err.message);
     }
   };
 
