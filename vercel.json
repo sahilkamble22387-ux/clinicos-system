@@ -3,6 +3,10 @@
         {
             "source": "/supabase-proxy/:path*",
             "destination": "https://sthuukrqzldurvzrgmah.supabase.co/:path*"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }
