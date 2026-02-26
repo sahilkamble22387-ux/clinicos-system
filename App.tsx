@@ -12,6 +12,10 @@ import { Users, UserRound, BarChart3, Pill, Home, QrCode, DollarSign } from 'luc
 import { supabase } from './services/db';
 import { Toaster } from 'react-hot-toast';
 import { Link, useLocation } from 'react-router-dom';
+import { SubscriptionGate } from './components/SubscriptionGate';
+import { FeatureGate } from './components/FeatureGate';
+import { MobileHeader } from './components/MobileHeader';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // ── URL Route Parser ──
 function getCheckinClinicId(): string | null {
@@ -237,173 +241,182 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-50" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: { borderRadius: '12px', fontSize: '13px', fontWeight: 500 },
-          success: { iconTheme: { primary: '#6366f1', secondary: '#fff' } },
-        }}
-      />
-      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
+    <SubscriptionGate
+      clinicId={clinic?.id}
+      clinicName={clinic?.name}
+      authResolved={!loading}  // gate waits until App has fully loaded the clinic
+      onSignOut={handleLogout}
+    >
+      <div className="h-screen flex overflow-hidden bg-slate-50" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: { borderRadius: '12px', fontSize: '13px', fontWeight: 500 },
+            success: { iconTheme: { primary: '#6366f1', secondary: '#fff' } },
+          }}
+        />
+        {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
-      {/* ── Sidebar: desktop only ── */}
-      <nav className="hidden md:flex w-[260px] flex-shrink-0 text-white flex-col border-r border-slate-800 h-full" style={{ background: 'linear-gradient(to bottom, #0f172a, #1e1b4b)' }}>
-        <button
-          onClick={() => setView('HOME')}
-          className="p-6 flex items-center gap-3 border-b border-slate-800/60 w-full text-left hover:bg-white/5 transition-colors group"
-        >
-          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:bg-indigo-400 transition-all">
-            <Pill className="text-white w-6 h-6" />
-          </div>
-          <span className="font-bold text-xl tracking-tight text-slate-100">ClinicOS</span>
-        </button>
-
-        <div className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <div className="px-4 py-2 mb-4">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Current Clinic</p>
-            <p className="text-sm font-bold text-indigo-400 truncate mt-0.5">{clinic?.name || 'Demo Clinic'}</p>
-          </div>
-
-          <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Main Menu</p>
-
-          {navItems.map(item => (
-            <button
-              key={item.key}
-              onClick={() => setView(item.key)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${view === item.key
-                ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20'
-                : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
-                }`}
-            >
-              {/* Animated pill indicator */}
-              {view === item.key && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-r-full" />
-              )}
-              {item.icon}
-              <span className="font-medium text-sm">{item.label}</span>
-              {/* Notification badge */}
-              {item.badge && item.badge > 0 ? (
-                <span className="ml-auto bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">
-                  {item.badge}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800/60">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold shadow-md shadow-indigo-500/30 flex-shrink-0">
-              {(session.user.user_metadata?.first_name || session.user.user_metadata?.full_name || session.user.email)?.charAt(0).toUpperCase() || 'D'}
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-bold text-slate-100 truncate leading-tight">
-                Dr.&nbsp;{session.user.user_metadata?.first_name
-                  ? `${session.user.user_metadata.first_name}${session.user.user_metadata.last_name ? ' ' + session.user.user_metadata.last_name : ''}`
-                  : session.user.user_metadata?.full_name
-                  || session.user.email?.split('@')[0]}
-              </span>
-              <span className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
-                {clinic?.name || session.user.email}
-              </span>
-              <button onClick={handleLogout} className="text-[10px] text-slate-600 hover:text-rose-400 text-left transition-colors mt-1 font-medium">Sign Out</button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* ── Main Content ── */}
-      <main className="flex-1 h-full flex flex-col overflow-hidden bg-slate-50">
-        {/* Sticky header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 md:px-8 py-3 border-b border-slate-200 bg-white shadow-sm">
-          {/* Mobile: Logo */}
-          <div className="flex md:hidden items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-              <Pill className="text-white w-4 h-4" />
-            </div>
-            <span className="font-bold text-sm text-slate-900">ClinicOS</span>
-          </div>
-          <div className="hidden md:block text-sm font-bold text-slate-900">
-            {view === 'HOME' && 'Dashboard'}
-            {view === 'FRONT_DESK' && 'Front Desk'}
-            {view === 'DOCTOR' && 'Doctor Portal'}
-            {view === 'ANALYTICS' && 'Analytics'}
-            {view === 'HISTORY' && 'Patient History'}
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/pricing"
-              className="flex items-center gap-2 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:underline active:bg-indigo-100 rounded-full transition-colors font-semibold"
-              title="View our flexible pricing plans"
-              aria-label="Pricing Plans"
-            >
-              <DollarSign size={16} />
-              <span className="hidden sm:inline text-sm">Pricing</span>
-            </Link>
-            <button
-              onClick={() => setIsQRModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full border border-indigo-200 transition-colors shadow-sm"
-              title="Show check-in QR Code"
-              aria-label="Patient Check-In QR"
-            >
-              <QrCode size={16} />
-              <span className="hidden sm:inline text-xs font-bold">QR Check-in</span>
-            </button>
-            <div className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hidden sm:block">
-              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-            </div>
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
-          {view === 'DOCTOR' ? (
-            <DoctorDashboard clinicId={clinic?.id || '00000000-0000-0000-0000-000000000000'} />
-          ) : (
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
-              {view === 'HOME' && <DashboardHome clinic={clinic} onNavigate={setView} session={session} />}
-              {view === 'FRONT_DESK' && <FrontDesk clinicId={clinic?.id || '00000000-0000-0000-0000-000000000000'} />}
-              {view === 'ANALYTICS' && <AnalyticsDashboard clinicId={clinic?.id} />}
-              {view === 'HISTORY' && <PatientHistory clinic={clinic} onBack={() => setView('HOME')} />}
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* ── Mobile Bottom Tab Bar ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-1 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-        {navItems.map(item => (
+        {/* ── Sidebar: desktop only ── */}
+        <nav className="hidden md:flex w-[260px] flex-shrink-0 text-white flex-col border-r border-slate-800 h-full" style={{ background: 'linear-gradient(to bottom, #0f172a, #1e1b4b)' }}>
           <button
-            key={item.key}
-            onClick={() => setView(item.key)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-lg transition-colors relative ${view === item.key ? 'text-indigo-600' : 'text-slate-400'
-              }`}
+            onClick={() => setView('HOME')}
+            className="p-6 flex items-center gap-3 border-b border-slate-800/60 w-full text-left hover:bg-white/5 transition-colors group"
           >
-            {view === item.key && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-indigo-500 rounded-b-full" />
-            )}
-            <div className="relative">
-              {item.icon}
-              {item.badge && item.badge > 0 ? (
-                <span className="absolute -top-1 -right-2 bg-amber-500 text-white text-[8px] font-black px-1 py-0 rounded-full min-w-[14px] text-center">
-                  {item.badge}
-                </span>
-              ) : null}
+            <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:bg-indigo-400 transition-all">
+              <Pill className="text-white w-6 h-6" />
             </div>
-            <span className="text-[10px] font-semibold">{item.label}</span>
+            <span className="font-bold text-xl tracking-tight text-slate-100">ClinicOS</span>
           </button>
-        ))}
-      </div>
 
-      <QRModal
-        isOpen={isQRModalOpen}
-        onClose={() => setIsQRModalOpen(false)}
-        clinicId={clinic?.id || ''}
-        clinicName={clinic?.name || 'My Clinic'}
-      />
-    </div>
+          <div className="flex-1 p-4 space-y-1 overflow-y-auto">
+            <div className="px-4 py-2 mb-4">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Current Clinic</p>
+              <p className="text-sm font-bold text-indigo-400 truncate mt-0.5">{clinic?.name || 'Demo Clinic'}</p>
+            </div>
+
+            <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Main Menu</p>
+
+            {navItems.map(item => {
+              const navBtn = (
+                <button
+                  key={item.key}
+                  onClick={() => setView(item.key)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${view === item.key
+                    ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                    }`}
+                >
+                  {/* Animated pill indicator */}
+                  {view === item.key && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-r-full" />
+                  )}
+                  {item.icon}
+                  <span className="font-medium text-sm">{item.label}</span>
+                  {/* Notification badge */}
+                  {item.badge && item.badge > 0 ? (
+                    <span className="ml-auto bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </button>
+              )
+
+              if (item.key === 'ANALYTICS') {
+                return (
+                  <FeatureGate
+                    key={item.key}
+                    feature="analytics"
+                    clinicId={clinic?.id}
+                    clinicName={clinic?.name}
+                    authResolved={!loading}
+                  >
+                    {navBtn}
+                  </FeatureGate>
+                )
+              }
+              return navBtn
+            })}
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-slate-800/60">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold shadow-md shadow-indigo-500/30 flex-shrink-0">
+                {(session.user.user_metadata?.first_name || session.user.user_metadata?.full_name || session.user.email)?.charAt(0).toUpperCase() || 'D'}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm font-bold text-slate-100 truncate leading-tight">
+                  Dr.&nbsp;{session.user.user_metadata?.first_name
+                    ? `${session.user.user_metadata.first_name}${session.user.user_metadata.last_name ? ' ' + session.user.user_metadata.last_name : ''}`
+                    : session.user.user_metadata?.full_name
+                    || session.user.email?.split('@')[0]}
+                </span>
+                <span className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
+                  {clinic?.name || session.user.email}
+                </span>
+                <button onClick={handleLogout} className="text-[10px] text-slate-600 hover:text-rose-400 text-left transition-colors mt-1 font-medium">Sign Out</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* ── Main Content ── */}
+        <main className="flex-1 h-full flex flex-col overflow-hidden bg-slate-50">
+          {/* Sticky header (Hidden on mobile entirely since MobileHeader handles it) */}
+          <div className="hidden md:flex flex-shrink-0 items-center justify-between px-8 py-3 border-b border-slate-200 bg-white shadow-sm">
+            <div className="text-sm font-bold text-slate-900">
+              {view === 'HOME' && 'Dashboard'}
+              {view === 'FRONT_DESK' && 'Front Desk'}
+              {view === 'DOCTOR' && 'Doctor Portal'}
+              {view === 'ANALYTICS' && 'Analytics'}
+              {view === 'HISTORY' && 'Patient History'}
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/pricing"
+                className="flex items-center gap-2 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:underline active:bg-indigo-100 rounded-full transition-colors font-semibold"
+                title="View our flexible pricing plans"
+                aria-label="Pricing Plans"
+              >
+                <DollarSign size={16} />
+                <span className="hidden sm:inline text-sm">Pricing</span>
+              </Link>
+              <FeatureGate
+                feature="qr_checkin"
+                clinicId={clinic?.id}
+                clinicName={clinic?.name}
+                authResolved={!loading}
+              >
+                <button
+                  onClick={() => setIsQRModalOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full border border-indigo-200 transition-colors shadow-sm"
+                  title="Show check-in QR Code"
+                  aria-label="Patient Check-In QR"
+                >
+                  <QrCode size={16} />
+                  <span className="hidden sm:inline text-xs font-bold">QR Check-in</span>
+                </button>
+              </FeatureGate>
+              <div className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hidden sm:block">
+                {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Header */}
+          <MobileHeader session={session} clinic={clinic} onSignOut={handleLogout} authResolved={!loading} onNavigate={setView} />
+
+          {/* Content area */}
+          <div className="flex-1 overflow-y-auto w-full">
+            {view === 'DOCTOR' ? (
+              <DoctorDashboard clinicId={clinic?.id || '00000000-0000-0000-0000-000000000000'} />
+            ) : (
+              <div className="w-full">
+                {view === 'HOME' && <DashboardHome clinic={clinic} onNavigate={setView} session={session} />}
+                {view === 'FRONT_DESK' && <FrontDesk clinicId={clinic?.id || '00000000-0000-0000-0000-000000000000'} />}
+                {view === 'ANALYTICS' && <AnalyticsDashboard clinicId={clinic?.id} />}
+                {view === 'HISTORY' && (
+                  <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+                    <PatientHistory clinic={clinic} onBack={() => setView('HOME')} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* ── Mobile Bottom Tab Bar ── */}
+        <MobileBottomNav view={view} onNavigate={setView} waitingCount={waitingCount} clinic={clinic} authResolved={!loading} />
+
+        <QRModal
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          clinicId={clinic?.id || ''}
+          clinicName={clinic?.name || 'My Clinic'}
+        />
+      </div>
+    </SubscriptionGate>
   );
 };
 
