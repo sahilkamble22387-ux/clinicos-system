@@ -76,7 +76,7 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
     );
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 min-h-screen">
+        <div className="space-y-6 animate-in fade-in duration-500 min-h-screen pb-24 md:pb-8 max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-3">
                     {onBack && (

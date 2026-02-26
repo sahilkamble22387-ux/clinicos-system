@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, User, ClipboardList, History, FileText, Send, Sparkles, Eye, Banknote, Activity, Heart, Thermometer, Stethoscope, Save } from 'lucide-react';
+import { Clock, User, ClipboardList, History, FileText, Send, Sparkles, Eye, Banknote, Activity, Heart, Thermometer, Stethoscope, Save, X } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { Visit, Patient, VisitStatus, Document, MedicalRecord } from '../../types';
 import { summarizePatientHistory, generateClinicalSuggestions } from '../../services/geminiService';
@@ -28,6 +28,7 @@ const VitalInput: React.FC<{
     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</label>
     <div className="relative">
       <input
+        style={{ fontSize: '16px' }}
         type="number"
         step="any"
         value={value}
@@ -200,8 +201,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   return (
     <div className="flex h-full flex-col md:flex-row">
 
-      {/* ── Sidebar Queue (fixed width) ── */}
-      <aside className="w-full md:w-[350px] flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col max-h-[40vh] md:max-h-full">
+      {/* ── Sidebar Queue (fixed width on desktop, full width on mobile) ── */}
+      <aside className={`w-full md:w-[350px] flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col h-full md:max-h-full ${activeVisit ? 'hidden md:flex' : 'flex'}`}>
         {/* Queue header */}
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
@@ -251,7 +252,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
       </aside>
 
       {/* ── Consultation Workspace ── */}
-      <main className="flex-1 overflow-y-auto bg-slate-50">
+      <main className={`flex-1 overflow-y-auto bg-slate-50 transition-all duration-300 ${activeVisit ? 'fixed inset-0 z-50 md:relative md:z-auto md:inset-auto pb-20 md:pb-0 animate-in slide-in-from-bottom-full md:animate-none' : 'hidden md:block'}`}>
         {!activeVisit ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-8">
             <div className="relative mb-6">
@@ -274,11 +275,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
             )}
           </div>
         ) : (
-          <div className="p-4 md:p-6 max-w-6xl mx-auto">
+          <div className="p-0 md:p-6 max-w-6xl mx-auto h-full flex flex-col">
             {/* Patient header strip */}
-            <div className="flex items-center gap-4 mb-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
-                <User size={26} className="text-white" />
+            <div className="flex items-center gap-3 md:gap-4 mb-0 md:mb-6 p-4 bg-white md:rounded-2xl border-b md:border border-slate-200 shadow-sm sticky top-0 z-10 md:static flex-shrink-0 lg:pt-4" style={{ paddingTop: 'calc(var(--sat) + 16px)' }}>
+              <button
+                onClick={() => setActiveVisit(null)}
+                className="md:hidden p-2 -ml-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+              >
+                <X size={24} />
+              </button>
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
+                <User size={24} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-bold text-slate-900 truncate">{activePatient?.name}</h3>
@@ -300,7 +307,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
             </div>
 
             {/* ── 2-Column Workspace Grid ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-4 md:p-0 grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 overflow-y-auto">
 
               {/* LEFT COL */}
               <div className="space-y-5">
@@ -337,10 +344,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                   )}
 
                   <input
+                    style={{ fontSize: '16px' }}
                     value={diagnosis}
                     onChange={e => setDiagnosis(e.target.value)}
                     placeholder="Enter diagnosis..."
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-900 placeholder:text-slate-400 transition-all"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-900 placeholder:text-slate-400 transition-all font-medium"
                   />
                 </div>
 
@@ -351,12 +359,13 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                   </label>
                   <div className="mb-2 relative">
                     <input
+                      style={{ fontSize: '16px' }}
                       type="text"
                       placeholder="Search medicines (e.g. Para...)"
                       value={medQuery}
                       onChange={e => { setMedQuery(e.target.value); setShowMedSuggestions(true); }}
                       onFocus={() => setShowMedSuggestions(true)}
-                      className="w-full p-3 pl-9 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10 text-slate-900 placeholder:text-slate-400"
+                      className="w-full p-3 pl-9 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/10 text-slate-900 placeholder:text-slate-400 font-medium"
                     />
                     <ClipboardList size={14} className="absolute left-3 top-3.5 text-slate-400" />
                     {showMedSuggestions && medQuery && (
@@ -372,10 +381,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     )}
                   </div>
                   <textarea
+                    style={{ fontSize: '16px' }}
                     value={prescription}
                     onChange={e => setPrescription(e.target.value)}
                     placeholder="Prescription details..."
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[100px] font-mono text-sm text-slate-900 placeholder:text-slate-400"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[100px] font-mono font-medium text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
 
@@ -385,10 +395,11 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     <FileText size={15} className="text-slate-400" /> Clinical Notes
                   </label>
                   <textarea
+                    style={{ fontSize: '16px' }}
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     placeholder="Doctor's internal notes..."
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[90px] text-slate-900 placeholder:text-slate-400"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[90px] text-slate-900 placeholder:text-slate-400 font-medium"
                   />
                 </div>
 
@@ -401,6 +412,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Fee (₹)</label>
                       <input
+                        style={{ fontSize: '16px' }}
                         type="number"
                         value={consultationFee === 0 ? '' : consultationFee}
                         onChange={e => setConsultationFee(Number(e.target.value))}
@@ -411,9 +423,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     <div>
                       <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Method</label>
                       <select
+                        style={{ fontSize: '16px' }}
                         value={paymentMethod}
                         onChange={e => setPaymentMethod(e.target.value as any)}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 font-medium"
                       >
                         <option value="Cash">Cash</option>
                         <option value="UPI">UPI</option>
@@ -462,12 +475,14 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                       </label>
                       <div className="flex gap-2 items-center mt-1">
                         <input type="number" placeholder="Systolic"
+                          style={{ fontSize: '16px' }}
                           value={vitalsForm.bp_systolic}
                           onChange={e => setVitalsForm(v => ({ ...v, bp_systolic: e.target.value }))}
                           className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-sm font-semibold text-slate-800"
                         />
                         <span className="text-slate-400 font-bold text-lg flex-shrink-0">/</span>
                         <input type="number" placeholder="Diastolic"
+                          style={{ fontSize: '16px' }}
                           value={vitalsForm.bp_diastolic}
                           onChange={e => setVitalsForm(v => ({ ...v, bp_diastolic: e.target.value }))}
                           className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-sm font-semibold text-slate-800"

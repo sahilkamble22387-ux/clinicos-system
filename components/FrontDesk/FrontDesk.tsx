@@ -123,22 +123,22 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
   const labelCls = "text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 md:pb-8 max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Front Desk</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Front Desk</h1>
           <p className="text-slate-500 mt-1 text-sm">Manage patient registration and arrival queue.</p>
         </div>
         <button
           onClick={() => setShowRegModal(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/25 hover:scale-[1.01] transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-5 py-3.5 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/25 hover:scale-[1.01] transition-all"
         >
           <UserPlus size={18} /> New Registration
         </button>
       </header>
 
       {/* Smart Search */}
-      <div className="relative group">
+      <div className="relative group -mx-4 px-4 md:mx-0 md:px-0">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
           <Search size={20} />
         </div>
@@ -151,9 +151,43 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
         />
       </div>
 
-      {/* Patient Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Patient Table (Desktop) & Cards (Mobile) */}
+      <div className="bg-white md:rounded-2xl shadow-sm border-y md:border border-slate-200 overflow-hidden -mx-4 md:mx-0">
+
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredPatients.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-sm italic">
+              No patients found. Register a new patient to get started.
+            </div>
+          ) : (
+            filteredPatients.map(patient => (
+              <div key={patient.id} className="p-4 bg-white active:bg-slate-50 flex items-center justify-between group transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-indigo-600 rounded-full flex items-center justify-center font-bold border border-indigo-200/60 shadow-sm flex-shrink-0">
+                    {(patient?.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900 text-base">{patient.name}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{patient.phone} • {patient.gender}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCheckIn(patient.id)}
+                    className="p-3 min-h-[48px] text-emerald-600 bg-emerald-50 rounded-xl active:bg-emerald-100 transition-colors flex items-center justify-center"
+                    aria-label="Check-In"
+                  >
+                    <Check size={20} strokeWidth={3} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -217,16 +251,23 @@ const FrontDesk: React.FC<FrontDeskProps> = ({ clinicId }) => {
         </div>
       </div>
 
-      {/* Registration Modal */}
+      {/* Registration Modal (Bottom Sheet on Mobile) */}
       {showRegModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-slate-900/60 backdrop-blur-sm md:p-4 animate-in fade-in duration-200">
+          <div
+            className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-xl shadow-2xl animate-in slide-in-from-bottom-full md:zoom-in-95 duration-300 overflow-hidden border-t md:border border-slate-200 flex flex-col max-h-[90vh]"
+            style={{ paddingBottom: 'calc(var(--sab) + 0px)' }}
+          >
+            {/* Handle bar for mobile */}
+            <div className="md:hidden flex justify-center pt-3 pb-1 bg-slate-50/80">
+              <div className="w-10 h-1.5 rounded-full bg-slate-300" />
+            </div>
 
             {/* Sticky Header */}
-            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/80 flex-shrink-0">
+            <div className="flex justify-between items-center px-6 pb-4 pt-1 md:pt-6 border-b border-slate-100 bg-slate-50/80 md:bg-white flex-shrink-0">
               <div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">New Patient Registration</h3>
-                <p className="text-slate-500 text-sm mt-0.5 font-medium">Enter patient details to create a digital record.</p>
+                <p className="text-slate-500 text-sm mt-0.5 font-medium hidden md:block">Enter patient details to create a digital record.</p>
               </div>
               <button
                 onClick={() => setShowRegModal(false)}

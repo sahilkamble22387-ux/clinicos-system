@@ -156,9 +156,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 slide-in-from-bottom-4">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 slide-in-from-bottom-4 pb-24 md:pb-8 max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6 max-w-full overflow-hidden">
       <div>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
+        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
         <p className="text-slate-500 mt-1 text-sm font-medium">Insights from the last 7 days</p>
       </div>
 
@@ -205,57 +205,83 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
 
         {/* Patient Traffic */}
         <ChartCard title="Patient Traffic" subtitle="Daily patient count" icon={<TrendingUp size={16} className="text-indigo-500" />}>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={trafficData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} allowDecimals={false} />
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
-              <Bar dataKey="patients" fill="#6366F1" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full" style={{ overflowX: 'hidden' }}>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={trafficData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px', padding: '8px 12px' }} cursor={{ fill: 'rgba(99,102,241,0.06)' }} />
+                <Bar dataKey="patients" fill="#6366F1" radius={[6, 6, 0, 0]} maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </ChartCard>
 
         {/* Revenue Trend */}
         <ChartCard title="Revenue Trend" subtitle="Daily revenue (₹)" icon={<IndianRupee size={16} className="text-emerald-500" />}>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} formatter={(value: any) => [`₹${value}`, 'Revenue']} />
-              <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2.5} dot={{ r: 4, fill: '#10B981' }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="w-full" style={{ overflowX: 'hidden' }}>
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={revenueData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={32} tickFormatter={(v: number) => v >= 1000 ? `₹${v / 1000}k` : `₹${v}`} />
+                <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }} formatter={(value: any) => [`₹${value}`, 'Revenue']} />
+                <Line type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: '#10B981' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </ChartCard>
 
         {/* Diagnosis Mix */}
         <ChartCard title="Diagnosis Mix" subtitle="Most common diagnoses" icon={<Activity size={16} className="text-pink-500" />}>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={diagnosisData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={85}
-                dataKey="value"
-                nameKey="name"
-                paddingAngle={3}
-              >
-                {diagnosisData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+          {/* Mobile: simple percentage list */}
+          <div className="block md:hidden">
+            {diagnosisData.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-sm">No data yet</div>
+            ) : (
+              <div className="space-y-1">
+                {diagnosisData.map((item, i) => (
+                  <div key={item.name} className="flex items-center gap-3 py-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ background: COLORS[i % COLORS.length] }}
+                    />
+                    <span className="text-sm text-slate-700 flex-1 truncate">{item.name}</span>
+                    <span className="text-xs font-bold text-slate-500">{item.value}</span>
+                  </div>
                 ))}
-              </Pie>
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
-              <Legend
-                verticalAlign="bottom"
-                iconType="circle"
-                iconSize={8}
-                formatter={(value) => <span className="text-xs text-slate-600 font-medium">{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+          {/* Desktop: pie chart */}
+          <div className="hidden md:block">
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={diagnosisData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  dataKey="value"
+                  nameKey="name"
+                  paddingAngle={3}
+                >
+                  {diagnosisData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
+                <Legend
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => <span className="text-xs text-slate-600 font-medium">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </ChartCard>
 
         {/* Revenue by Payment Method */}
@@ -296,19 +322,21 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
 
         {/* Check-in Channels */}
         <ChartCard title="Check-In Channels" subtitle="QR vs Front Desk registrations" icon={<QrCode size={16} className="text-blue-500" />}>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={checkinChannelData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis type="number" tick={{ fontSize: 12, fill: '#94a3b8' }} allowDecimals={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} width={90} />
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 13, border: '1px solid #e2e8f0' }} />
-              <Bar dataKey="count" radius={[0, 8, 8, 0]}>
-                {checkinChannelData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full" style={{ overflowX: 'hidden' }}>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={checkinChannelData} layout="vertical" margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} width={72} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
+                <Bar dataKey="count" radius={[0, 8, 8, 0]} maxBarSize={28}>
+                  {checkinChannelData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </ChartCard>
 
       </div>
@@ -328,12 +356,14 @@ const SummaryCard = ({ icon, label, value, bg }: { icon: React.ReactNode; label:
 );
 
 const ChartCard = ({ title, subtitle, icon, children }: { title: string; subtitle: string; icon: React.ReactNode; children: React.ReactNode }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-    <div className="px-5 pt-5 pb-3">
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <div className="px-5 pt-5 pb-3 flex-shrink-0">
       <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">{icon} {title}</h3>
       <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
     </div>
-    <div className="px-2 pb-4">{children}</div>
+    <div className="px-2 pb-4 overflow-hidden flex-1">
+      <div className="w-full">{children}</div>
+    </div>
   </div>
 );
 

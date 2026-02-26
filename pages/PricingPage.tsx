@@ -2,15 +2,25 @@ import React, { useState } from 'react';
 import { Pill, CheckCircle2, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { pricingTiers, faqs } from '../data/pricing';
+import { useSubscription } from '../hooks/useSubscription';
+
+const YOUR_WHATSAPP = 'https://wa.me/919876543210';
 
 const PricingPage = () => {
     const navigate = useNavigate();
     const [hoveredTier, setHoveredTier] = useState<string | null>(null);
+    const { subscription, status, daysLeft } = useSubscription(null, true);
+    // Note: clinicName is not available on the public pricing page (no session context here)
 
-    const handleStartTrial = (tierId: string) => {
-        // In a real app, track analytics here before routing
-        console.log(`Trial started for tier: ${tierId}`);
-        navigate('/');
+    const handleSelectPlan = (planName: string, planPrice: number) => {
+        const message = encodeURIComponent(
+            `Hi! I want to upgrade to ClinicOS ${planName} Plan.\n\n` +
+            `Clinic: N/A\n` +
+            `Plan: ${planName}\n` +
+            `Price: ₹${planPrice}/month\n\n` +
+            `Please send me the UPI payment details.`
+        );
+        window.open(`${YOUR_WHATSAPP}?text=${message}`, '_blank');
     };
 
     const trackHover = (tierId: string) => {
@@ -33,7 +43,7 @@ const PricingPage = () => {
                         Log In
                     </Link>
                     <button
-                        onClick={() => handleStartTrial('professional')}
+                        onClick={() => handleSelectPlan('Professional', 2499)}
                         className="text-sm font-bold bg-indigo-600 text-white px-5 py-2 rounded-full hover:bg-indigo-700 transition-colors shadow-sm"
                     >
                         Start Free Trial
@@ -53,6 +63,31 @@ const PricingPage = () => {
                     <p className="text-lg md:text-xl text-slate-500 font-medium">
                         No hidden fees, no surprises. Choose the plan that best fits the needs of your growing practice.
                     </p>
+                </div>
+
+                {/* Current plan status banner */}
+                <div className="max-w-4xl mx-auto mb-12">
+                    <div className={`rounded-2xl p-5 flex items-center justify-between shadow-sm border ${status === 'active' ? 'bg-emerald-50 border-emerald-200' :
+                        status === 'trial' ? 'bg-blue-50 border-blue-200' :
+                            'bg-red-50 border-red-200'
+                        }`}>
+                        <div>
+                            <p className="font-bold text-slate-800 text-sm">
+                                Current Plan: <span className="capitalize">{subscription?.plan_name ?? 'Trial'}</span>
+                            </p>
+                            <p className="text-slate-500 text-xs mt-1">
+                                {status === 'trial' && `Free trial — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
+                                {status === 'active' && `Active — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until renewal`}
+                                {status === 'expired' && 'Subscription expired — choose a plan below'}
+                            </p>
+                        </div>
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize shadow-sm ${status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                            status === 'trial' ? 'bg-blue-100 text-blue-700' :
+                                'bg-red-100 text-red-700'
+                            }`}>
+                            {status === 'loading' ? 'Loading...' : status}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Pricing Cards Grid */}
@@ -91,7 +126,7 @@ const PricingPage = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => handleStartTrial(tier.id)}
+                                    onClick={() => handleSelectPlan(tier.name, tier.price)}
                                     className={`
                     w-full py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 group
                     ${tier.theme === 'light' ? 'bg-slate-100 text-slate-900 hover:bg-slate-200' : ''}
@@ -99,8 +134,9 @@ const PricingPage = () => {
                     ${tier.theme === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-100' : ''}
                   `}
                                 >
-                                    Get Started
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    {subscription?.plan_name === tier.id && status === 'active'
+                                        ? '✓ Current Plan'
+                                        : 'Get Started — Pay via UPI'}
                                 </button>
                             </div>
 
@@ -117,8 +153,8 @@ const PricingPage = () => {
                                                 <XCircle className={`w-5 h-5 shrink-0 ${tier.theme === 'dark' ? 'text-slate-700' : 'text-slate-300'}`} />
                                             )}
                                             <span className={`text-sm leading-snug ${!feature.included
-                                                    ? (tier.theme === 'dark' ? 'text-slate-600' : 'text-slate-400')
-                                                    : (tier.theme === 'dark' ? 'text-slate-300' : 'text-slate-700')
+                                                ? (tier.theme === 'dark' ? 'text-slate-600' : 'text-slate-400')
+                                                : (tier.theme === 'dark' ? 'text-slate-300' : 'text-slate-700')
                                                 }`}>
                                                 {feature.name}
                                             </span>
@@ -137,7 +173,7 @@ const PricingPage = () => {
                         <p className="text-lg text-slate-600">Join thousands of modern healthcare providers using ClinicOS.</p>
                     </div>
                     <button
-                        onClick={() => handleStartTrial('professional')}
+                        onClick={() => handleSelectPlan('Professional', 2499)}
                         className="shrink-0 px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300"
                     >
                         Start Your Free Trial

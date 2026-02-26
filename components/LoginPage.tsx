@@ -264,7 +264,7 @@ const Breathing: React.FC<{ delay?: number; range?: number; duration?: number; c
 // ─────────────────────────────────────────────────────────────────────────────
 const CharacterStage: React.FC<{ emotion: Emotion; compact?: boolean }> = ({ emotion, compact = false }) => {
     const mouse = useMousePosition();
-    const scale = compact ? 0.48 : 1;
+    const scale = compact ? 0.46 : 1;
 
     return (
         <div className="relative flex flex-col items-center w-full" style={{ transform: `scale(${scale})`, transformOrigin: 'bottom center' }}>
@@ -355,16 +355,17 @@ const FormInput: React.FC<{
     required?: boolean;
     isValid?: boolean;
 }> = ({ icon, type, placeholder, value, onChange, onFocus, onBlur, required, isValid }) => (
-    <div className={`group flex items-center gap-3.5 px-4 py-[14px] border rounded-2xl transition-all duration-200 ${isValid
+    <div className={`group flex items-center gap-3.5 px-4 py-[16px] border rounded-2xl transition-all duration-200 ${isValid
         ? 'border-emerald-300 bg-emerald-50/40 shadow-sm shadow-emerald-100'
         : 'bg-slate-50/80 border-slate-200/80 focus-within:border-indigo-400/70 focus-within:bg-white focus-within:shadow-sm focus-within:shadow-indigo-100/80'
         }`}>
-        <span className="text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-200 flex-shrink-0">{icon}</span>
+        <span className="text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-200 flex-shrink-0 w-5 h-5 flex items-center justify-center">{icon}</span>
         <input
+            style={{ fontSize: '16px' }}
             type={type} placeholder={placeholder} value={value} required={required}
             onChange={e => onChange(e.target.value)}
             onFocus={onFocus} onBlur={onBlur}
-            className="flex-1 bg-transparent outline-none text-slate-800 text-[14px] font-medium placeholder:text-slate-400/70 placeholder:font-normal"
+            className="flex-1 bg-transparent outline-none text-slate-800 font-medium placeholder:text-slate-400/70 placeholder:font-normal"
         />
         {isValid && (
             <motion.span className="text-emerald-500 text-sm font-bold flex-shrink-0"
@@ -605,7 +606,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* ═══════════════════════ RIGHT PANEL ═══════════════════════ */}
-            <div className="w-full md:w-1/2 flex flex-col items-center justify-center min-h-screen px-5 pt-12 pb-[140px] md:pb-24 relative"
+            <div className="w-full md:w-1/2 flex flex-col items-center justify-center min-h-screen px-4 md:px-5 py-6 md:py-12 relative"
                 style={{ background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)' }}>
                 <motion.div
                     className="w-full max-w-[400px]"
@@ -613,18 +614,72 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 240, damping: 28 }}
                 >
-                    {/* Mobile logo */}
-                    <div className="flex md:hidden items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                            <Pill className="text-white w-6 h-6" />
+                    {/* ── MOBILE TOP SECTION — Logo + Compact Mascots ── */}
+                    <div className="flex md:hidden flex-col items-center mb-6">
+                        {/* Logo */}
+                        <div className="flex items-center gap-2.5 mb-5 self-start">
+                            <div className="w-9 h-9 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                <Pill className="text-white w-5 h-5" />
+                            </div>
+                            <span className="font-black text-xl tracking-tight text-slate-900">ClinicOS</span>
                         </div>
-                        <span className="font-bold text-xl tracking-tight text-slate-900">ClinicOS</span>
-                    </div>
 
-                    {/* Mobile compact characters */}
-                    <div className="flex md:hidden justify-center mb-4">
-                        <div style={{ height: 90, overflow: 'visible' }}>
-                            <CharacterStage emotion={emotion} compact />
+                        {/* Mascot strip — appears ABOVE the form card */}
+                        <div
+                            className="w-full rounded-2xl overflow-hidden mb-2 relative"
+                            style={{
+                                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)',
+                                minHeight: '100px',
+                            }}
+                        >
+                            {/* Dot grain overlay */}
+                            <div
+                                className="absolute inset-0 pointer-events-none opacity-[0.04]"
+                                style={{
+                                    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+                                    backgroundSize: '18px 18px',
+                                }}
+                            />
+                            {/* Radial glow */}
+                            <div
+                                className="absolute inset-0 pointer-events-none"
+                                style={{ background: 'radial-gradient(ellipse 80% 70% at 50% 70%, rgba(99,102,241,0.25) 0%, transparent 100%)' }}
+                            />
+                            {/* Mascot characters — positioned at BOTTOM of banner so heads are visible */}
+                            <div className="relative z-10 flex justify-center items-end h-[100px] pb-0">
+                                <CharacterStage emotion={emotion} compact />
+                            </div>
+
+                            {/* Status pill overlay */}
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+                                <div
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.08)',
+                                        border: '1px solid rgba(255,255,255,0.14)',
+                                        backdropFilter: 'blur(8px)',
+                                    }}
+                                >
+                                    <span className="relative flex h-1.5 w-1.5">
+                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${emotion === 'sad' ? 'bg-red-400' :
+                                            emotion === 'success' ? 'bg-emerald-400' :
+                                                emotion === 'happy' ? 'bg-emerald-400' : 'bg-indigo-400'
+                                            }`} />
+                                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${emotion === 'sad' ? 'bg-red-400' :
+                                            emotion === 'success' ? 'bg-emerald-400' :
+                                                emotion === 'happy' ? 'bg-emerald-400' : 'bg-indigo-400'
+                                            }`} />
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-white/60 tracking-wide">
+                                        {emotion === 'idle' && 'Clinic is ready'}
+                                        {emotion === 'happy' && 'Looking good'}
+                                        {emotion === 'sad' && 'Check credentials'}
+                                        {emotion === 'password' && 'Privacy mode'}
+                                        {emotion === 'submitting' && 'Verifying...'}
+                                        {emotion === 'success' && 'Access granted'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -633,10 +688,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                         style={{ boxShadow: '0 12px 48px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.04)' }}>
                         {/* Indigo accent bar */}
                         <div className="h-[3px] w-full" style={{ background: 'linear-gradient(to right, #6366F1, #8B5CF6, #A78BFA)' }} />
-                        <div className="px-8 pt-8 pb-8">
+                        <div className="px-5 pt-6 pb-5 md:px-8 md:pt-8 md:pb-8">
 
                             {/* Heading */}
-                            <div className="mb-8">
+                            <div className="mb-5 md:mb-8">
                                 <AnimatePresence mode="wait">
                                     <motion.div key={isSignUp ? 'sup' : 'sig'}
                                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -746,19 +801,40 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
                 </motion.div>
 
-                {/* Footer */}
-                <footer className="absolute bottom-0 left-0 w-full text-center pt-[40px] pb-[30px] px-[20px] bg-white/60 backdrop-blur-md border-t border-[#e0e0e0] z-10">
-                    <div className="text-[13px] text-[#999999] mb-4 md:mb-3">
+                {/* ── COMPACT FOOTER — collapses on mobile ── */}
+                <div className="mt-4">
+                    {/* Legal consent line — always visible, compact */}
+                    <p className="text-center text-slate-400 text-[11px] leading-relaxed">
+                        By continuing you agree to our{' '}
+                        <Link
+                            to="/terms"
+                            className="text-indigo-500 font-semibold hover:underline"
+                        >
+                            Terms
+                        </Link>
+                        {' '}&{' '}
+                        <Link
+                            to="/privacy"
+                            className="text-indigo-500 font-semibold hover:underline"
+                        >
+                            Privacy
+                        </Link>
+                    </p>
+
+                    {/* Extra links — HIDDEN on mobile, shown on desktop */}
+                    <div className="hidden md:flex items-center justify-center gap-4 mt-4">
+                        <Link to="/privacy" className="text-slate-400 text-xs hover:text-slate-600 transition">Privacy Policy</Link>
+                        <span className="text-slate-200">·</span>
+                        <Link to="/terms" className="text-slate-400 text-xs hover:text-slate-600 transition">Terms of Service</Link>
+                        <span className="text-slate-200">·</span>
+                        <a href="mailto:support@clinicos.com" className="text-slate-400 text-xs hover:text-slate-600 transition">Contact Support</a>
+                    </div>
+
+                    {/* Copyright — hidden on mobile */}
+                    <p className="hidden md:block text-center text-slate-300 text-[11px] mt-3">
                         © 2026 ClinicOS. All rights reserved.
-                    </div>
-                    <div className="flex flex-col md:flex-row items-center justify-center md:gap-0">
-                        <Link to="/privacy" className="text-[#6366f1] text-[14px] font-medium hover:text-[#4f46e5] hover:underline transition-all min-h-[44px] flex items-center justify-center mx-[8px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:ring-offset-2 rounded-md px-2" aria-label="Privacy Policy">Privacy Policy</Link>
-                        <span className="text-[#999999] mx-[8px] hidden md:inline">|</span>
-                        <Link to="/terms" className="text-[#6366f1] text-[14px] font-medium hover:text-[#4f46e5] hover:underline transition-all min-h-[44px] flex items-center justify-center mx-[8px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:ring-offset-2 rounded-md px-2" aria-label="Terms of Service">Terms of Service</Link>
-                        <span className="text-[#999999] mx-[8px] hidden md:inline">|</span>
-                        <a href="mailto:support@clinicos.com" className="text-[#6366f1] text-[14px] font-medium hover:text-[#4f46e5] hover:underline transition-all min-h-[44px] flex items-center justify-center mx-[8px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:ring-offset-2 rounded-md px-2" aria-label="Contact Support">Contact Support</a>
-                    </div>
-                </footer>
+                    </p>
+                </div>
             </div>
         </div>
     );

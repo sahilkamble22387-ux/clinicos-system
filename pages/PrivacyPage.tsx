@@ -1,136 +1,139 @@
 import React from 'react';
-import { Pill, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, ShieldCheck, Lock, UserCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const PrivacyPage = () => {
-    const lastUpdated = "February 25, 2026";
+interface PrivacyPageProps {
+    onBack?: () => void;
+}
 
+const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
+    const navigate = useNavigate();
+    const handleBack = onBack ?? (() => navigate('/login'));
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
-            {/* Navigation Bar Minimal */}
-            <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
-                <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center group-hover:bg-indigo-700 transition-colors">
-                        <Pill className="text-white w-4 h-4" />
-                    </div>
-                    <span className="font-bold text-lg text-slate-900 tracking-tight">ClinicOS</span>
-                </Link>
-                <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors py-2 px-4">
-                    Back to Home
-                </Link>
-            </nav>
-
-            {/* Breadcrumbs */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-medium mb-8">
-                    <Link to="/" className="hover:text-indigo-600 transition-colors">Home</Link>
-                    <ChevronRight size={14} />
-                    <span className="text-slate-900">Privacy Policy</span>
+        <div className="min-h-screen bg-slate-50 font-sans">
+            {/* Top bar */}
+            <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-100">
+                <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
+                    <button
+                        onClick={handleBack}
+                        className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors"
+                    >
+                        <ArrowLeft size={17} />
+                        Back to Sign In
+                    </button>
                 </div>
             </div>
 
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-12 items-start">
+            <div className="max-w-3xl mx-auto py-14 px-6 space-y-12">
 
-                {/* Table of Contents - Sticky Sidebar */}
-                <aside className="w-full md:w-64 shrink-0 hidden md:block sticky top-24">
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h4 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs">Table of Contents</h4>
-                        <nav className="space-y-3 text-sm font-medium">
-                            <a href="#introduction" className="block text-slate-600 hover:text-indigo-600 transition-colors">1. Introduction</a>
-                            <a href="#information-collection" className="block text-slate-600 hover:text-indigo-600 transition-colors">2. Information Collection</a>
-                            <a href="#how-we-use" className="block text-slate-600 hover:text-indigo-600 transition-colors">3. How We Use Information</a>
-                            <a href="#data-security" className="block text-slate-600 hover:text-indigo-600 transition-colors">4. Data Security</a>
-                            <a href="#user-rights" className="block text-slate-600 hover:text-indigo-600 transition-colors">5. User Rights</a>
-                            <a href="#cookies" className="block text-slate-600 hover:text-indigo-600 transition-colors">6. Cookie Policy</a>
-                            <a href="#contact" className="block text-slate-600 hover:text-indigo-600 transition-colors">7. Contact Us</a>
-                        </nav>
+                {/* Hero */}
+                <div className="space-y-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full text-emerald-600 text-xs font-bold tracking-wide">
+                        <ShieldCheck size={13} /> PRIVACY
                     </div>
-                </aside>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                        Privacy Policy
+                    </h1>
+                    <p className="text-slate-500 text-base font-medium">
+                        Effective date: <span className="text-slate-700 font-semibold">February 2026</span> · Last updated February 21, 2026
+                    </p>
+                    <p className="text-slate-600 leading-relaxed">
+                        At ClinicOS we believe patient data belongs to the doctor, not to us. This policy explains how we handle data and why you can trust us with it.
+                    </p>
+                </div>
 
-                {/* Markdown Content Area */}
-                <article className="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-sm prose prose-slate max-w-none flex-1">
-                    <header className="mb-10 text-center md:text-left border-b border-slate-100 pb-8">
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Privacy Policy</h1>
-                        <p className="text-slate-500 font-medium tracking-wide">Last Updated: {lastUpdated}</p>
-                    </header>
+                <hr className="border-slate-200" />
 
-                    <section id="introduction" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">1. Introduction</h2>
-                        <p className="text-slate-600 leading-relaxed mb-4">
-                            Welcome to ClinicOS ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice or our practices with regard to your personal information, please contact us.
+                {/* Section 1 — Ownership */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
+                            <UserCheck size={18} className="text-indigo-500" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Data Ownership</h3>
+                    </div>
+                    <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
+                        <p>
+                            All patient records, appointments, medical notes, and clinical data entered into ClinicOS are <strong className="text-slate-800">owned exclusively by the registered doctor/clinic</strong> — not by ClinicOS, its developers, or any affiliated entity.
                         </p>
-                        <p className="text-slate-600 leading-relaxed">
-                            When you visit our website and use our services, you trust us with your personal information. We take your privacy very seriously. In this privacy notice, we seek to explain to you in the clearest way possible what information we collect, how we use it, and what rights you have in relation to it.
+                        <p>
+                            We act as a <strong className="text-slate-800">data processor</strong> on your behalf. You remain the data controller under applicable healthcare and data protection regulations. We will never claim ownership of, licence, sublicence, or commercially exploit any patient or clinical data you input.
                         </p>
-                    </section>
+                        <p>
+                            You may request deletion of all your data at any time by contacting <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">support@clinicos.app</span>. Deletion will be completed within 30 days.
+                        </p>
+                    </div>
+                </section>
 
-                    <section id="information-collection" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">2. Information We Collect</h2>
-                        <ul className="list-disc pl-5 space-y-2 text-slate-600 leading-relaxed">
-                            <li><strong>Personal Information you disclose to us:</strong> We collect names, phone numbers, email addresses, mailing addresses, passwords, and other similar information.</li>
-                            <li><strong>Patient Health Data:</strong> As a healthcare platform, we store electronic patient records, medical histories, diagnosis, and treatment plans entered by authorized practitioners. We act as a processor for this data.</li>
-                            <li><strong>Information automatically collected:</strong> We automatically collect certain information when you visit, use or navigate the platform. This information does not reveal your specific identity (like your name or contact information) but may include device and usage information, such as your IP address, browser and device characteristics, operating system, language preferences, referring URLs, device name, country, location, and information about how and when you use our services.</li>
+                {/* Section 2 — Security */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                            <Lock size={18} className="text-slate-600" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Security & Encryption</h3>
+                    </div>
+                    <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
+                        <p>
+                            All data is stored on <strong className="text-slate-800">Supabase</strong> — a SOC 2 Type II compliant, PostgreSQL-based infrastructure provider. Data is encrypted <strong className="text-slate-800">at rest (AES-256)</strong> and <strong className="text-slate-800">in transit (TLS 1.3)</strong> by default.
+                        </p>
+                        <p>
+                            Authentication is handled via Supabase Auth with JWT-based session management. Passwords are never stored in plain text. We enforce secure session expiry and token rotation.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                            {[
+                                { label: 'At-rest encryption', detail: 'AES-256' },
+                                { label: 'In-transit encryption', detail: 'TLS 1.3' },
+                                { label: 'Auth standard', detail: 'JWT + RLS' },
+                            ].map(item => (
+                                <div key={item.label} className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
+                                    <div className="text-slate-800 font-black text-base">{item.detail}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <p>
+                            Row-Level Security (RLS) policies are enforced at the database level, ensuring one clinic can never access another clinic's data — even in the event of an application-layer bug.
+                        </p>
+                    </div>
+                </section>
+
+                {/* Section 3 — Non-sharing */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center flex-shrink-0">
+                            <ShieldCheck size={18} className="text-rose-500" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">No Third-Party Data Sharing</h3>
+                    </div>
+                    <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
+                        <p>
+                            <strong className="text-slate-800">We do not sell, rent, trade, or share patient data with any third party for any commercial purpose.</strong> Patient data will never be used for advertising, machine learning model training outside your explicit consent, or analytics products sold to other parties.
+                        </p>
+                        <p>
+                            We will only disclose data to third parties in the following strictly limited circumstances:
+                        </p>
+                        <ul className="list-disc list-outside pl-5 space-y-1 text-slate-600">
+                            <li>When legally required by a court order or government authority in your jurisdiction</li>
+                            <li>With your explicit written consent</li>
+                            <li>To Supabase Inc., solely as our infrastructure sub-processor under their Data Processing Agreement</li>
                         </ul>
-                    </section>
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4">
+                            <p className="text-emerald-700 text-sm font-semibold">
+                                ✅ ClinicOS helps clinics manage operations securely — your patient data stays under your control.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-                    <section id="how-we-use" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">3. How We Use Information</h2>
-                        <p className="text-slate-600 leading-relaxed mb-4">
-                            We use personal information collected via our website for a variety of business purposes described below:
-                        </p>
-                        <ul className="list-disc pl-5 space-y-2 text-slate-600 leading-relaxed">
-                            <li>To facilitate account creation and logon process.</li>
-                            <li>To provide, operate, and maintain our services for clinics.</li>
-                            <li>To improve, personalize, and expand our services.</li>
-                            <li>To understand and analyze how you use our services.</li>
-                            <li>To develop new products, services, features, and functionality.</li>
-                            <li>To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the website, and for marketing and promotional purposes.</li>
-                            <li>To process your transactions and send you related information.</li>
-                            <li>To find and prevent fraud.</li>
-                        </ul>
-                    </section>
+                <hr className="border-slate-200" />
 
-                    <section id="data-security" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">4. Data Security</h2>
-                        <p className="text-slate-600 leading-relaxed">
-                            We have implemented appropriate technical and organizational security measures designed to protect the security of any personal information we process. All medical data is encrypted both in transit and at rest. However, despite our safeguards and efforts to secure your information, no electronic transmission over the Internet or information storage technology can be guaranteed to be 100% secure, so we cannot promise or guarantee that hackers, cybercriminals, or other unauthorized third parties will not be able to defeat our security, and improperly collect, access, steal, or modify your information.
-                        </p>
-                    </section>
-
-                    <section id="user-rights" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">5. Your Privacy Rights</h2>
-                        <p className="text-slate-600 leading-relaxed mb-4">
-                            Depending on where you are located physically, you may have the right to request access to the personal information we collect from you, change that information, or delete it in some circumstances. To request to review, update, or delete your personal information, please submit a request to our Data Protection Officer.
-                        </p>
-                    </section>
-
-                    <section id="cookies" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">6. Cookie Policy</h2>
-                        <p className="text-slate-600 leading-relaxed">
-                            We may use cookies and similar tracking technologies (like web beacons and pixels) to access or store information. Specific information about how we use such technologies and how you can refuse certain cookies is set out in our Cookie Policy. Essential cookies necessary for the secure functioning of the ClinicOS application cannot be disabled.
-                        </p>
-                    </section>
-
-                    <section id="contact" className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">7. Contact Us</h2>
-                        <p className="text-slate-600 leading-relaxed">
-                            If you have questions or comments about this notice, you may email us at <a href="mailto:privacy@clinicos.com" className="text-indigo-600 hover:text-indigo-800 font-medium">privacy@clinicos.com</a> or by post to:
-                        </p>
-                        <address className="mt-4 not-italic text-slate-600 leading-relaxed p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            ClinicOS Legal Department<br />
-                            123 HealthTech Avenue Suite 400<br />
-                            Mumbai, Maharashtra 400001<br />
-                            India
-                        </address>
-                    </section>
-
-                </article>
-            </main>
-
-            {/* Footer minimal */}
-            <footer className="mt-24 border-t border-slate-200 py-8 text-center text-slate-500">
-                <p>© 2026 ClinicOS. All rights reserved.</p>
-            </footer>
+                {/* Footer note */}
+                <p className="text-slate-400 text-sm text-center">
+                    Questions about privacy?{' '}
+                    <span className="text-indigo-500 font-semibold cursor-pointer hover:text-indigo-700 transition-colors">Contact us at support@clinicos.app</span>
+                </p>
+            </div>
         </div>
     );
 };

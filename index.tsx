@@ -5,6 +5,7 @@ import App from './App.tsx';
 import PricingPage from './pages/PricingPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import Settings from './pages/Settings';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/*" element={<App />} />
         </Routes>
       </BrowserRouter>

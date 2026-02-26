@@ -111,55 +111,88 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
+        <div className="space-y-5 md:space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4 pb-24 md:pb-8 px-4 md:px-6">
             {/* Identity Card — Gradient Header */}
             <div
-                className="rounded-3xl p-6 md:p-8 text-white shadow-2xl shadow-violet-900/20 flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #4C1D95 100%)' }}
+                className="rounded-2xl md:rounded-3xl p-4 md:p-6 relative overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #6D28D9 100%)',
+                    boxShadow: '0 8px 32px rgba(99,102,241,0.30)',
+                }}
             >
-                <div className="absolute inset-0 backdrop-blur-md bg-white/10 rounded-3xl" />
-                <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl" />
-                <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl" />
+                {/* Background decoration */}
+                <div
+                    className="absolute right-0 top-0 w-40 h-40 opacity-10 pointer-events-none"
+                    style={{
+                        background: 'radial-gradient(circle at top right, white 0%, transparent 70%)',
+                    }}
+                />
 
-                <div className="z-10 space-y-1 flex-1">
-                    <p className="text-indigo-200/80 text-sm font-semibold uppercase tracking-widest mb-1">
-                        {clinic?.name || 'ClinicOS'}
-                    </p>
-                    <h1 className="text-2xl md:text-4xl font-bold tracking-tight leading-tight">
-                        {getGreeting()}{' '}
-                        <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent font-extrabold">
-                            Dr. {doctorName}
-                        </span>
-                    </h1>
-                    <p className={`text-base font-medium mt-2 ${stats.waiting > 0 ? 'text-amber-200' : 'text-indigo-100/80'}`}>
-                        {getSubtext()}
-                    </p>
-
-                    {/* Live queue status pill */}
-                    {stats.waiting > 0 && (
-                        <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                {/* Top row: clinic name + time */}
+                <div className="flex items-start justify-between mb-3 relative z-10">
+                    <div>
+                        <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">
+                            {clinic?.name ?? 'Your Clinic'}
+                        </p>
+                        <h1 className="text-white font-black text-lg md:text-2xl leading-tight">
+                            {getGreeting()}{' '}
+                            <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent">
+                                Dr. {doctorName}
                             </span>
-                            <span className="text-xs font-bold text-white">{stats.waiting} in queue</span>
+                        </h1>
+                    </div>
+                    {/* Clock — compact on mobile */}
+                    <div className="text-right flex-shrink-0 ml-3">
+                        <p className="text-white font-black text-xl md:text-3xl leading-none tabular-nums">
+                            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="text-indigo-200 text-[10px] font-medium mt-0.5">
+                            {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Patient status pill */}
+                <div className="relative z-10">
+                    {stats.waiting > 0 ? (
+                        <div className="inline-flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1.5 mb-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-white text-xs font-bold">
+                                {stats.waiting} patient{stats.waiting !== 1 ? 's' : ''} ready for consultation
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="inline-flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 mb-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
+                            <span className="text-indigo-200 text-xs font-medium">No patients waiting</span>
                         </div>
                     )}
                 </div>
 
-                <div className="z-10 mt-4 md:mt-0 flex flex-col items-end gap-2">
-                    <div className="text-right bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20">
-                        <div className="text-3xl font-bold tabular-nums">
-                            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        <div className="text-indigo-200 font-medium text-sm">
-                            {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
-                        </div>
+                {/* Revenue — inline in banner, not separate card */}
+                <div className="flex items-center justify-between relative z-10">
+                    <div>
+                        <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                            Today's Revenue
+                        </p>
+                        <p className="text-white font-black text-xl leading-tight tabular-nums">
+                            ₹{stats.todayRevenue.toLocaleString('en-IN')}
+                        </p>
                     </div>
-                    {/* Today's revenue pill */}
-                    <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20 text-right">
-                        <p className="text-[10px] text-indigo-200 font-semibold uppercase tracking-wider">Today's Revenue</p>
-                        <p className="text-lg font-black tabular-nums">₹{stats.todayRevenue.toLocaleString('en-IN')}</p>
+                    {/* Quick action buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onNavigate('FRONT_DESK')}
+                            className="bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-bold px-3 py-2 rounded-xl transition"
+                        >
+                            + Patient
+                        </button>
+                        <button
+                            onClick={() => onNavigate('DOCTOR')}
+                            className="bg-white text-indigo-700 text-xs font-bold px-3 py-2 rounded-xl active:bg-indigo-50 transition shadow-sm"
+                        >
+                            Queue →
+                        </button>
                     </div>
                 </div>
             </div>
@@ -234,21 +267,15 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
 };
 
 const StatCard = ({ icon, label, value, trend, accent, iconBg }: any) => (
-    <div className={`
-        relative min-h-[140px] md:min-h-[160px] p-4 md:p-6 rounded-2xl flex flex-col justify-between
-        border border-slate-200 border-l-[3px] ${accent}
-        bg-white shadow-sm
-        hover:scale-[1.02] hover:shadow-md transition-all duration-200
-        overflow-hidden
-    `}>
+    <div className={`relative min-h-[120px] md:min-h-[160px] p-5 md:p-6 rounded-2xl flex flex-col justify-between border border-slate-200 border-l-[4px] ${accent} bg-white hover:scale-[1.02] transition-all duration-200 overflow-hidden`}>
         <div className="flex items-start justify-between">
-            <div className={`p-2 md:p-2.5 ${iconBg} rounded-xl`}>{icon}</div>
+            <div className={`p-2.5 md:p-3 ${iconBg} rounded-xl`}>{icon}</div>
             <span className="hidden md:inline text-[11px] font-bold px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 tracking-wide">
                 {trend}
             </span>
         </div>
-        <div>
-            <div className="text-3xl md:text-4xl font-black text-slate-900 tabular-nums leading-none mb-1.5">{value}</div>
+        <div className="mt-4">
+            <div className="text-2xl md:text-4xl font-black text-slate-900 tabular-nums leading-none mb-1.5">{value}</div>
             <div className="text-xs md:text-sm font-semibold text-slate-500 tracking-wide">{label}</div>
         </div>
     </div>

@@ -41,8 +41,8 @@ const customFetch = async (url: string | URL | Request, options: RequestInit = {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 8000);
     try {
-        options.signal = controller.signal;
-        const response = await fetch(url, options);
+        const fetchOptions = { ...options, signal: controller.signal };
+        const response = await fetch(url, fetchOptions);
         clearTimeout(id);
         return response;
     } catch (err: any) {
