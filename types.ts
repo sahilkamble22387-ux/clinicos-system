@@ -86,7 +86,7 @@ export interface Clinic {
   created_at: string;
 }
 
-export type ViewMode = 'HOME' | 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS' | 'HISTORY';
+export type ViewMode = 'HOME' | 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS' | 'HISTORY' | 'SETTINGS';
 
 // ── DB-aligned types (snake_case, matches Supabase schema exactly) ──
 

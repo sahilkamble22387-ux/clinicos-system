@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Clinic, Patient } from '../types';
 import { supabase } from '../services/db';
-import { FileText, Calendar, Search, ArrowLeft, X, Phone, MapPin, User, ChevronRight } from 'lucide-react';
+import { FileText, Calendar, Search, ArrowLeft, X, Phone, MapPin, User, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface PatientHistoryProps {
     clinic: Clinic | null;
@@ -175,87 +176,382 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
 
             {/* Patient Details Modal */}
             {selectedPatient && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
-                                    <User size={32} />
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-slate-900">{selectedPatient.full_name}</h3>
-                                    <p className="text-slate-500">{selectedPatient.gender} • {selectedPatient.phone}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setSelectedPatient(null)}
-                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 custom-scrollbar">
-                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <FileText size={16} /> Medical History
-                            </h4>
-
-                            {loadingRecords ? (
-                                <div className="flex justify-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                                </div>
-                            ) : patientRecords.length === 0 ? (
-                                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
-                                    <p className="text-slate-500">No medical records found for this patient.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {patientRecords.map((record) => (
-                                        <div key={record.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                                                    {new Date(record.created_at).toLocaleDateString()}
-                                                </div>
-                                                <div className="text-xs text-slate-400">
-                                                    {new Date(record.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="text-xs font-bold text-slate-400 uppercase">Diagnosis</span>
-                                                    <p className="text-lg font-semibold text-slate-800">{record.diagnosis}</p>
-                                                </div>
-
-                                                {record.prescription && (
-                                                    <div>
-                                                        <span className="text-xs font-bold text-slate-400 uppercase">Prescription</span>
-                                                        <p className="text-slate-600 bg-slate-50 p-3 rounded-lg mt-1 text-sm border border-slate-100 font-mono">
-                                                            {record.prescription}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {record.doctor_notes && (
-                                                    <div>
-                                                        <span className="text-xs font-bold text-slate-400 uppercase">Doctor's Notes</span>
-                                                        <p className="text-slate-600 text-sm mt-1 italic">
-                                                            "{record.doctor_notes}"
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <PatientHistoryModal patient={selectedPatient} onClose={() => setSelectedPatient(null)} />
             )}
-        </div>
+</div>
     );
 };
+
+
+// ── Types ──
+interface VisitRecord {
+  id: string
+  created_at: string
+  diagnosis: string
+  prescription: string | null
+  doctor_notes: string | null
+  fee_collected: number
+  payment_method: string
+  vitals: {
+    bp_systolic: number | null
+    bp_diastolic: number | null
+    heart_rate: number | null
+    weight_kg: number | null
+    temperature_f: number | null
+  } | null
+  medicines: {
+    id: string
+    medicine_name: string
+    strength: string | null
+    form: string | null
+    dosage: string
+    duration: string
+    instructions: string | null
+  }[]
+}
+
+async function fetchPatientHistory(patientId: string): Promise<VisitRecord[]> {
+  const { data: records, error } = await supabase
+    .from('medical_records')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false })
+
+  if (error || !records) return []
+
+  const { data: appointments } = await supabase
+    .from('appointments')
+    .select('id, patient_id, bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f, created_at')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false })
+
+  const recordIds = records.map(r => r.id)
+  let prescriptionItems: any[] = []
+  if (recordIds.length > 0) {
+    const { data: items } = await supabase
+      .from('prescription_items')
+      .select('*')
+      .in('medical_record_id', recordIds)
+      .order('sort_order', { ascending: true })
+    prescriptionItems = items ?? []
+  }
+
+  return records.map(record => {
+    const recordDate = new Date(record.created_at).toDateString()
+    const matchedAppt = appointments?.find(a =>
+      new Date(a.created_at).toDateString() === recordDate
+    )
+    const meds = prescriptionItems.filter(item => item.medical_record_id === record.id)
+
+    return {
+      id: record.id,
+      created_at: record.created_at,
+      diagnosis: record.diagnosis ?? 'Not specified',
+      prescription: record.prescription ?? null,
+      doctor_notes: record.doctor_notes ?? null,
+      fee_collected: record.fee_collected ?? 0,
+      payment_method: record.payment_method ?? 'Cash',
+      vitals: matchedAppt ? {
+        bp_systolic:  matchedAppt.bp_systolic  ?? null,
+        bp_diastolic: matchedAppt.bp_diastolic ?? null,
+        heart_rate:   matchedAppt.heart_rate   ?? null,
+        weight_kg:    matchedAppt.weight_kg    ?? null,
+        temperature_f: matchedAppt.temperature_f ?? null,
+      } : null,
+      medicines: meds.map(m => ({
+        id: m.id,
+        medicine_name: m.medicine_name,
+        strength: m.strength ?? null,
+        form: m.form ?? null,
+        dosage: m.dosage,
+        duration: m.duration,
+        instructions: m.instructions ?? null,
+      })),
+    }
+  })
+}
+
+function VisitCard({ visit }: { visit: VisitRecord }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasVitals = visit.vitals && Object.values(visit.vitals).some(v => v !== null)
+  const hasMeds = visit.medicines.length > 0
+
+  return (
+    <div className="border border-slate-200 rounded-2xl overflow-hidden mb-3 bg-white">
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full text-left px-4 py-3.5 flex items-start justify-between hover:bg-slate-50 transition"
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+              {new Date(visit.created_at).toLocaleDateString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric'
+              })}
+            </span>
+            <span className="text-xs text-slate-400">
+              {new Date(visit.created_at).toLocaleTimeString('en-IN', {
+                hour: '2-digit', minute: '2-digit'
+              })}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">DIAGNOSIS</p>
+          <p className="font-bold text-slate-900 text-sm">{visit.diagnosis}</p>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {hasMeds && (
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full border border-violet-100">
+                💊 {visit.medicines.length} medicine{visit.medicines.length !== 1 ? 's' : ''}
+              </span>
+            )}
+            {hasVitals && (
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                🩺 Vitals recorded
+              </span>
+            )}
+            {visit.fee_collected > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+                💰 Rs.{visit.fee_collected.toLocaleString('en-IN')}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className={`flex-shrink-0 ml-3 mt-1 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
+          <ChevronDown size={16} className="text-slate-400" />
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-slate-100">
+          {hasVitals && (
+            <div className="px-4 py-3 bg-blue-50/50 border-b border-slate-100">
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2.5">
+                🩺 Vitals
+              </p>
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                {[
+                  {
+                    label: 'Blood Pressure',
+                    value: (visit.vitals?.bp_systolic && visit.vitals?.bp_diastolic)
+                      ? `${visit.vitals.bp_systolic}/${visit.vitals.bp_diastolic}`
+                      : null,
+                    unit: 'mmHg',
+                    icon: '❤️',
+                    normal: visit.vitals?.bp_systolic
+                      ? visit.vitals.bp_systolic < 120 ? 'normal' : visit.vitals.bp_systolic < 140 ? 'warning' : 'high'
+                      : 'normal',
+                  },
+                  {
+                    label: 'Heart Rate',
+                    value: visit.vitals?.heart_rate?.toString() ?? null,
+                    unit: 'bpm',
+                    icon: '💓',
+                    normal: visit.vitals?.heart_rate
+                      ? visit.vitals.heart_rate >= 60 && visit.vitals.heart_rate <= 100 ? 'normal' : 'warning'
+                      : 'normal',
+                  },
+                  {
+                    label: 'Temperature',
+                    value: visit.vitals?.temperature_f?.toString() ?? null,
+                    unit: '°F',
+                    icon: '🌡️',
+                    normal: visit.vitals?.temperature_f
+                      ? visit.vitals.temperature_f < 99 ? 'normal' : visit.vitals.temperature_f < 101 ? 'warning' : 'high'
+                      : 'normal',
+                  },
+                  {
+                    label: 'Weight',
+                    value: visit.vitals?.weight_kg?.toString() ?? null,
+                    unit: 'kg',
+                    icon: '⚖️',
+                    normal: 'normal',
+                  },
+                  {
+                    label: 'SpO2',
+                    value: null,
+                    unit: '%',
+                    icon: '🫁',
+                    normal: 'normal',
+                  },
+                ].filter(v => v.value !== null).map(vital => (
+                    <div
+                      key={vital.label}
+                      className={`rounded-xl p-2.5 text-center border ${
+                        vital.normal === 'high' ? 'bg-red-50 border-red-200' :
+                        vital.normal === 'warning' ? 'bg-amber-50 border-amber-200' :
+                        'bg-white border-slate-200'
+                      }`}
+                    >
+                      <p className="text-base mb-0.5">{vital.icon}</p>
+                      <p className={`font-black text-base leading-none ${
+                        vital.normal === 'high' ? 'text-red-600' :
+                        vital.normal === 'warning' ? 'text-amber-600' :
+                        'text-slate-900'
+                      }`}>
+                        {vital.value}
+                      </p>
+                      <p className="text-slate-400 text-[9px] font-medium mt-0.5">{vital.unit}</p>
+                      <p className="text-slate-500 text-[9px] leading-tight mt-1">{vital.label}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {hasMeds && (
+            <div className="px-4 py-3 border-b border-slate-100">
+              <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest mb-2.5">
+                💊 Prescription
+              </p>
+              <div className="space-y-2">
+                {visit.medicines.map((med, i) => (
+                  <div key={med.id} className="flex items-start gap-3 p-2.5 bg-violet-50/50 rounded-xl border border-violet-100">
+                    <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-white text-[9px] font-black">{i + 1}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-slate-900 text-sm">{med.medicine_name}</span>
+                        {med.strength && (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                            {med.strength}
+                          </span>
+                        )}
+                        {med.form && (
+                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md capitalize">
+                            {med.form}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-slate-600 font-semibold">{med.dosage}</span>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-600">{med.duration}</span>
+                        {med.instructions && (
+                          <>
+                            <span className="text-xs text-slate-400">·</span>
+                            <span className="text-xs text-slate-500 italic">{med.instructions}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {visit.doctor_notes && (
+            <div className="px-4 py-3 bg-amber-50/50 border-b border-slate-100">
+              <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5">
+                📝 Doctor's Notes
+              </p>
+              <p className="text-sm text-slate-700 leading-relaxed">{visit.doctor_notes}</p>
+            </div>
+          )}
+
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">💰</span>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400 font-medium">Fee Collected</p>
+                <p className="text-sm font-black text-emerald-700">
+                  {visit.fee_collected > 0 ? `Rs.${visit.fee_collected.toLocaleString('en-IN')}` : 'No fee recorded'}
+                </p>
+              </div>
+            </div>
+            {visit.fee_collected > 0 && (
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                {visit.payment_method}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PatientHistoryModal({ patient, onClose }: { patient: any; onClose: () => void }) {
+  const [visits, setVisits] = useState<VisitRecord[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchPatientHistory(patient.id).then(data => {
+      setVisits(data)
+      setLoading(false)
+    })
+  }, [patient.id])
+
+  const totalFee = visits.reduce((s, v) => s + v.fee_collected, 0)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-xl max-h-[88vh] flex flex-col overflow-hidden shadow-2xl"
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+      >
+        <div className="flex items-start gap-3 p-5 border-b border-slate-100">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-indigo-700 font-black text-lg">
+              {patient.full_name?.charAt(0).toUpperCase() || 'U'}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-black text-slate-900 text-lg leading-tight">{patient.full_name || 'Unknown'}</h2>
+            <p className="text-slate-400 text-sm mt-0.5">
+              {patient.gender ?? 'Unknown'} · {patient.phone}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 mr-8">
+            <div className="text-center">
+              <p className="text-xl font-black text-indigo-600">{visits.length}</p>
+              <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Visits</p>
+            </div>
+            {totalFee > 0 && (
+              <div className="text-center">
+                <p className="text-sm font-black text-emerald-600">Rs.{totalFee.toLocaleString('en-IN')}</p>
+                <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Total</p>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition"
+          >
+            <X size={14} className="text-slate-600" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="animate-spin text-indigo-500 w-6 h-6" />
+            </div>
+          ) : visits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-4xl mb-3">📋</p>
+              <p className="font-bold text-slate-700">No visit history yet</p>
+              <p className="text-slate-400 text-sm mt-1">
+                Complete a consultation to see it here
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                {visits.length} Visit{visits.length !== 1 ? 's' : ''} · Tap to expand
+              </p>
+              {visits.map(visit => (
+                <VisitCard key={visit.id} visit={visit} />
+              ))}
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  )
+}
 
 export default PatientHistory;

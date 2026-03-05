@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSubscription } from '../hooks/useSubscription';
-import { Loader2, Lock, CheckCircle, Clock, AlertTriangle, WifiOff } from 'lucide-react';
+import { Lock, CheckCircle, Clock, WifiOff, X } from 'lucide-react';
 
-// ── UPDATE THESE WITH YOUR ACTUAL DETAILS ────────────────────────────────────
-const YOUR_UPI_ID = 'sahilkamble@okicici';
+// ── YOUR DETAILS ────────────────────────────────────────────────────────────
+const YOUR_UPI_ID = 'sahilkamble22387-1@oksbi';
 const YOUR_UPI_NAME = 'ClinicOS';
-const YOUR_PHONE = '+91 98765 43210';
-const YOUR_WHATSAPP_URL = 'https://wa.me/919876543210';
+const YOUR_PHONE = '+91 99999 99999';
+const YOUR_WHATSAPP_URL = 'https://wa.me/917620422387';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PLANS = [
@@ -60,14 +60,7 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
     // The previous bug rendered {children} during loading, letting users in.
     // ─────────────────────────────────────────────────────────────────────────
     if (!authResolved || isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="animate-spin text-indigo-400 w-9 h-9" />
-                    <p className="text-sm text-slate-400 font-semibold tracking-wide">Verifying subscription...</p>
-                </div>
-            </div>
-        );
+        return null;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -173,8 +166,8 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
                                             key={plan.id}
                                             onClick={() => setSelectedPlan(plan.id)}
                                             className={`relative text-left p-5 rounded-2xl border-2 transition-all duration-200 ${selectedPlan === plan.id
-                                                    ? 'border-indigo-500 bg-indigo-500/10 scale-[1.02]'
-                                                    : 'border-white/10 bg-white/5 hover:border-white/20'
+                                                ? 'border-indigo-500 bg-indigo-500/10 scale-[1.02]'
+                                                : 'border-white/10 bg-white/5 hover:border-white/20'
                                                 }`}
                                         >
                                             {plan.popular && (
@@ -321,21 +314,90 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
     // ─────────────────────────────────────────────────────────────────────────
     return (
         <>
-            {/* Trial ending banner — only when ≤ 2 days remain */}
-            {isTrialEnding && (
-                <div className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold px-4 py-2.5 flex items-center justify-between shadow-md flex-shrink-0 z-50 relative">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                        <span className="leading-snug">
-                            ⏰ Your free trial ends in <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong>. Upgrade now to keep access.
-                        </span>
-                    </div>
-                    <a href="/pricing" className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ml-4 whitespace-nowrap">
-                        View Plans →
-                    </a>
-                </div>
+            {/* Trial banner — dismissible */}
+            {status === 'trial' && daysLeft <= 5 && (
+                <TrialBanner daysLeft={daysLeft} />
             )}
             {children}
         </>
     );
+}
+
+// ── Dismissible Trial Banner ────────────────────────────────────────────────
+const BANNER_DISMISSED_KEY = 'clinicos_trial_banner_dismissed_until'
+
+function TrialBanner({ daysLeft }: { daysLeft: number }) {
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        if (daysLeft <= 0 || daysLeft > 5) { setVisible(false); return }
+
+        const dismissedUntil = localStorage.getItem(BANNER_DISMISSED_KEY)
+        if (dismissedUntil) {
+            const until = new Date(dismissedUntil)
+            if (new Date() < until) {
+                setVisible(false)
+                return
+            }
+        }
+        setVisible(true)
+    }, [daysLeft])
+
+    function handleDismiss() {
+        setVisible(false)
+        if (daysLeft <= 1) return // last day — never dismiss
+        const remindDate = new Date()
+        remindDate.setDate(remindDate.getDate() + Math.min(3, daysLeft - 1))
+        localStorage.setItem(BANNER_DISMISSED_KEY, remindDate.toISOString())
+    }
+
+    if (!visible) return null
+
+    const isUrgent = daysLeft <= 2
+
+    return (
+        <div
+            className={`relative flex items-center justify-between px-4 py-2.5 text-sm transition-all ${isUrgent ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'
+                }`}
+        >
+            <div className="flex items-center gap-2.5">
+                <span className="text-base">{isUrgent ? '⚠️' : '⏳'}</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-black">
+                        {daysLeft === 1
+                            ? 'Last day of your free trial!'
+                            : `Free trial · ${daysLeft} days left`}
+                    </span>
+                    <span className={`${isUrgent ? 'text-red-100' : 'text-indigo-200'} hidden sm:inline`}>
+                        · All features unlocked
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+                <a
+                    href="/pricing"
+                    className={`px-4 py-1.5 rounded-xl font-black text-xs transition ${isUrgent
+                            ? 'bg-white text-red-600 hover:bg-red-50'
+                            : 'bg-white text-indigo-700 hover:bg-indigo-50'
+                        }`}
+                >
+                    Choose a Plan →
+                </a>
+
+                {daysLeft > 1 && (
+                    <button
+                        onClick={handleDismiss}
+                        title={`Dismiss — we'll remind you in ${Math.min(3, daysLeft - 1)} days`}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center transition ${isUrgent
+                                ? 'bg-red-400 hover:bg-red-300 text-white'
+                                : 'bg-indigo-500 hover:bg-indigo-400 text-white'
+                            }`}
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+        </div>
+    )
 }

@@ -4,7 +4,17 @@ import { supabase } from '../services/db'
 // ─────────────────────────────────────────────────────────────────────────────
 // PLAN‑TIER FEATURE MAP
 // ─────────────────────────────────────────────────────────────────────────────
-export type PlanTier = 'trial' | 'basic' | 'pro' | 'enterprise'
+export type PlanTier =
+    | 'trial'
+    | 'essential'
+    | 'professional'
+    | 'elite'
+    // Legacy tiers kept for backwards compatibility
+    | 'basic'
+    | 'pro'
+    | 'enterprise'
+    | 'starter'
+    | 'clinic_pro'
 
 export type FeatureKey =
     | 'front_desk'
@@ -15,25 +25,37 @@ export type FeatureKey =
     | 'medical_records'
     | 'advanced_analytics'
     | 'data_export'
+    | 'whatsapp_prescription'
+    | 'analytics_dashboard'
 
-/** Maps each plan tier to the features it unlocks */
+/** Maps each plan tier to the features it unlocks (Section 4 spec) */
 export const PLAN_FEATURES: Record<PlanTier, FeatureKey[]> = {
+    // Trial unlocks ALL features — let users experience everything before buying
     trial: [
-        'front_desk', 'doctor_portal', 'analytics', 'qr_checkin',
-        'medical_records', 'download_report', 'advanced_analytics', 'data_export',
+        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
+        'qr_checkin', 'whatsapp_prescription', 'analytics', 'advanced_analytics',
+        'analytics_dashboard', 'data_export',
     ],
-    basic: [
-        'front_desk', 'doctor_portal', 'medical_records',
+    essential: [
+        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
     ],
-    pro: [
-        'front_desk', 'doctor_portal', 'analytics', 'qr_checkin',
-        'medical_records', 'download_report', 'advanced_analytics',
+    professional: [
+        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
+        'qr_checkin', 'whatsapp_prescription', 'analytics',
     ],
-    enterprise: [
-        'front_desk', 'doctor_portal', 'analytics', 'qr_checkin',
-        'medical_records', 'download_report', 'advanced_analytics', 'data_export',
+    elite: [
+        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
+        'qr_checkin', 'whatsapp_prescription', 'analytics', 'advanced_analytics',
+        'analytics_dashboard', 'data_export',
     ],
+    // ── Legacy tiers (kept for backwards compatibility) ──
+    basic: ['front_desk', 'doctor_portal', 'medical_records'],
+    pro: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics'],
+    enterprise: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics', 'data_export'],
+    starter: ['front_desk', 'doctor_portal', 'medical_records'],
+    clinic_pro: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics', 'data_export'],
 }
+
 
 /** Human-readable metadata for each feature (used by UpgradeModal / FeatureGate) */
 export const FEATURE_LABELS: Record<FeatureKey, { name: string; description: string; icon: string }> = {
@@ -45,6 +67,8 @@ export const FEATURE_LABELS: Record<FeatureKey, { name: string; description: str
     medical_records: { name: 'Medical Records', description: 'Full patient history and prescriptions', icon: '🗂️' },
     advanced_analytics: { name: 'Advanced Analytics', description: 'Diagnosis trends and forecasting', icon: '📈' },
     data_export: { name: 'Data Export', description: 'Bulk data export and integrations', icon: '💾' },
+    whatsapp_prescription: { name: 'WhatsApp Prescription', description: '1-click prescription sharing via WhatsApp', icon: '💬' },
+    analytics_dashboard: { name: 'Analytics Dashboard', description: 'Full analytics with revenue trends', icon: '📊' },
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -2,14 +2,23 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, User, Bell, Shield, HelpCircle, ExternalLink, ChevronRight, LogOut } from 'lucide-react'
 import { supabase } from '../services/db'
+import { SignatureUpload } from '../components/SignatureUpload'
 
 export default function Settings() {
     const [session, setSession] = React.useState<any>(null)
     const [loading, setLoading] = React.useState(true)
+    const [clinic, setClinic] = React.useState<any>(null)
 
     React.useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session)
+            if (session) {
+                const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', session.user.id).single()
+                if (profile?.clinic_id) {
+                    const { data: clinicData } = await supabase.from('clinics').select('*').eq('id', profile.clinic_id).single()
+                    setClinic(clinicData)
+                }
+            }
             setLoading(false)
         })
     }, [])
@@ -63,7 +72,7 @@ export default function Settings() {
                     icon: HelpCircle,
                     label: 'Help & Documentation',
                     sub: 'FAQs and guides',
-                    action: () => window.open('https://wa.me/919876543210', '_blank'),
+                    action: () => window.open('https://wa.me/917620422387', '_blank'),
                     color: 'bg-blue-100 text-blue-600',
                 },
                 {
@@ -123,8 +132,24 @@ export default function Settings() {
                 </div>
             </div>
 
-            {/* Settings sections */}
+            {clinic && (
+                <div className="px-4 mb-5">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                        E-Prescription
+                    </p>
+                    <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                        <SignatureUpload
+                            clinicId={clinic.id}
+                            currentSignature={clinic.doctor_signature_base64}
+                            onSaved={(base64) => setClinic({ ...clinic, doctor_signature_base64: base64 })}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* The rest of the padding was originally handled by px-4 space-y-5 */}
             <div className="px-4 space-y-5">
+
                 {sections.map(section => (
                     <div key={section.title}>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">

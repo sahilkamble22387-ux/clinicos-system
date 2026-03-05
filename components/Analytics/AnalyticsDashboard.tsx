@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
-import { TrendingUp, Activity, Clock, IndianRupee, Sparkles, QrCode, Smartphone } from 'lucide-react';
+import { TrendingUp, Activity, Clock, IndianRupee, Sparkles, QrCode, Smartphone, Loader2, Download } from 'lucide-react';
 import { supabase } from '../../services/db';
+import { toast } from 'react-hot-toast';
+import { downloadAnalyticsReport } from '../../services/analyticsReport';
 
 interface AnalyticsDashboardProps {
   clinicId?: string;
@@ -24,6 +26,27 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
   const [avgWaitTime, setAvgWaitTime] = useState<string>('—');
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [aiInsight, setAiInsight] = useState('');
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    if (!clinicId) return;
+    setDownloading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let docName = 'Doctor';
+      if (user) {
+        docName = user.user_metadata?.full_name || user.user_metadata?.first_name || user.email?.split('@')[0] || 'Doctor';
+      }
+      const { data } = await supabase.from('clinics').select('name').eq('id', clinicId).single();
+      await downloadAnalyticsReport(clinicId, data?.name ?? 'Clinic', docName);
+      toast.success('Report downloaded successfully!');
+    } catch (err: any) {
+      toast.error('Failed to generate report');
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     if (clinicId) fetchAnalytics();
@@ -157,9 +180,22 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 slide-in-from-bottom-4 pb-24 md:pb-8 max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6 max-w-full overflow-hidden">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
-        <p className="text-slate-500 mt-1 text-sm font-medium">Insights from the last 7 days</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Analytics</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Insights from the last 7 days</p>
+        </div>
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 active:bg-indigo-800 transition disabled:opacity-60 shadow-lg shadow-indigo-500/25"
+        >
+          {downloading ? (
+            <><Loader2 size={16} className="animate-spin" /> Generating...</>
+          ) : (
+            <><Download size={16} /> Download 7-Day Report</>
+          )}
+        </button>
       </div>
 
       {/* AI Insight */}

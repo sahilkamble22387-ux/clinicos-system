@@ -4,8 +4,8 @@ import { X, CheckCircle, Copy, Check, ExternalLink } from 'lucide-react'
 import { FEATURE_LABELS, type FeatureKey } from '../hooks/useSubscription'
 
 // ── YOUR DETAILS ──────────────────────────────────────────────────────────────
-const UPI_ID = 'sahilkamble25614@okaxis'
-const WHATSAPP_NUMBER = '919606076578' // 91 + 10-digit number, no spaces/+
+const UPI_ID = 'sahilkamble22387-1@oksbi'
+const WHATSAPP_NUMBER = '917620422387' // 91 + 10-digit number, no spaces/+
 const SUPPORT_NAME = 'Sahil'
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -175,8 +175,8 @@ export function UpgradeModal({ isOpen, onClose, lockedFeature, clinicId, clinicN
                                                 key={plan.id}
                                                 onClick={() => setSelectedPlan(plan.id)}
                                                 className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 relative ${selectedPlan === plan.id
-                                                        ? `border-violet-500/50 ring-2 ${plan.ring}`
-                                                        : 'border-white/8 hover:border-white/16'
+                                                    ? `border-violet-500/50 ring-2 ${plan.ring}`
+                                                    : 'border-white/8 hover:border-white/16'
                                                     }`}
                                                 style={{
                                                     background: selectedPlan === plan.id
@@ -305,8 +305,8 @@ export function UpgradeModal({ isOpen, onClose, lockedFeature, clinicId, clinicN
                                         <button
                                             onClick={copyUPI}
                                             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold flex-shrink-0 transition ${copied
-                                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                                 }`}
                                         >
                                             {copied ? <><Check size={12} />Copied!</> : <><Copy size={12} />Copy</>}

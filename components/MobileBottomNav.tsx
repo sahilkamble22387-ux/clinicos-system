@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Home, Users, UserRound, BarChart3, Sparkles } from 'lucide-react'
+import { Home, Users, UserRound, BarChart3, Sparkles, UserCircle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { ViewMode } from '../types'
 import { FeatureGate } from './FeatureGate'
@@ -23,6 +23,7 @@ export function MobileBottomNav({ view, onNavigate, waitingCount, clinic, authRe
         { key: 'FRONT_DESK' as ViewMode, icon: Users, label: 'Desk' },
         { key: 'DOCTOR' as ViewMode, icon: UserRound, label: 'Doctor', badge: waitingCount },
         { key: 'ANALYTICS' as ViewMode, icon: BarChart3, label: 'Analytics' },
+        { key: 'SETTINGS' as ViewMode, icon: UserCircle, label: 'Profile' },
     ]
 
     return (

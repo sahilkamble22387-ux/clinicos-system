@@ -17,13 +17,17 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
         reason: '',
     });
 
-    // Validate clinic exists
+    // Queue status state
+    const [queueAccepting, setQueueAccepting] = useState(true);
+    const [emergencyMode, setEmergencyMode] = useState(false);
+
+    // Validate clinic exists + fetch queue status
     useEffect(() => {
         const validate = async () => {
             try {
                 const { data, error } = await supabasePublic
                     .from('clinics')
-                    .select('id, name')
+                    .select('id, name, queue_accepting_patients, emergency_mode')
                     .eq('id', clinicId)
                     .single();
 
@@ -32,17 +36,39 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
                     return;
                 }
                 setClinicName(data.name || 'Clinic');
+                setQueueAccepting(data.queue_accepting_patients ?? true);
+                setEmergencyMode(data.emergency_mode ?? false);
                 setStep('form');
             } catch {
                 setStep('invalid');
             }
         };
         validate();
+
+        // Realtime subscription for queue status updates
+        const channel = supabasePublic
+            .channel(`checkin-queue-${clinicId}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'clinics',
+                filter: `id=eq.${clinicId}`,
+            }, (payload) => {
+                const n = payload.new as { queue_accepting_patients?: boolean; emergency_mode?: boolean };
+                if (typeof n.queue_accepting_patients === 'boolean') setQueueAccepting(n.queue_accepting_patients);
+                if (typeof n.emergency_mode === 'boolean') setEmergencyMode(n.emergency_mode);
+            })
+            .subscribe();
+
+        return () => { supabasePublic.removeChannel(channel); };
     }, [clinicId]);
+
+    const isBlocked = !queueAccepting || emergencyMode;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.full_name.trim() || !form.phone.trim()) return;
+        if (isBlocked) return; // Safety guard
         setLoading(true);
 
         try {
@@ -156,6 +182,47 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
         );
     }
 
+    // Queue blocked overlay
+    if (isBlocked) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center p-4 ${emergencyMode
+                    ? 'bg-gradient-to-br from-red-600 via-red-700 to-red-800'
+                    : 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
+                }`}>
+                <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{
+                        background: emergencyMode ? '#fef2f2' : '#fefce8'
+                    }}>
+                        <span className="text-5xl">{emergencyMode ? '🚨' : '⏸️'}</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                        {emergencyMode ? 'Emergency Pause' : 'Queue Paused'}
+                    </h1>
+                    <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                        {emergencyMode
+                            ? 'The doctor is attending an emergency. New check-ins are temporarily paused. This page will update automatically when the queue reopens.'
+                            : 'The doctor has paused the queue. New check-ins are not being accepted right now. Please wait — this page will update automatically when the queue reopens.'
+                        }
+                    </p>
+                    <div className={`rounded-2xl px-4 py-3 border ${emergencyMode
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-amber-50 border-amber-200'
+                        }`}>
+                        <div className="flex items-center justify-center gap-2">
+                            <div className={`w-2 h-2 rounded-full animate-pulse ${emergencyMode ? 'bg-red-500' : 'bg-amber-500'
+                                }`} />
+                            <p className={`text-xs font-bold ${emergencyMode ? 'text-red-700' : 'text-amber-700'
+                                }`}>
+                                Waiting for doctor to resume...
+                            </p>
+                        </div>
+                    </div>
+                    <p className="mt-5 text-xs text-slate-400">{clinicName}</p>
+                </div>
+            </div>
+        );
+    }
+
     // Main form
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 flex items-center justify-center p-4">
@@ -260,3 +327,4 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
 };
 
 export default CheckinPage;
+
