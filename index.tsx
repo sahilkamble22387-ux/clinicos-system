@@ -12,7 +12,7 @@ import Maintenance from './pages/Maintenance';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
-const IS_MAINTENANCE_MODE = true;
+const IS_MAINTENANCE_MODE = false;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

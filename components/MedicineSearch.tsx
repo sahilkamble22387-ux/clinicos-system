@@ -270,8 +270,8 @@ export function MedicineSearch({ clinicId, onAdd }: MedicineSearchProps) {
                             {['1-0-0', '0-0-1', '1-0-1', '1-1-1', 'SOS'].map(d => (
                                 <button key={d} onClick={() => setLine(l => ({ ...l, dosage: d }))}
                                     className={`text-xs px-2.5 py-1 rounded-full border font-semibold transition ${line.dosage === d
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                                         }`}>
                                     {d}
                                 </button>
@@ -286,8 +286,8 @@ export function MedicineSearch({ clinicId, onAdd }: MedicineSearchProps) {
                             {DURATION_PRESETS.map(d => (
                                 <button key={d} onClick={() => setLine(l => ({ ...l, duration: d }))}
                                     className={`text-xs px-2.5 py-1.5 rounded-full border font-semibold transition ${line.duration === d
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                                         }`}>
                                     {d}
                                 </button>
@@ -302,8 +302,8 @@ export function MedicineSearch({ clinicId, onAdd }: MedicineSearchProps) {
                             {['After food', 'Before food', 'With water', 'Before sleep', 'Empty stomach'].map(i => (
                                 <button key={i} onClick={() => setLine(l => ({ ...l, instructions: i }))}
                                     className={`text-xs px-2.5 py-1.5 rounded-full border font-semibold transition ${line.instructions === i
-                                            ? 'bg-slate-800 text-white border-slate-800'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                                        ? 'bg-slate-800 text-white border-slate-800'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
                                         }`}>
                                     {i}
                                 </button>
