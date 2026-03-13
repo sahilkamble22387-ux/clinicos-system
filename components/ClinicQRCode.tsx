@@ -7,8 +7,12 @@ interface ClinicQRCodeProps {
     clinicName: string;
 }
 
+// Same strategy as QRGenerator — uses env var, never window.location
+// Set VITE_SITE_URL in Vercel dashboard + your .env.local file
+const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://nirogos.in'
+
 const ClinicQRCode: React.FC<ClinicQRCodeProps> = ({ clinicId, clinicName }) => {
-    const checkinUrl = `${window.location.origin}/checkin/${clinicId}`;
+    const checkinUrl = `${BASE_URL}/checkin/${clinicId}`;
 
     return (
         <div className="flex flex-col items-center gap-5 p-6 bg-white rounded-2xl shadow-sm border border-slate-200">
@@ -35,13 +39,18 @@ const ClinicQRCode: React.FC<ClinicQRCodeProps> = ({ clinicId, clinicName }) => 
                 />
             </div>
 
+            {/* URL preview so doctor can verify */}
+            <p className="text-[10px] text-slate-400 font-mono tracking-wide break-all text-center px-2">
+                {checkinUrl}
+            </p>
+
             {/* Clinic name */}
-            <p className="text-xs text-slate-400 font-mono tracking-wide">{clinicName}</p>
+            <p className="text-xs text-slate-500 font-semibold">{clinicName}</p>
 
             {/* Print button */}
             <button
                 onClick={() => window.print()}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/20"
             >
                 <Printer size={16} />
                 Print QR Code

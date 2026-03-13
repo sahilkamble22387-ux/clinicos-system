@@ -127,7 +127,7 @@ export default function Settings() {
                     </div>
                     <div>
                         <p className="font-black text-slate-900 text-base">{fullName}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">ClinicOS Admin</p>
+                        <p className="text-slate-400 text-xs mt-0.5">NirogOS Admin</p>
                     </div>
                 </div>
             </div>
@@ -196,7 +196,7 @@ export default function Settings() {
                 </div>
 
                 <p className="text-center text-slate-300 text-xs pb-4">
-                    ClinicOS v1.0 · © 2026
+                    NirogOS v1.0 · © 2026
                 </p>
             </div>
         </div>

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ArrowRight } from 'lucide-react'
 
-export const TUTORIAL_DONE_KEY = 'clinicos_tutorial_done_v2'
+export const TUTORIAL_DONE_KEY = 'nirogos_tutorial_done_v2'
 
 interface TutorialStep {
     target: string

@@ -38,7 +38,7 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
                         Effective date: <span className="text-slate-700 font-semibold">February 2026</span> · Last updated February 21, 2026
                     </p>
                     <p className="text-slate-600 leading-relaxed">
-                        At ClinicOS we believe patient data belongs to the doctor, not to us. This policy explains how we handle data and why you can trust us with it.
+                        At NirogOS we believe patient data belongs to the doctor, not to us. This policy explains how we handle data and why you can trust us with it.
                     </p>
                 </div>
 
@@ -54,13 +54,13 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
                     </div>
                     <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
                         <p>
-                            All patient records, appointments, medical notes, and clinical data entered into ClinicOS are <strong className="text-slate-800">owned exclusively by the registered doctor/clinic</strong> — not by ClinicOS, its developers, or any affiliated entity.
+                            All patient records, appointments, medical notes, and clinical data entered into NirogOS are <strong className="text-slate-800">owned exclusively by the registered doctor/clinic</strong> — not by NirogOS, its developers, or any affiliated entity.
                         </p>
                         <p>
                             We act as a <strong className="text-slate-800">data processor</strong> on your behalf. You remain the data controller under applicable healthcare and data protection regulations. We will never claim ownership of, licence, sublicence, or commercially exploit any patient or clinical data you input.
                         </p>
                         <p>
-                            You may request deletion of all your data at any time by contacting <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">support@clinicos.app</span>. Deletion will be completed within 30 days.
+                            You may request deletion of all your data at any time by contacting <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">support@nirogos.in</span>. Deletion will be completed within 30 days.
                         </p>
                     </div>
                 </section>
@@ -120,7 +120,7 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
                         </ul>
                         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4">
                             <p className="text-emerald-700 text-sm font-semibold">
-                                ✅ ClinicOS helps clinics manage operations securely — your patient data stays under your control.
+                                ✅ NirogOS helps clinics manage operations securely — your patient data stays under your control.
                             </p>
                         </div>
                     </div>
@@ -131,7 +131,7 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack }) => {
                 {/* Footer note */}
                 <p className="text-slate-400 text-sm text-center">
                     Questions about privacy?{' '}
-                    <span className="text-indigo-500 font-semibold cursor-pointer hover:text-indigo-700 transition-colors">Contact us at support@clinicos.app</span>
+                    <span className="text-indigo-500 font-semibold cursor-pointer hover:text-indigo-700 transition-colors">Contact us at support@nirogos.in</span>
                 </p>
             </div>
         </div>

@@ -64,7 +64,7 @@ export function UpgradePendingBanner({ clinicId }: UpgradePendingBannerProps) {
                 </div>
             </div>
             <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi, I have already paid for my ClinicOS upgrade. Please check and activate my plan.')}`}
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi, I have already paid for my NirogOS upgrade. Please check and activate my plan.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl transition whitespace-nowrap flex-shrink-0"

@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 // Environment variables — all values MUST live in .env (or Vercel env vars)
 // Required:  VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 // Optional:  VITE_SITE_URL  (set to your Vercel production URL, e.g.
-//            https://clinicos-system.vercel.app — used as the emailRedirectTo
+//            https://nirogos.in — used as the emailRedirectTo
 //            for auth confirmation emails. Falls back to window.location.origin.)
 // ---------------------------------------------------------------------------
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -33,7 +33,7 @@ if (finalUrl.endsWith('/')) {
 }
 
 if (!finalUrl || !supabaseAnonKey) {
-    console.error('[ClinicOS] Supabase env vars missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+    console.error('[NirogOS] Supabase env vars missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
 }
 
 // Global 8-second fetch timeout to prevent infinite hanging

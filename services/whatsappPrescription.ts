@@ -129,7 +129,7 @@ export function sendPrescriptionTextWhatsApp(data: PrescriptionForWhatsApp): voi
         data.doctorRegistrationNo ? `   Reg. No. ${data.doctorRegistrationNo}` : null,
         '',
         `_Ref: ${data.recordId.slice(0, 8).toUpperCase()}_`,
-        `_Sent via ClinicOS · clinicos-system.vercel.app_`,
+        `_Sent via NirogOS · nirogos.in_`,
     ]
         .filter(line => line !== null)
         .join('\n')

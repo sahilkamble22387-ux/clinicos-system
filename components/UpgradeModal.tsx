@@ -82,7 +82,7 @@ export function UpgradeModal({ isOpen, onClose, lockedFeature, clinicId, clinicN
     function openWhatsApp() {
         const plan = PLANS.find(p => p.id === selectedPlan)
         const msg = encodeURIComponent(
-            `Hi ${SUPPORT_NAME}! I just paid for ClinicOS ${plan?.name} Plan.\n\n` +
+            `Hi ${SUPPORT_NAME}! I just paid for NirogOS ${plan?.name} Plan.\n\n` +
             `Clinic: ${clinicName ?? 'N/A'}\n` +
             `Clinic ID: ${clinicId ?? 'N/A'}\n` +
             `Plan: ${plan?.name} — ₹${plan?.price}/month\n\n` +

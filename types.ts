@@ -21,6 +21,9 @@ export interface Patient {
   phone: string;
   address: string;
   createdAt: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Visit {

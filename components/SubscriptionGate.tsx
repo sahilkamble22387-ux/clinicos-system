@@ -4,7 +4,7 @@ import { Lock, CheckCircle, Clock, WifiOff, X } from 'lucide-react';
 
 // ── YOUR DETAILS ────────────────────────────────────────────────────────────
 const YOUR_UPI_ID = 'sahilkamble22387-1@oksbi';
-const YOUR_UPI_NAME = 'ClinicOS';
+const YOUR_UPI_NAME = 'NirogOS';
 const YOUR_PHONE = '+91 99999 99999';
 const YOUR_WHATSAPP_URL = 'https://wa.me/917620422387';
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
                         <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
                             <Lock className="text-red-400 w-4 h-4" />
                         </div>
-                        <span className="text-white font-bold text-lg tracking-tight">ClinicOS</span>
+                        <span className="text-white font-bold text-lg tracking-tight">NirogOS</span>
                         <span className="text-xs bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded-full ml-1 tracking-wider">
                             LOCKED
                         </span>
@@ -256,7 +256,7 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
                                                 if (!utrInput) { alert('Please enter your UTR / Transaction ID.'); return; }
                                                 const plan = PLANS.find(p => p.id === selectedPlan);
                                                 const message = encodeURIComponent(
-                                                    `Hi! I've paid for ClinicOS ${plan?.name} Plan.\n\n` +
+                                                    `Hi! I've paid for NirogOS ${plan?.name} Plan.\n\n` +
                                                     `Clinic: ${clinicName ?? 'N/A'}\n` +
                                                     `Plan: ${plan?.name}\n` +
                                                     `Amount: ₹${plan?.price}\n` +
@@ -324,7 +324,7 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
 }
 
 // ── Dismissible Trial Banner ────────────────────────────────────────────────
-const BANNER_DISMISSED_KEY = 'clinicos_trial_banner_dismissed_until'
+const BANNER_DISMISSED_KEY = 'nirogos_trial_banner_dismissed_until'
 
 function TrialBanner({ daysLeft }: { daysLeft: number }) {
     const [visible, setVisible] = useState(false)

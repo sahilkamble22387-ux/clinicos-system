@@ -38,7 +38,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                         Effective date: <span className="text-slate-700 font-semibold">February 2026</span> · Last updated February 21, 2026
                     </p>
                     <p className="text-slate-600 leading-relaxed">
-                        By accessing or using ClinicOS you agree to the following terms. Please read them carefully before continuing.
+                        By accessing or using NirogOS you agree to the following terms. Please read them carefully before continuing.
                     </p>
                 </div>
 
@@ -54,13 +54,13 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                     </div>
                     <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
                         <p>
-                            ClinicOS is a <strong className="text-slate-800">practice management and operational tool</strong> — not a medical device, diagnostic system, or clinical decision support platform in the regulated sense. It does not generate medical advice, diagnoses, or treatment recommendations.
+                            NirogOS is a <strong className="text-slate-800">practice management and operational tool</strong> — not a medical device, diagnostic system, or clinical decision support platform in the regulated sense. It does not generate medical advice, diagnoses, or treatment recommendations.
                         </p>
                         <p>
-                            All clinical decisions remain the sole responsibility of the licensed healthcare professional using the platform. Patient data stored in ClinicOS is used solely for record-keeping and workflow organisation purposes.
+                            All clinical decisions remain the sole responsibility of the licensed healthcare professional using the platform. Patient data stored in NirogOS is used solely for record-keeping and workflow organisation purposes.
                         </p>
                         <p>
-                            ClinicOS expressly disclaims any liability for clinical outcomes resulting from how data recorded in the platform is interpreted or acted upon by healthcare providers.
+                            NirogOS expressly disclaims any liability for clinical outcomes resulting from how data recorded in the platform is interpreted or acted upon by healthcare providers.
                         </p>
                     </div>
                 </section>
@@ -75,17 +75,17 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                     </div>
                     <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
                         <p>
-                            ClinicOS is currently in <strong className="text-slate-800">active beta (Pilot Phase)</strong>. Features, interfaces, and data schemas may change between updates without prior notice.
+                            NirogOS is currently in <strong className="text-slate-800">active beta (Pilot Phase)</strong>. Features, interfaces, and data schemas may change between updates without prior notice.
                         </p>
                         <p>
                             During the pilot period, the platform may experience downtime, data migrations, or breaking changes. We will communicate significant updates via the email address associated with your account.
                         </p>
                         <p>
-                            By using ClinicOS during the pilot phase, you acknowledge that you are a beta participant and agree to provide feedback to help improve the platform. We are grateful for your collaboration.
+                            By using NirogOS during the pilot phase, you acknowledge that you are a beta participant and agree to provide feedback to help improve the platform. We are grateful for your collaboration.
                         </p>
                         <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4">
                             <p className="text-amber-700 text-sm font-semibold">
-                                ⚠️ We strongly recommend maintaining your own backup of critical patient records during the pilot phase, independent of ClinicOS.
+                                ⚠️ We strongly recommend maintaining your own backup of critical patient records during the pilot phase, independent of NirogOS.
                             </p>
                         </div>
                     </div>
@@ -101,10 +101,10 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                     </div>
                     <div className="pl-12 space-y-3 text-slate-600 leading-relaxed">
                         <p>
-                            You have the right to export all patient data associated with your clinic at any time. ClinicOS provides a built-in <strong className="text-slate-800">CSV export</strong> directly from the Analytics dashboard.
+                            You have the right to export all patient data associated with your clinic at any time. NirogOS provides a built-in <strong className="text-slate-800">CSV export</strong> directly from the Analytics dashboard.
                         </p>
                         <p>
-                            For full data export requests (including historical records, appointments, and medical notes), submit a request via email to <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">support@clinicos.app</span>. Exports will be delivered within <strong className="text-slate-800">48 hours</strong> in machine-readable CSV format (UTF-8 encoded).
+                            For full data export requests (including historical records, appointments, and medical notes), submit a request via email to <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">support@nirogos.in</span>. Exports will be delivered within <strong className="text-slate-800">48 hours</strong> in machine-readable CSV format (UTF-8 encoded).
                         </p>
                         <p>
                             Upon account closure, your data will be retained for 30 days to allow final exports, then permanently deleted from all Supabase-managed storage.
@@ -117,7 +117,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                 {/* Footer note */}
                 <p className="text-slate-400 text-sm text-center">
                     Questions about these terms?{' '}
-                    <span className="text-indigo-500 font-semibold cursor-pointer hover:text-indigo-700 transition-colors">Contact us at support@clinicos.app</span>
+                    <span className="text-indigo-500 font-semibold cursor-pointer hover:text-indigo-700 transition-colors">Contact us at support@nirogos.in</span>
                 </p>
             </div>
         </div>

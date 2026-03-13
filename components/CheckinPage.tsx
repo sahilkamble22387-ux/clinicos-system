@@ -319,7 +319,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
 
                 {/* Footer */}
                 <div className="px-6 pb-5 text-center">
-                    <p className="text-[11px] text-slate-400">Powered by <span className="font-bold text-indigo-500">ClinicOS</span></p>
+                    <p className="text-[11px] text-slate-400">Powered by <span className="font-bold text-indigo-500">NirogOS</span></p>
                 </div>
             </div>
         </div>

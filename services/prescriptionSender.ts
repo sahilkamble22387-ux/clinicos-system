@@ -132,7 +132,7 @@ export async function sendPrescriptionWhatsApp(
             `🗓 Date: ${new Date().toLocaleDateString('en-IN')}\n` +
             `🔬 Diagnosis: ${opts.diagnosis}\n\n` +
             `Get well soon! 💊\n` +
-            `_Sent via ClinicOS_`
+            `_Sent via NirogOS_`
         )
 
         const whatsappUrl = `https://wa.me/${phone}?text=${message}`

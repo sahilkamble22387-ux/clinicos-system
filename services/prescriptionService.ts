@@ -2,7 +2,7 @@ import { supabase } from './db'
 import { PrescriptionLine } from '../components/PrescriptionForm'
 import toast from 'react-hot-toast'
 
-const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://clinicos-system.vercel.app'
+const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'https://nirogos.in'
 
 export interface SavePrescriptionInput {
     // Auth
@@ -129,7 +129,7 @@ export function openWhatsAppWithPrescription(
         `This link contains your diagnosis, medicines, and dosage instructions.\n` +
         `You can download it as a PDF directly from the link.\n\n` +
         `Get well soon! 💊\n` +
-        `_Sent via ClinicOS_`
+        `_Sent via NirogOS_`
     )
 
     const url = `https://wa.me/${phone}?text=${msg}`

@@ -523,12 +523,12 @@ function render(doc: jsPDF, data: PrescriptionData): void {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(7.5)
     doc.setTextColor(...C.teal)
-    doc.text('ClinicOS', M + 4, 293)
+    doc.text('NirogOS', M + 4, 293)
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7.5)
     doc.setTextColor(...C.muted)
-    doc.text('Secure Digital Prescription  \xb7  clinicos-system.vercel.app', W / 2, 293, { align: 'center' })
+    doc.text('Secure Digital Prescription  \xb7  nirogos.in', W / 2, 293, { align: 'center' })
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7.5)

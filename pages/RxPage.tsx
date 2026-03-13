@@ -194,7 +194,7 @@ export default function RxPage() {
                             <span style={{ color: '#C9A84C', fontWeight: 800, fontSize: 16, fontFamily: 'Georgia,serif' }}>℞</span>
                         </div>
                         <div>
-                            <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 14 }}>ClinicOS</span>
+                            <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 14 }}>NirogOS</span>
                             <span style={{ color: '#94A3B8', fontSize: 12, marginLeft: 6 }}>· e-Prescription</span>
                         </div>
                     </div>
@@ -441,12 +441,12 @@ export default function RxPage() {
                             <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#4338CA,#7C3AED)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ color: 'white', fontSize: 11, fontWeight: 800, fontFamily: 'Georgia,serif' }}>℞</span>
                             </div>
-                            <span style={{ color: '#93C5FD', fontSize: 12, fontWeight: 700 }}>ClinicOS</span>
+                            <span style={{ color: '#93C5FD', fontSize: 12, fontWeight: 700 }}>NirogOS</span>
                             <span style={{ color: '#4F46E5', fontSize: 11 }}>⚡</span>
-                            <span style={{ color: '#1E2D50', fontSize: 10 }}>Powered by ClinicOS</span>
+                            <span style={{ color: '#1E2D50', fontSize: 10 }}>Powered by NirogOS</span>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <p style={{ color: '#4338CA', fontSize: 10 }}>clinicos-system.vercel.app</p>
+                            <p style={{ color: '#4338CA', fontSize: 10 }}>nirogos.in</p>
                             <p style={{ color: '#1A2645', fontSize: 9, marginTop: 2 }}>Digital prescription · {date}</p>
                         </div>
                     </div>
@@ -455,7 +455,7 @@ export default function RxPage() {
                 {/* Verified badge */}
                 <div className="no-print" style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 24px', background: '#F0FDF4', borderRadius: 14, border: '1px solid #BBF7D0' }}>
                     <CheckCircle size={15} style={{ color: '#22C55E' }} />
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#15803D' }}>Authentic prescription issued by {rx.clinic_name} · Verified via ClinicOS</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#15803D' }}>Authentic prescription issued by {rx.clinic_name} · Verified via NirogOS</p>
                 </div>
             </div>
         </>

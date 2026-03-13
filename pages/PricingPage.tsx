@@ -577,7 +577,7 @@ export default function PricingPage() {
                     <div>
                         <p className="font-black text-slate-900 mb-0.5">Trusted by doctors across Maharashtra</p>
                         <p className="text-sm text-slate-500 font-medium">
-                            "ClinicOS cut my prescription time from 5 minutes to 30 seconds. My patients get a professional digital prescription on WhatsApp instantly." — Dr. Rahul M., Pune
+                            "NirogOS cut my prescription time from 5 minutes to 30 seconds. My patients get a professional digital prescription on WhatsApp instantly." — Dr. Rahul M., Pune
                         </p>
                     </div>
                 </div>
@@ -645,7 +645,7 @@ export default function PricingPage() {
                     Questions? Chat with us directly on WhatsApp.
                 </p>
                 <a
-                    href="https://wa.me/917620422387?text=Hi%2C+I+have+a+question+about+ClinicOS+pricing"
+                    href="https://wa.me/917620422387?text=Hi%2C+I+have+a+question+about+NirogOS+pricing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-sm transition shadow-lg shadow-green-200"
@@ -726,7 +726,7 @@ export default function PricingPage() {
                                         const price = isYearly ? whatsappConfirmTier.yearlyPrice : whatsappConfirmTier.monthlyPrice
                                         const total = isYearly ? price * 12 : price
                                         const waText = encodeURIComponent(
-                                            `Hi, I want to start ClinicOS ${whatsappConfirmTier.name} plan (₹${price.toLocaleString('en-IN')}/month, ` +
+                                            `Hi, I want to start NirogOS ${whatsappConfirmTier.name} plan (₹${price.toLocaleString('en-IN')}/month, ` +
                                             `${isYearly ? `₹${total.toLocaleString('en-IN')}/year` : 'monthly billing'}).\n` +
                                             `Please help me get started and send the UPI QR code.`
                                         )

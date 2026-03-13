@@ -1,5 +1,5 @@
 {
-  "name": "clinicos---advanced-healthtech-system",
+  "name": "nirogos",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,6 +13,8 @@
     "@supabase/supabase-js": "^2.95.3",
     "@types/react-router-dom": "^5.3.3",
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "framer-motion": "^12.34.3",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.562.0",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.24",

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Download, Copy, Check, ExternalLink } from 'lucide-react'
 
 // CRITICAL: Uses Vercel domain, NOT localhost
-const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://clinicos-system.vercel.app'
+const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://nirogos.in'
 
 export function QRGenerator({ clinicId, clinicName }: { clinicId: string; clinicName: string }) {
     const [copied, setCopied] = useState(false)
@@ -56,7 +56,7 @@ export function QRGenerator({ clinicId, clinicName }: { clinicId: string; clinic
         ctx.fillStyle = topGrad
         ctx.fillRect(0, 0, width, 16)
 
-        // 3. Draw ClinicOS Logo mark at top center
+        // 3. Draw NirogOS Logo mark at top center
         const logoSize = 48
         const logoY = 36
         ctx.fillStyle = '#7c3aed'
@@ -109,7 +109,7 @@ export function QRGenerator({ clinicId, clinicName }: { clinicId: string; clinic
 
         // 8. Download
         const link = document.createElement('a')
-        link.download = `ClinicOS_Premium_QR_${clinicId?.slice(0, 8)}.png`
+        link.download = `NirogOS_Premium_QR_${clinicId?.slice(0, 8)}.png`
         link.href = output.toDataURL('image/png', 1.0)
         link.click()
 

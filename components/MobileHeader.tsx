@@ -46,7 +46,7 @@ export function MobileHeader({ session, clinic, onSignOut, authResolved, onNavig
                         <Pill className="text-white w-4 h-4" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-black text-sm text-slate-900 leading-none">ClinicOS</span>
+                        <span className="font-black text-sm text-slate-900 leading-none">NirogOS</span>
                         {fullName && (
                             <span className="text-[10px] text-slate-400 font-medium leading-none mt-0.5 truncate max-w-[120px]">
                                 {fullName}

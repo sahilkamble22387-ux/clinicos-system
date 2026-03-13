@@ -67,7 +67,7 @@ export default function WelcomePopup({
                         </motion.div>
 
                         <h1 className="text-2xl font-black text-white mb-2 leading-tight">
-                            Welcome to ClinicOS,<br />Dr. {firstName}!
+                            Welcome to NirogOS,<br />Dr. {firstName}!
                         </h1>
                         <p className="text-indigo-200 text-sm">
                             Your clinic is set up and ready to go.

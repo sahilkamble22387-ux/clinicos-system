@@ -3,7 +3,7 @@
 // before the user is logged in. After login/signup, the pending plan is picked
 // up and used to auto-open the UPI payment modal.
 
-const STORAGE_KEY = 'clinicos_pending_plan'
+const STORAGE_KEY = 'nirogos_pending_plan'
 
 export interface PendingPlan {
     id: string

@@ -128,11 +128,11 @@ export async function downloadAnalyticsReport(
         doc.setFillColor(...C.gold)
         doc.rect(0, 0, PW, 4, 'F')
 
-        // ClinicOS wordmark
+        // NirogOS wordmark
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(10)
         doc.setTextColor(...C.indigoLight)
-        doc.text('ClinicOS', M, 16)
+        doc.text('NirogOS', M, 16)
 
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7)
@@ -505,7 +505,7 @@ export async function downloadAnalyticsReport(
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(8)
         doc.setTextColor(...C.indigoLight)
-        doc.text('ClinicOS', M, PH - 5.5)
+        doc.text('NirogOS', M, PH - 5.5)
 
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7)
@@ -513,10 +513,10 @@ export async function downloadAnalyticsReport(
         doc.text(`Weekly Report · ${clinicName} · ${fromLabel}–${toLabel}`, PW / 2, PH - 5.5, { align: 'center' })
 
         doc.setTextColor(67, 56, 202)
-        doc.text('clinicos-system.vercel.app', PW - M, PH - 5.5, { align: 'right' })
+        doc.text('nirogos.in', PW - M, PH - 5.5, { align: 'right' })
 
         // Save
-        const filename = `ClinicOS_Report_${fromLabel.replace(/\s/g, '_')}_to_${toLabel.replace(/[\s,]/g, '_')}.pdf`
+        const filename = `NirogOS_Report_${fromLabel.replace(/\s/g, '_')}_to_${toLabel.replace(/[\s,]/g, '_')}.pdf`
         doc.save(filename)
         toast.dismiss(loadingToast)
         toast.success('Analytics report downloaded!')
