@@ -10,8 +10,6 @@ interface ClinicInfo {
     id: string
     name: string
     doctor_name: string | null
-    address: string | null
-    logo_url: string | null
 }
 
 export default function CheckIn() {
@@ -37,7 +35,7 @@ export default function CheckIn() {
 
             const { data, error } = await supabase
                 .from('clinics')
-                .select('id, name, doctor_name, address, logo_url')
+                .select('id, name, doctor_name')
                 .eq('id', clinicId)
                 .single()
 
