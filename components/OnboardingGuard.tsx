@@ -26,9 +26,9 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
             return
         }
 
-        setDbChecking(true)
+        setDbChecking(true);
 
-        supabase
+        (supabase as any)
             .from('clinics')
             .select('onboarding_completed, registration_number')
             // Support both owner_id (existing) and id=userId (fallback)

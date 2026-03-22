@@ -16,14 +16,14 @@ export function UpgradePendingBanner({ clinicId }: UpgradePendingBannerProps) {
     useEffect(() => {
         if (!clinicId) return
 
-        supabase
+        (supabase as any)
             .from('clinics')
             .select('plan_status')
             .eq('id', clinicId)
             .single()
             .then(({ data, error }) => {
-                if (!error && data && typeof data.plan_status === 'string') {
-                    setPlanStatus(data.plan_status)
+                if (!error && data && typeof (data as any).plan_status === 'string') {
+                    setPlanStatus((data as any).plan_status)
                 }
             })
 

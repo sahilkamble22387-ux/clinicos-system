@@ -33,7 +33,7 @@ export default function CheckIn() {
         async function loadClinic() {
             if (!clinicId) { setStep('invalid'); return }
 
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('clinics')
                 .select('id, name, doctor_name')
                 .eq('id', clinicId)
@@ -60,7 +60,7 @@ export default function CheckIn() {
 
         try {
             // 1. Insert patient row
-            const { data: patient, error: patientError } = await supabase
+            const { data: patient, error: patientError } = await (supabase as any)
                 .from('patients')
                 .insert({
                     full_name: form.full_name.trim(),
@@ -77,7 +77,7 @@ export default function CheckIn() {
             if (patientError) throw patientError
 
             // 2. Create appointment row
-            await supabase
+            await (supabase as any)
                 .from('appointments')
                 .insert({
                     patient_id: patient.id,
@@ -87,7 +87,7 @@ export default function CheckIn() {
                 })
 
             // 3. Get their position in queue
-            const { count } = await supabase
+            const { count } = await (supabase as any)
                 .from('patients')
                 .select('id', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId)

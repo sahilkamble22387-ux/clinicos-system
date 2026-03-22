@@ -49,17 +49,17 @@ export async function downloadAnalyticsReport(
 
         // Fetch all data in parallel
         const [patientsRes, recordsAllTimeRes, recordsWeekRes] = await Promise.all([
-            supabase.from('patients').select('id, full_name, status, source, created_at')
+            (supabase as any).from('patients').select('id, full_name, status, source, created_at')
                 .eq('clinic_id', clinicId).gte('created_at', fromISO).order('created_at', { ascending: false }),
-            supabase.from('medical_records').select('id, diagnosis, created_at')
+            (supabase as any).from('medical_records').select('id, diagnosis, created_at')
                 .eq('clinic_id', clinicId).not('diagnosis', 'is', null).neq('diagnosis', ''),
-            supabase.from('medical_records').select('id, fee_collected, payment_method, created_at')
+            (supabase as any).from('medical_records').select('id, fee_collected, payment_method, created_at')
                 .eq('clinic_id', clinicId).gte('created_at', fromISO),
         ])
 
-        const patients = patientsRes.data ?? []
-        const allRecords = recordsAllTimeRes.data ?? []
-        const weekRecords = recordsWeekRes.data ?? []
+        const patients = (patientsRes.data ?? []) as any[]
+        const allRecords = (recordsAllTimeRes.data ?? []) as any[]
+        const weekRecords = (recordsWeekRes.data ?? []) as any[]
 
         // ── Stats ──
         const totalPatients = patients.length

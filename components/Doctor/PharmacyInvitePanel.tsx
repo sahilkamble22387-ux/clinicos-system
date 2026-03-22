@@ -12,8 +12,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/db';
-import { Link2, Copy, CheckCheck, RefreshCw, ShieldCheck, Clock, Store, AlertTriangle } from 'lucide-react';
+import {
+    Link2, Copy, CheckCheck, RefreshCw, ShieldCheck, Clock, Store, AlertTriangle, Link as LinkIcon,
+    Unlink, Star, Building2,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+    DoctorPharmacyNetwork,
+    clearClinicDefaultPharmacy,
+    fetchDoctorPharmacyNetwork,
+    linkPharmacyToClinic,
+    setClinicDefaultPharmacy,
+    unlinkPharmacyFromClinic,
+} from '../../services/pharmacyService';
 
 interface Props {
     clinicId: string;
@@ -28,23 +39,21 @@ interface Invite {
     created_at: string;
 }
 
-interface LinkedPharmacy {
-    id: string;
-    name: string;
-    phone: string | null;
-    address: string | null;
-    created_at: string;
+function createInviteToken() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 24 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
 }
 
 const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => {
     const [invite, setInvite] = useState<Invite | null>(null);
-    const [linkedPharmacy, setLinkedPharmacy] = useState<LinkedPharmacy | null>(null);
+    const [network, setNetwork] = useState<DoctorPharmacyNetwork | null>(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [actingPharmacyId, setActingPharmacyId] = useState<string | null>(null);
 
     const inviteUrl = invite
-        ? `${window.location.origin}/pharmacy-signup?token=${invite.token}`
+        ? `${window.location.origin}/pharmacy/signup?token=${invite.token}`
         : null;
 
     useEffect(() => {
@@ -54,37 +63,29 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
     const loadData = async () => {
         setLoading(true);
         try {
-            // Check if a pharmacy is already linked
-            const { data: pharmacy } = await supabase
-                .from('pharmacies')
-                .select('id, name, phone, address, created_at')
-                .eq('clinic_id', clinicId)
-                .maybeSingle();
+            const [pharmacyNetwork, pendingInvite] = await Promise.all([
+                fetchDoctorPharmacyNetwork(clinicId),
+                (supabase as any)
+                    .from('pharmacy_invites')
+                    .select('id, token, status, expires_at, created_at')
+                    .eq('clinic_id', clinicId)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle(),
+            ]);
 
-            if (pharmacy) {
-                setLinkedPharmacy(pharmacy);
-                setLoading(false);
-                return;
-            }
+            setNetwork(pharmacyNetwork);
 
-            // Check for a pending invite
-            const { data: existingInvite } = await supabase
-                .from('pharmacy_invites')
-                .select('id, token, status, expires_at, created_at')
-                .eq('clinic_id', clinicId)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            if (existingInvite) {
-                // Check it's not expired locally
-                if (new Date(existingInvite.expires_at) > new Date()) {
-                    setInvite(existingInvite);
-                }
+            const existingInvite = pendingInvite.data;
+            if (existingInvite && new Date(existingInvite.expires_at) > new Date()) {
+                setInvite(existingInvite as Invite);
+            } else {
+                setInvite(null);
             }
         } catch (err) {
             console.error('PharmacyInvitePanel load error:', err);
+            toast.error('Could not load pharmacies right now.');
         } finally {
             setLoading(false);
         }
@@ -94,17 +95,20 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
         setGenerating(true);
         try {
             // Expire any old pending invites first
-            await supabase
+            await (supabase as any)
                 .from('pharmacy_invites')
                 .update({ status: 'expired' })
                 .eq('clinic_id', clinicId)
                 .eq('status', 'pending');
 
-            const { data, error } = await supabase
+            const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+            const { data, error } = await (supabase as any)
                 .from('pharmacy_invites')
                 .insert({
                     clinic_id: clinicId,
                     created_by: doctorProfileId,
+                    token: createInviteToken(),
+                    expires_at: expiresAt,
                 })
                 .select('id, token, status, expires_at, created_at')
                 .single();
@@ -135,6 +139,51 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
         return `${mins}m remaining`;
     };
 
+    const handleLink = async (pharmacyId: string) => {
+        setActingPharmacyId(pharmacyId);
+        try {
+            await linkPharmacyToClinic(clinicId, pharmacyId);
+            if (!network?.defaultPharmacyId) {
+                await setClinicDefaultPharmacy(clinicId, pharmacyId);
+            }
+            toast.success('Pharmacy linked to your clinic.');
+            await loadData();
+        } catch (err: any) {
+            toast.error('Failed to link pharmacy: ' + err.message);
+        } finally {
+            setActingPharmacyId(null);
+        }
+    };
+
+    const handleUnlink = async (pharmacyId: string) => {
+        setActingPharmacyId(pharmacyId);
+        try {
+            if (network?.defaultPharmacyId === pharmacyId) {
+                await clearClinicDefaultPharmacy(clinicId);
+            }
+            await unlinkPharmacyFromClinic(clinicId, pharmacyId);
+            toast.success('Pharmacy unlinked from this clinic.');
+            await loadData();
+        } catch (err: any) {
+            toast.error('Failed to unlink pharmacy: ' + err.message);
+        } finally {
+            setActingPharmacyId(null);
+        }
+    };
+
+    const handleSetPrimary = async (pharmacyId: string) => {
+        setActingPharmacyId(pharmacyId);
+        try {
+            await setClinicDefaultPharmacy(clinicId, pharmacyId);
+            toast.success('Primary pharmacy updated.');
+            await loadData();
+        } catch (err: any) {
+            toast.error('Failed to update primary pharmacy: ' + err.message);
+        } finally {
+            setActingPharmacyId(null);
+        }
+    };
+
     if (loading) {
         return (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 animate-pulse">
@@ -144,130 +193,216 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
         );
     }
 
-    // ── Already linked ──
-    if (linkedPharmacy) {
-        return (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-                <div className="flex items-start gap-4">
-                    <div className="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-200">
-                        <Store size={20} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-slate-900 text-sm">Linked Pharmacy</h3>
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                                <ShieldCheck size={10} />
-                                VERIFIED
-                            </span>
-                        </div>
-                        <p className="text-base font-bold text-emerald-800">{linkedPharmacy.name}</p>
-                        {linkedPharmacy.phone && (
-                            <p className="text-xs text-slate-500 mt-0.5">{linkedPharmacy.phone}</p>
-                        )}
-                        {linkedPharmacy.address && (
-                            <p className="text-xs text-slate-400 mt-0.5">{linkedPharmacy.address}</p>
-                        )}
-                        <p className="text-[11px] text-slate-400 mt-2">
-                            Prescriptions will be sent here automatically when you complete a visit.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const linkedPharmacies = network?.linkedPharmacies ?? [];
+    const directoryPharmacies = network?.directoryPharmacies ?? [];
 
     return (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-            {/* Header */}
             <div className="px-6 pt-6 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3 mb-1">
                     <div className="w-9 h-9 bg-indigo-500 rounded-xl flex items-center justify-center shadow-md shadow-indigo-200">
                         <Store size={18} className="text-white" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-900 text-sm">Local Pharmacy Link</h3>
-                        <p className="text-xs text-slate-400">Connect the ground-floor store to your clinic</p>
+                        <h3 className="font-bold text-slate-900 text-sm">Pharmacy Network</h3>
+                        <p className="text-xs text-slate-400">Link signed-in pharmacies, set a primary store, and keep invite onboarding ready</p>
                     </div>
                 </div>
             </div>
 
             <div className="p-6 space-y-4">
-                {/* Security notice */}
                 <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
                     <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-800 leading-relaxed">
                         Pharmacies are <strong>invite-only</strong>. Only share this link with your trusted pharmacist.
-                        The link expires in 48 hours and can only be used once.
+                        Signed-in pharmacies can then be linked here and marked as your primary destination.
                     </p>
                 </div>
 
-                {invite ? (
-                    <div className="space-y-3">
-                        {/* Invite link box */}
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Invite Link</p>
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs text-slate-600 font-mono truncate flex-1 min-w-0">{inviteUrl}</p>
-                                <button
-                                    onClick={copyLink}
-                                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-colors"
-                                >
-                                    {copied ? <CheckCheck size={12} /> : <Copy size={12} />}
-                                    {copied ? 'Copied!' : 'Copy'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Expiry */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                <Clock size={12} />
-                                <span>{formatExpiry(invite.expires_at)}</span>
-                            </div>
-                            <button
-                                onClick={generateInvite}
-                                disabled={generating}
-                                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={12} className={generating ? 'animate-spin' : ''} />
-                                Generate new link
-                            </button>
-                        </div>
-
-                        {/* Instructions */}
-                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-1.5">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Instructions for pharmacist</p>
-                            <ol className="space-y-1">
-                                {[
-                                    'Send this link to your pharmacist via WhatsApp',
-                                    'They open the link and create their account',
-                                    'Their dashboard is automatically linked to your clinic',
-                                    'Prescriptions will appear instantly when you complete a visit',
-                                ].map((step, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                                        <span className="flex-shrink-0 w-4 h-4 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[9px] font-black mt-0.5">
-                                            {i + 1}
-                                        </span>
-                                        {step}
-                                    </li>
-                                ))}
-                            </ol>
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Linked</p>
+                        <p className="text-2xl font-black text-emerald-800 mt-1">{linkedPharmacies.length}</p>
                     </div>
-                ) : (
-                    <button
-                        onClick={generateInvite}
-                        disabled={generating}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 active:scale-[0.98]"
-                    >
-                        {generating ? (
-                            <RefreshCw size={16} className="animate-spin" />
-                        ) : (
-                            <Link2 size={16} />
-                        )}
-                        {generating ? 'Generating...' : 'Generate Pharmacy Invite Link'}
-                    </button>
-                )}
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Primary</p>
+                        <p className="text-sm font-black text-indigo-900 mt-2 truncate">
+                            {linkedPharmacies.find((pharmacy) => pharmacy.id === network?.defaultPharmacyId)?.name ?? 'Not set'}
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Signed in</p>
+                        <p className="text-2xl font-black text-slate-900 mt-1">{directoryPharmacies.length}</p>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-900">Invite a new pharmacy</h4>
+                            <p className="text-xs text-slate-500">Use this for pharmacies that have not created an account yet.</p>
+                        </div>
+                        <button
+                            onClick={generateInvite}
+                            disabled={generating}
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-indigo-200"
+                        >
+                            {generating ? <RefreshCw size={15} className="animate-spin" /> : <Link2 size={15} />}
+                            {generating ? 'Generating...' : invite ? 'Rotate invite' : 'New invite'}
+                        </button>
+                    </div>
+
+                    {invite && (
+                        <>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Active Invite Link</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-xs text-slate-600 font-mono truncate flex-1 min-w-0">{inviteUrl}</p>
+                                    <button
+                                        onClick={copyLink}
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-colors"
+                                    >
+                                        {copied ? <CheckCheck size={12} /> : <Copy size={12} />}
+                                        {copied ? 'Copied!' : 'Copy'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs text-slate-500">
+                                <div className="flex items-center gap-1.5">
+                                    <Clock size={12} />
+                                    <span>{formatExpiry(invite.expires_at)}</span>
+                                </div>
+                                <span className="font-medium">One-time onboarding link</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-emerald-500" />
+                        <h4 className="text-sm font-bold text-slate-900">Linked pharmacies</h4>
+                    </div>
+
+                    {linkedPharmacies.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                            No pharmacy is linked yet. Invite one or link a signed-in pharmacy below.
+                        </div>
+                    ) : (
+                        linkedPharmacies.map((pharmacy) => {
+                            const isPrimary = network?.defaultPharmacyId === pharmacy.id;
+                            const isBusy = actingPharmacyId === pharmacy.id;
+                            return (
+                                <div key={pharmacy.id} className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="text-sm font-bold text-emerald-900">{pharmacy.name}</p>
+                                                {isPrimary && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                                        <Star size={10} />
+                                                        PRIMARY
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {[pharmacy.owner_name, pharmacy.phone, pharmacy.city].filter(Boolean).join(' · ') || 'Signed-in pharmacy'}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                                            {!isPrimary && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSetPrimary(pharmacy.id)}
+                                                    disabled={isBusy}
+                                                    className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-indigo-700 text-xs font-bold disabled:opacity-60"
+                                                >
+                                                    {isBusy ? 'Saving...' : 'Set primary'}
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleUnlink(pharmacy.id)}
+                                                disabled={isBusy}
+                                                className="px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 text-xs font-bold disabled:opacity-60 inline-flex items-center gap-1"
+                                            >
+                                                <Unlink size={12} />
+                                                {isBusy ? 'Updating...' : 'Unlink'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Building2 size={14} className="text-slate-500" />
+                        <h4 className="text-sm font-bold text-slate-900">Signed-in pharmacy directory</h4>
+                    </div>
+
+                    {directoryPharmacies.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                            No pharmacy accounts have signed in yet.
+                        </div>
+                    ) : (
+                        directoryPharmacies.map((pharmacy) => {
+                            const isLinkedHere = pharmacy.clinic_id === clinicId;
+                            const linkedElsewhere = Boolean(pharmacy.clinic_id && pharmacy.clinic_id !== clinicId);
+                            const isPrimary = network?.defaultPharmacyId === pharmacy.id;
+                            const isBusy = actingPharmacyId === pharmacy.id;
+                            return (
+                                <div key={pharmacy.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="text-sm font-bold text-slate-900">{pharmacy.name}</p>
+                                                {isPrimary && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                                        <Star size={10} />
+                                                        PRIMARY
+                                                    </span>
+                                                )}
+                                                {isLinkedHere && (
+                                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                                        LINKED HERE
+                                                    </span>
+                                                )}
+                                                {!isLinkedHere && !linkedElsewhere && (
+                                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                                                        READY TO LINK
+                                                    </span>
+                                                )}
+                                                {linkedElsewhere && (
+                                                    <span className="text-[10px] font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">
+                                                        OTHER CLINIC
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {[pharmacy.owner_name, pharmacy.phone, pharmacy.city].filter(Boolean).join(' · ') || 'Signed-in pharmacy'}
+                                            </p>
+                                        </div>
+                                        {!isLinkedHere && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleLink(pharmacy.id)}
+                                                disabled={isBusy || linkedElsewhere}
+                                                className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-indigo-700 text-xs font-bold disabled:opacity-50 inline-flex items-center gap-1"
+                                            >
+                                                <LinkIcon size={12} />
+                                                {isBusy ? 'Linking...' : linkedElsewhere ? 'Unavailable' : 'Link'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
             </div>
         </div>
     );

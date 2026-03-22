@@ -1,12 +1,16 @@
 /**
- * App.tsx — Fixed routing
- * ROOT CAUSE FIX: The ProtectedRoute on "/*" with redirectTo="/pharmacy-portal"
- * was sending ALL unauthenticated users (including doctors) to /pharmacy-portal.
- * DoctorApp handles its own auth — it shows <LoginPage /> when !session.
- * ProtectedRoute is now ONLY on /pharmacy-portal.
+ * App.tsx
+ *
+ * ROOT BUG FIX: The top-level <Route path="/onboarding"> was rendering
+ * OnboardingForm OUTSIDE AuthProvider. useAuth() returned null defaults,
+ * so handleSave() always hit "Session expired" and the form never completed.
+ *
+ * Fix: /onboarding route removed from top-level App entirely.
+ * It lives ONLY inside DoctorApp's nested Routes, where AuthProvider is active.
  */
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
 import { AppLoader } from './components/AppLoader';
 import { ViewMode, Clinic } from './types';
 import FrontDesk from './components/FrontDesk/FrontDesk';
@@ -17,13 +21,18 @@ import DashboardHome from './components/DashboardHome';
 import PatientHistory from './components/PatientHistory';
 import CheckinPage from './components/CheckinPage';
 import QRModal from './components/QRModal';
-import { Users, UserRound, BarChart3, Home, QrCode, DollarSign, Settings as SettingsIcon, Pill } from 'lucide-react';
+import {
+  Users, UserRound, BarChart3, Home,
+  QrCode, DollarSign, Settings as SettingsIcon, Pill,
+} from 'lucide-react';
 import { supabase } from './services/db';
 import { Toaster } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { SubscriptionGate } from './components/SubscriptionGate';
 import { FeatureGate } from './components/FeatureGate';
 import { AuthProvider } from './context/AuthContext';
+import { LogoProvider } from './src/context/LogoContext';
+import { Logo } from './src/components/Logo';
 import { OnboardingGuard } from './components/OnboardingGuard';
 import OnboardingForm from './pages/OnboardingForm';
 import EditProfile from './pages/EditProfile';
@@ -32,7 +41,15 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import PatientDetailPage from './components/FrontDesk/PatientDetailPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import PharmacyPortal from './pages/PharmacyPortal';
+import PharmacySignup from './src/pages/pharmacy/PharmacySignup';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import SupportPage from './pages/SupportPage';
+import RefundPolicyPage from './pages/RefundPolicyPage';
+import RxPage from './pages/RxPage';
+import { syncAndFetchPharmacyProfile } from './services/pharmacyService';
 
+// ── Rebrand localStorage migration ───────────────────────────────
 const legacyStorageKeys: [string, string][] = [
   ['clinicos_welcome_popup_done', 'nirogos_welcome_popup_done'],
   ['clinicos_tutorial_done_v2', 'nirogos_tutorial_done_v2'],
@@ -50,7 +67,9 @@ function normalizeClinic(data: any, fallbackName: string): Clinic {
   return {
     ...data,
     name: data.name === 'My Clinic' ? fallbackName : data.name,
-    qualifications: Array.isArray(data.qualifications) ? data.qualifications.join(', ') : data.qualifications,
+    qualifications: Array.isArray(data.qualifications)
+      ? data.qualifications.join(', ')
+      : data.qualifications,
   };
 }
 
@@ -58,12 +77,18 @@ const Toast = ({ message, onClose }: { message: string; onClose: () => void }) =
   <div className="fixed top-4 right-4 bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 z-50 max-w-sm border border-slate-700">
     <div className="bg-amber-500/10 p-2 rounded-lg">
       <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     </div>
-    <div className="flex-1"><h4 className="font-bold text-sm">Notice</h4><p className="text-xs text-slate-300 mt-0.5">{message}</p></div>
-    <button onClick={onClose} className="text-slate-400 hover:text-white">
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    <div className="flex-1">
+      <h4 className="font-bold text-sm">Notice</h4>
+      <p className="text-xs text-slate-300 mt-0.5">{message}</p>
+    </div>
+    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
     </button>
   </div>
 );
@@ -75,31 +100,54 @@ const CheckinRoute: React.FC = () => {
 
 // ── App shell — pure routing, zero hooks ──────────────────────────
 const App: React.FC = () => (
-  <Routes>
-    <Route path="/checkin/:clinicId" element={<CheckinRoute />} />
-    <Route path="/onboarding" element={<OnboardingForm />} />
-    {/* Pharmacy portal — role-gated, redirects to unified login on failure */}
-    <Route
-      path="/pharmacy-portal"
-      element={
-        <ProtectedRoute allowedRoles={['pharmacy_staff']} redirectTo="/login">
-          <PharmacyPortal />
-        </ProtectedRoute>
-      }
-    />
-    {/*
-      ALL other routes → DoctorApp.
-      NO ProtectedRoute here — DoctorApp renders <LoginPage> when !session.
-      This was the root cause: the old ProtectedRoute redirectTo="/pharmacy-portal"
-      sent every unauthenticated visitor (including doctors) to the pharmacy portal.
-    */}
-    <Route path="/*" element={<DoctorApp />} />
-  </Routes>
+  <LogoProvider>
+    <Routes>
+      {/* Public kiosk — no auth needed */}
+      <Route path="/checkin/:clinicId" element={<CheckinRoute />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/pharmacy-login" element={<Navigate to="/login?portal=pharmacy" replace />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/support" element={<SupportPage />} />
+      <Route path="/refund-policy" element={<RefundPolicyPage />} />
+      <Route path="/rx/:prescriptionId" element={<RxPage />} />
+
+      {/* Pharmacy portal — role-gated */}
+      <Route
+        path="/pharmacy-portal"
+        element={
+          <ProtectedRoute allowedRoles={['pharmacy_staff']} redirectTo="/login?portal=pharmacy">
+            <PharmacyPortal />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Pharmacy signup */}
+      <Route path="/pharmacy/signup" element={<PharmacySignup />} />
+      <Route path="/pharmacy-signup" element={<PharmacySignup />} />
+
+      {/*
+        ALL other routes (including /onboarding) → DoctorApp.
+
+        CRITICAL: /onboarding is NOT listed here at the top level.
+        It is handled by DoctorApp's nested Routes (see below),
+        which means it renders INSIDE AuthProvider where useAuth()
+        returns the real session/clinicId.
+
+        The old top-level <Route path="/onboarding"> was the root
+        cause of the "stuck on onboarding" bug: OnboardingForm rendered
+        outside AuthProvider, useAuth() returned null defaults, and
+        handleSave() always bailed with "Session expired".
+      */}
+      <Route path="/*" element={<DoctorApp />} />
+    </Routes>
+  </LogoProvider>
 );
 
 // ── Doctor App ────────────────────────────────────────────────────
 const DoctorApp: React.FC = () => {
   const navigate = useNavigate();
+
   const [view, setView] = useState<ViewMode>('HOME');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
@@ -124,8 +172,17 @@ const DoctorApp: React.FC = () => {
       const derivedName = lastName ? `${firstName} ${lastName}` : firstName;
       const personalClinicName = `Dr. ${firstName}'s Clinic`;
 
-      const { data: profile } = await supabase
-        .from('profiles').select('clinic_id, role').eq('id', userId).single();
+      const metaRole = meta?.role;
+      const profile = metaRole === 'pharmacy_staff'
+        ? await syncAndFetchPharmacyProfile(userId)
+        : await (async () => {
+          const { data } = await (supabase as any)
+            .from('profiles')
+            .select('clinic_id, role')
+            .eq('id', userId)
+            .maybeSingle();
+          return data;
+        })();
 
       if (profile?.role === 'pharmacy_staff') {
         navigate('/pharmacy-portal', { replace: true });
@@ -133,28 +190,38 @@ const DoctorApp: React.FC = () => {
       }
 
       if (profile?.clinic_id) {
-        const { data: clinicData } = await supabase
+        const { data: clinicData } = await (supabase as any)
           .from('clinics').select('*').eq('id', profile.clinic_id).single();
         if (clinicData) {
           const resolved = normalizeClinic(clinicData, personalClinicName);
-          if (clinicData.name === 'My Clinic') await supabase.from('clinics').update({ name: personalClinicName }).eq('id', clinicData.id);
-          setClinic(resolved); setLoading(false); return;
+          if (clinicData.name === 'My Clinic') {
+            await (supabase as any).from('clinics').update({ name: personalClinicName }).eq('id', clinicData.id);
+          }
+          setClinic(resolved);
+          setLoading(false);
+          return;
         }
       }
 
-      const { data: ownedClinic } = await supabase
+      const { data: ownedClinic } = await (supabase as any)
         .from('clinics').select('*').eq('owner_id', userId).single();
 
       if (ownedClinic) {
         const resolved = normalizeClinic(ownedClinic, personalClinicName);
-        if (ownedClinic.name === 'My Clinic') await supabase.from('clinics').update({ name: personalClinicName }).eq('id', ownedClinic.id);
+        if (ownedClinic.name === 'My Clinic') {
+          await (supabase as any).from('clinics').update({ name: personalClinicName }).eq('id', ownedClinic.id);
+        }
         setClinic(resolved);
       } else {
-        const { data: newClinic, error: createError } = await supabase
-          .from('clinics').insert([{ id: userId, name: personalClinicName, owner_id: userId }]).select().single();
+        const { data: newClinic, error: createError } = await (supabase as any)
+          .from('clinics')
+          .insert([{ id: userId, name: personalClinicName, owner_id: userId }])
+          .select().single();
         if (!createError && newClinic) {
           setClinic(newClinic);
-          await supabase.from('profiles').insert([{ id: userId, clinic_id: newClinic.id, role: 'doctor', full_name: derivedName }]);
+          await (supabase as any).from('profiles').insert([
+            { id: userId, clinic_id: (newClinic as any).id, role: 'doctor', full_name: derivedName },
+          ]);
         }
       }
     } catch (err) {
@@ -168,7 +235,7 @@ const DoctorApp: React.FC = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession) fetchClinic(newSession.user.id);
+      if (newSession) { fetchClinic(newSession.user.id); }
       else { setClinic(null); setLoading(false); }
     });
     return () => subscription.unsubscribe();
@@ -177,7 +244,8 @@ const DoctorApp: React.FC = () => {
   useEffect(() => {
     if (!clinic?.id) return;
     const fetchWaiting = async () => {
-      const { count } = await supabase.from('patients').select('*', { count: 'exact', head: true })
+      const { count } = await supabase
+        .from('patients').select('*', { count: 'exact', head: true })
         .eq('clinic_id', clinic.id).eq('status', 'waiting');
       setWaitingCount(count ?? 0);
     };
@@ -189,8 +257,13 @@ const DoctorApp: React.FC = () => {
     return () => { supabase.removeChannel(channel); };
   }, [clinic?.id]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); setClinic(null); setSession(null); };
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setClinic(null);
+    setSession(null);
+  };
 
+  // Auth loading / no session — handle before Routes render
   if (loading) return <AppLoader message="Starting NirogOS..." />;
   if (!session) return <LoginPage onNavigate={(v: any) => setView(v)} />;
 
@@ -209,22 +282,50 @@ const DoctorApp: React.FC = () => {
   })();
 
   return (
-    <AuthProvider user={session.user} session={session} profile={clinic} clinicId={clinic?.id} loading={loading} clinicProfile={clinic} refreshClinicProfile={() => fetchClinic(session.user.id)}>
+    // AuthProvider wraps everything below — useAuth() works correctly for
+    // both OnboardingForm and all main app components.
+    <AuthProvider
+      user={session.user}
+      session={session}
+      profile={clinic}
+      clinicId={clinic?.id ?? null}
+      loading={loading}
+      clinicProfile={clinic}
+      refreshClinicProfile={() => fetchClinic(session.user.id)}
+    >
       <Routes>
+        {/*
+          /onboarding lives HERE — inside AuthProvider.
+          useAuth() in OnboardingForm now returns the real user + clinicId.
+          handleSave() can write to the DB and refreshClinicProfile() works.
+        */}
         <Route path="/onboarding" element={<OnboardingForm />} />
+
         <Route path="/*" element={
           <OnboardingGuard>
             <SubscriptionGate clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading} onSignOut={handleLogout}>
               <div className="h-screen flex overflow-hidden bg-slate-50">
                 <Toaster position="top-right" toastOptions={{ style: { borderRadius: '12px', fontSize: '13px', fontWeight: 500 }, success: { iconTheme: { primary: '#6366f1', secondary: '#fff' } } }} />
                 {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
-                <nav className="hidden md:flex w-[260px] flex-shrink-0 text-white flex-col border-r border-slate-800 h-full" style={{ background: 'linear-gradient(to bottom, #0f172a, #1e1b4b)' }}>
-                  <button onClick={() => { setView('HOME'); setSelectedPatient(null); }} className="p-6 flex items-center gap-3 border-b border-slate-800/60 w-full text-left hover:bg-white/5 transition-colors group">
-                    <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:bg-indigo-400 transition-all">
-                      <Pill size={20} className="text-white" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight text-slate-100">NirogOS</span>
+
+                {/* Desktop sidebar */}
+                <nav className="hidden md:flex w-[260px] flex-shrink-0 text-white flex-col border-r border-slate-800 h-full"
+                  style={{ background: 'linear-gradient(to bottom, #0f172a, #1e1b4b)' }}>
+                  <button
+                    onClick={() => {
+                      setView('HOME');
+                      setSelectedPatient(null);
+                    }}
+                    className="p-6 flex items-center gap-3 border-b border-slate-800/60 w-full text-left hover:bg-white/5 transition-colors group"
+                  >
+                    <Logo
+                      variant="full"
+                      usage="sidebarExpanded"
+                      theme="light"
+                      className="drop-shadow-lg"
+                    />
                   </button>
+
                   <div className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <div className="px-4 py-2 mb-4">
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Current Clinic</p>
@@ -233,17 +334,29 @@ const DoctorApp: React.FC = () => {
                     <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Main Menu</p>
                     {navItems.map(item => {
                       const btn = (
-                        <button key={item.key} onClick={() => { setView(item.key); setSelectedPatient(null); }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${view === item.key ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'}`}>
-                          {view === item.key && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-r-full" />}
-                          {item.icon}<span className="font-medium text-sm">{item.label}</span>
-                          {item.badge && item.badge > 0 ? <span className="ml-auto bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">{item.badge}</span> : null}
+                        <button key={item.key}
+                          onClick={() => { setView(item.key); setSelectedPatient(null); }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${view === item.key
+                              ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20'
+                              : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                            }`}>
+                          {view === item.key && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-r-full" />
+                          )}
+                          {item.icon}
+                          <span className="font-medium text-sm">{item.label}</span>
+                          {item.badge && item.badge > 0
+                            ? <span className="ml-auto bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">{item.badge}</span>
+                            : null}
                         </button>
                       );
-                      if (item.key === 'ANALYTICS') return <FeatureGate key={item.key} feature="analytics" clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading}>{btn}</FeatureGate>;
+                      if (item.key === 'ANALYTICS') {
+                        return <FeatureGate key={item.key} feature="analytics" clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading}>{btn}</FeatureGate>;
+                      }
                       return btn;
                     })}
                   </div>
+
                   <div className="p-4 border-t border-slate-800/60">
                     <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold shadow-md shadow-indigo-500/30 flex-shrink-0">
@@ -252,17 +365,24 @@ const DoctorApp: React.FC = () => {
                       <div className="flex flex-col min-w-0 flex-1">
                         <span className="text-sm font-bold text-slate-100 truncate leading-tight">Dr.&nbsp;{doctorDisplayName}</span>
                         <span className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">{clinic?.name ?? session.user.email}</span>
-                        <button onClick={handleLogout} className="text-[10px] text-slate-600 hover:text-rose-400 text-left transition-colors mt-1 font-medium">Sign Out</button>
+                        <button onClick={handleLogout} className="text-[10px] text-slate-600 hover:text-rose-400 text-left transition-colors mt-1 font-medium">
+                          Sign Out
+                        </button>
                       </div>
                     </div>
                   </div>
                 </nav>
 
+                {/* Main content */}
                 <main className="flex-1 h-full flex flex-col overflow-hidden bg-slate-50">
                   <div className="hidden md:flex flex-shrink-0 items-center justify-between px-8 py-3 border-b border-slate-200 bg-white shadow-sm">
                     <div className="text-sm font-bold text-slate-900">
-                      {view === 'HOME' && 'Dashboard'}{view === 'FRONT_DESK' && (selectedPatient ? selectedPatient.full_name || selectedPatient.name : 'Front Desk')}
-                      {view === 'DOCTOR' && 'Doctor Portal'}{view === 'ANALYTICS' && 'Analytics'}{view === 'HISTORY' && 'Patient History'}{view === 'SETTINGS' && 'Edit Profile'}
+                      {view === 'HOME' && 'Dashboard'}
+                      {view === 'FRONT_DESK' && (selectedPatient ? selectedPatient.full_name || selectedPatient.name : 'Front Desk')}
+                      {view === 'DOCTOR' && 'Doctor Portal'}
+                      {view === 'ANALYTICS' && 'Analytics'}
+                      {view === 'HISTORY' && 'Patient History'}
+                      {view === 'SETTINGS' && 'Edit Profile'}
                     </div>
                     <div className="flex items-center gap-3">
                       <Link to="/pricing" className="flex items-center gap-2 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-full transition-colors font-semibold">
@@ -284,7 +404,10 @@ const DoctorApp: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <MobileHeader session={session} clinic={clinic} onSignOut={handleLogout} authResolved={!loading} onNavigate={(v) => { setView(v); setSelectedPatient(null); }} />
+
+                  <MobileHeader session={session} clinic={clinic} onSignOut={handleLogout} authResolved={!loading}
+                    onNavigate={v => { setView(v); setSelectedPatient(null); }} />
+
                   <div className="flex-1 overflow-y-auto w-full">
                     {view === 'DOCTOR' ? (
                       <DoctorDashboard clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} />
@@ -292,18 +415,24 @@ const DoctorApp: React.FC = () => {
                       <EditProfile />
                     ) : (
                       <div className="w-full">
-                        {view === 'HOME' && <DashboardHome clinic={clinic} onNavigate={(v) => { setView(v); setSelectedPatient(null); }} session={session} />}
-                        {view === 'FRONT_DESK' && !selectedPatient && <FrontDesk clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} clinicName={clinic?.name ?? ''} onPatientClick={(p) => setSelectedPatient(p)} />}
+                        {view === 'HOME' && <DashboardHome clinic={clinic} onNavigate={v => { setView(v); setSelectedPatient(null); }} session={session} />}
+                        {view === 'FRONT_DESK' && !selectedPatient && <FrontDesk clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} clinicName={clinic?.name ?? ''} onPatientClick={p => setSelectedPatient(p)} />}
                         {view === 'FRONT_DESK' && selectedPatient && <PatientDetailPage patient={selectedPatient} onBack={() => setSelectedPatient(null)} />}
                         {view === 'ANALYTICS' && <AnalyticsDashboard clinicId={clinic?.id} />}
-                        {view === 'HISTORY' && <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8"><PatientHistory clinic={clinic} onBack={() => setView('HOME')} /></div>}
+                        {view === 'HISTORY' && (
+                          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+                            <PatientHistory clinic={clinic} onBack={() => setView('HOME')} />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 </main>
 
-                <MobileBottomNav view={view} onNavigate={(v) => { setView(v); setSelectedPatient(null); }} waitingCount={waitingCount} clinic={clinic} authResolved={!loading} />
-                <QRModal isOpen={isQRModalOpen} onClose={() => setIsQRModalOpen(false)} clinicId={clinic?.id ?? ''} clinicName={clinic?.name ?? 'My Clinic'} />
+                <MobileBottomNav view={view} onNavigate={v => { setView(v); setSelectedPatient(null); }}
+                  waitingCount={waitingCount} clinic={clinic} authResolved={!loading} />
+                <QRModal isOpen={isQRModalOpen} onClose={() => setIsQRModalOpen(false)}
+                  clinicId={clinic?.id ?? ''} clinicName={clinic?.name ?? 'My Clinic'} />
               </div>
             </SubscriptionGate>
           </OnboardingGuard>

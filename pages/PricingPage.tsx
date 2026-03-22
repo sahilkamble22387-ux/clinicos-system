@@ -142,7 +142,7 @@ function UpgradeModal({
 
         try {
             // Step 1: Database Update — set plan_status = 'pending'
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('clinics')
                 .update({ plan_status: 'pending' })
                 .eq('id', clinicId)
@@ -319,7 +319,7 @@ export default function PricingPage() {
     // Fetch plan_status from clinics table
     useEffect(() => {
         if (!clinicId) return
-        supabase
+        (supabase as any)
             .from('clinics')
             .select('plan_status')
             .eq('id', clinicId)

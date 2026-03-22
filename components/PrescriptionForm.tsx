@@ -124,7 +124,7 @@ function MedicineSearchInput({
             setLoading(true)
 
             // 1. Try Supabase clinic history first
-            const { data: dbResults } = await supabase
+            const { data: dbResults } = await (supabase as any)
                 .from('medicines')
                 .select('id, name, generic_name, strength, form, usage_count, is_custom')
                 .ilike('name', `%${query}%`)
@@ -168,7 +168,7 @@ function MedicineSearchInput({
 
         const t = toast.loading(`Adding "${query}" to medicines...`)
 
-        const { data: newMed, error } = await supabase
+        const { data: newMed, error } = await (supabase as any)
             .from('medicines')
             .insert({
                 name: name,
@@ -185,7 +185,7 @@ function MedicineSearchInput({
         toast.dismiss(t)
 
         if (error) {
-            const { data: existing } = await supabase
+            const { data: existing } = await (supabase as any)
                 .from('medicines')
                 .select('*')
                 .ilike('name', name)

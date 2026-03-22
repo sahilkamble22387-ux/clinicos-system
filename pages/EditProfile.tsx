@@ -158,13 +158,14 @@ export default function EditProfile() {
         async function load() {
             if (!clinicId) return
             setLoading(true)
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('clinics').select('*').eq('id', clinicId).single()
             if (!error && data) {
-                if (Array.isArray(data.qualifications)) {
-                    data.qualifications = data.qualifications.join(', ')
+                const d = data as any
+                if (Array.isArray(d.qualifications)) {
+                    d.qualifications = d.qualifications.join(', ')
                 }
-                setProfile(data)
+                setProfile(d)
             } else {
                 toast.error('Failed to load profile data')
             }
@@ -297,7 +298,7 @@ export default function EditProfile() {
             updated_at: new Date().toISOString(),
         }
 
-        const { error } = await supabase.from('clinics').update(payload).eq('id', clinicId)
+        const { error } = await (supabase as any).from('clinics').update(payload).eq('id', clinicId)
 
         if (error) {
             toast.error('Save failed: ' + error.message)

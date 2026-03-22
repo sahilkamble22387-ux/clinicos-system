@@ -3,7 +3,7 @@ import {
   Clock, User, ClipboardList, History, FileText, Send,
   Sparkles, Eye, Banknote, Activity, Heart, Thermometer,
   Stethoscope, Save, X, MessageCircle, Download, Loader2,
-  ShieldAlert, AlertTriangle, Info,
+  ShieldAlert, AlertTriangle, Info, Store,
 } from 'lucide-react';
 import { downloadPrescriptionAndPrompt, PrescriptionForWhatsApp } from '../../services/whatsappPrescription';
 import { PrescriptionForm, PrescriptionLine } from '../PrescriptionForm';
@@ -13,6 +13,7 @@ import { supabase } from '../../services/db';
 import { Visit, Patient, VisitStatus, Document, MedicalRecord } from '../../types';
 import { summarizePatientHistory, generateClinicalSuggestions } from '../../services/geminiService';
 import { analyzeVitals, VitalsRiskResult, RiskLevel, VitalFlag } from '../../services/vitalRiskEngine';
+import { DoctorPharmacyNetwork, PharmacyDirectoryItem, fetchDoctorPharmacyNetwork } from '../../services/pharmacyService';
 import QueueItem from './QueueItem';
 import { toast } from 'react-hot-toast';
 import { EmergencyQueueControls } from '../EmergencyQueueControls';
@@ -22,29 +23,6 @@ import WelcomePopup from '../WelcomePopup';
 interface DoctorDashboardProps {
   clinicId: string;
 }
-
-// ── PHARMACY HELPER (NEW) ─────────────────────────────────────────
-// Silently pushes a saved prescription to the linked pharmacy.
-// Non-fatal — if no pharmacy is linked, it does nothing.
-async function pushToPharmacy(clinicId: string, prescriptionId: string) {
-  try {
-    const { data: pharmacy } = await supabase
-      .from('pharmacies')
-      .select('id')
-      .eq('clinic_id', clinicId)
-      .maybeSingle();
-
-    if (!pharmacy) return; // No pharmacy linked — skip silently
-
-    await supabase
-      .from('prescriptions')
-      .update({ pharmacy_id: pharmacy.id, pharmacy_status: 'sent_to_pharmacy' })
-      .eq('id', prescriptionId);
-  } catch (err) {
-    console.warn('[Pharmacy push] non-fatal error:', err);
-  }
-}
-// ─────────────────────────────────────────────────────────────────
 
 const VitalInput: React.FC<{
   label: string; unit: string; value: string;
@@ -88,6 +66,8 @@ const LEVEL_LABELS: Record<RiskLevel, string> = {
   warning: '⚠️ Vitals Warning',
   info: 'ℹ️ Vitals Note',
 };
+
+type PharmacyRoutingMode = 'default' | 'manual' | 'none';
 
 const VitalsRiskBanner: React.FC<{ result: VitalsRiskResult }> = ({ result }) => {
   const { flags, highestLevel, combinedAlert } = result;
@@ -158,11 +138,15 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [sending, setSending] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [sendingWA, setSendingWA] = useState(false);
+  const [pharmacyNetwork, setPharmacyNetwork] = useState<DoctorPharmacyNetwork | null>(null);
+  const [loadingPharmacies, setLoadingPharmacies] = useState(true);
+  const [pharmacyRoutingMode, setPharmacyRoutingMode] = useState<PharmacyRoutingMode>('default');
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState('');
 
   const vitalsRisk: VitalsRiskResult = analyzeVitals(vitalsForm);
 
   const fetchQueue = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('appointments').select('*, patients(*)')
       .eq('clinic_id', clinicId).eq('status', 'waiting').order('created_at', { ascending: true });
     if (error) { console.error('Error fetching queue:', error); return; }
@@ -176,25 +160,144 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
 
   useEffect(() => {
     fetchQueue();
-    const subscription = supabase.channel('doctor-queue-all')
+    const subscription = (supabase as any).channel('doctor-queue-all')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, fetchQueue)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, fetchQueue)
       .subscribe();
-    return () => { supabase.removeChannel(subscription); };
+    return () => { (supabase as any).removeChannel(subscription); };
   }, [clinicId]);
 
+  const refreshPharmacyNetwork = async () => {
+    setLoadingPharmacies(true);
+    try {
+      const network = await fetchDoctorPharmacyNetwork(clinicId);
+      setPharmacyNetwork(network);
+      setSelectedPharmacyId((current) => {
+        const selectedStillExists = network.directoryPharmacies.some((pharmacy) => pharmacy.id === current);
+        if (selectedStillExists) return current;
+        return network.defaultPharmacyId ?? network.directoryPharmacies[0]?.id ?? '';
+      });
+      setPharmacyRoutingMode((current) => {
+        if (current === 'none') return current;
+        if (current === 'manual' && network.directoryPharmacies.length > 0) return current;
+        return network.defaultPharmacyId ? 'default' : network.directoryPharmacies.length > 0 ? 'manual' : 'none';
+      });
+    } catch (error) {
+      console.error('Error loading pharmacy network:', error);
+      toast.error('Could not load pharmacy directory.');
+    } finally {
+      setLoadingPharmacies(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshPharmacyNetwork();
+  }, [clinicId]);
+
+  const directoryPharmacies = pharmacyNetwork?.directoryPharmacies ?? [];
+  const linkedPharmacies = pharmacyNetwork?.linkedPharmacies ?? [];
+  const defaultPharmacy = linkedPharmacies.find((pharmacy) => pharmacy.id === pharmacyNetwork?.defaultPharmacyId) ?? null;
+  const selectedPharmacy = directoryPharmacies.find((pharmacy) => pharmacy.id === selectedPharmacyId) ?? null;
+  const resolvedPharmacyId =
+    pharmacyRoutingMode === 'none'
+      ? null
+      : pharmacyRoutingMode === 'manual'
+        ? selectedPharmacyId || null
+        : pharmacyNetwork?.defaultPharmacyId ?? null;
+  const resolvedPharmacy = directoryPharmacies.find((pharmacy) => pharmacy.id === resolvedPharmacyId) ?? null;
+
+  const getDoctorQualification = () => {
+    const qualifications = clinicProfile?.qualifications;
+    if (!qualifications) return null;
+    return Array.isArray(qualifications) ? qualifications.join(', ') : qualifications;
+  };
+
+  const getVitalsPayload = () => (
+    vitalsForm.bp_systolic || vitalsForm.heart_rate || vitalsForm.temperature_f || vitalsForm.weight_kg
+      ? {
+        bp_systolic: vitalsForm.bp_systolic ? Number(vitalsForm.bp_systolic) : null,
+        bp_diastolic: vitalsForm.bp_diastolic ? Number(vitalsForm.bp_diastolic) : null,
+        heart_rate: vitalsForm.heart_rate ? Number(vitalsForm.heart_rate) : null,
+        weight_kg: vitalsForm.weight_kg ? Number(vitalsForm.weight_kg) : null,
+        temperature_f: vitalsForm.temperature_f ? Number(vitalsForm.temperature_f) : null,
+      }
+      : null
+  );
+
+  const createMedicalRecord = async (patient: Patient) => {
+    const { data: newRecord, error: recordError } = await (supabase as any)
+      .from('medical_records')
+      .insert([{
+        patient_id: patient.id,
+        diagnosis,
+        prescription: JSON.stringify(prescription),
+        doctor_notes: notes,
+        clinic_id: clinicId,
+        fee_collected: consultationFee,
+        payment_method: paymentMethod,
+      }])
+      .select()
+      .single();
+
+    if (recordError) throw recordError;
+    if (!newRecord) throw new Error('Could not create medical record');
+
+    if (prescription.length > 0) {
+      const { error: itemsError } = await (supabase as any).from('prescription_items').insert(
+        prescription.map((med, index) => ({
+          medical_record_id: newRecord.id,
+          clinic_id: clinicId,
+          medicine_name: med.medicine_name,
+          dosage: `${med.timing[0]}-${med.timing[1]}-${med.timing[2]}`,
+          duration: `${med.duration_value} ${med.duration_unit}`,
+          sort_order: index,
+        }))
+      );
+
+      if (itemsError) throw itemsError;
+    }
+
+    return newRecord;
+  };
+
+  const finalizeConsultation = async (visitId: string, patientId: string) => {
+    await Promise.all([
+      (supabase as any).from('appointments').update({ status: 'completed' }).eq('id', visitId),
+      (supabase as any).from('patients').update({
+        status: 'completed',
+        consultation_fee: consultationFee,
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      }).eq('id', patientId),
+    ]);
+  };
+
+  const resetConsultationWorkspace = () => {
+    setActiveVisit(null);
+    setActivePatient(null);
+    setVitalsLoaded(false);
+    setDiagnosis('');
+    setPrescription([]);
+    setNotes('');
+  };
+
+  const getRoutingSuccessMessage = (prefix: string) => {
+    if (resolvedPharmacy) return `${prefix} ${resolvedPharmacy.name}.`;
+    return 'Prescription saved for patient only.';
+  };
+
   const startConsultation = async (visit: Visit) => {
-    const { data: pData } = await supabase.from('patients').select('*').eq('id', visit.patientId).single();
+    const { data: pData } = await (supabase as any).from('patients').select('*').eq('id', visit.patientId).single();
     if (pData) {
       const patient: Patient = {
         id: pData.id, name: pData.full_name, gender: pData.gender as any,
         dob: pData.dob, phone: pData.phone, address: pData.address, createdAt: pData.created_at,
       };
-      const { data: records } = await supabase.from('medical_records').select('*')
+      const { data: records } = await (supabase as any).from('medical_records').select('*')
         .eq('patient_id', patient.id).order('created_at', { ascending: false });
       setActiveVisit(visit); setActivePatient(patient); setHistory(records || []);
       setAiSummary(null); setDiagnosis(''); setPrescription([]); setNotes(''); setConsultationFee(0);
-      const { data: apptData } = await supabase
+      const { data: apptData } = await (supabase as any)
         .from('appointments').select('bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f').eq('id', visit.id).single();
       setVitalsForm({
         bp_systolic: apptData?.bp_systolic?.toString() || '', bp_diastolic: apptData?.bp_diastolic?.toString() || '',
@@ -209,7 +312,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     if (!activeVisit) return;
     setSavingVitals(true);
     try {
-      await supabase.from('appointments').update({
+      await (supabase as any).from('appointments').update({
         bp_systolic: vitalsForm.bp_systolic ? Number(vitalsForm.bp_systolic) : null,
         bp_diastolic: vitalsForm.bp_diastolic ? Number(vitalsForm.bp_diastolic) : null,
         heart_rate: vitalsForm.heart_rate ? Number(vitalsForm.heart_rate) : null,
@@ -226,40 +329,45 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     if (prescription.length === 0) { toast.error('Add at least one medicine first'); return; }
     if (!diagnosis.trim()) { toast.error('Please enter a diagnosis first'); return; }
 
+    const snapshotPatient = activePatient;
+    const snapshotVisit = activeVisit;
+
     setSending(true);
     try {
-      const { data: newRecord, error: recordError } = await supabase
-        .from('medical_records')
-        .insert([{
-          patient_id: activePatient.id, diagnosis,
-          prescription: JSON.stringify(prescription), doctor_notes: notes,
-          clinic_id: clinicId, fee_collected: consultationFee, payment_method: paymentMethod,
-        }]).select().single();
-      if (recordError) throw recordError;
-      if (!newRecord) throw new Error('Could not create medical record');
+      const doctorName = clinicProfile?.doctor_name ?? profile?.full_name ?? 'Doctor';
+      const medicalRecord = await createMedicalRecord(snapshotPatient);
+      const result = await savePrescriptionAndGetLink({
+        clinicId,
+        patientId: snapshotPatient.id,
+        patientName: snapshotPatient.name,
+        patientPhone: snapshotPatient.phone,
+        patientAge: snapshotPatient.dob ? (new Date().getFullYear() - new Date(snapshotPatient.dob).getFullYear()).toString() : null,
+        patientGender: snapshotPatient.gender,
+        clinicName: clinicProfile?.clinic_name_override ?? (clinicProfile as any)?.name ?? 'Clinic',
+        doctorName,
+        doctorQualification: getDoctorQualification(),
+        doctorRegistrationNo: clinicProfile?.registration_number ?? null,
+        clinicAddress: clinicProfile?.clinic_address ?? null,
+        clinicPhone: clinicProfile?.phone_number ?? null,
+        doctorSignatureBase64: clinicProfile?.signature_base64 ?? null,
+        medicalRecordId: medicalRecord.id,
+        targetPharmacyId: resolvedPharmacyId,
+        diagnosis,
+        doctorNotes: notes,
+        feeCollected: consultationFee,
+        paymentMethod,
+        medicines: prescription,
+        vitals: getVitalsPayload(),
+      });
 
-      if (prescription.length > 0) {
-        await supabase.from('prescription_items').insert(
-          prescription.map((med, i) => ({
-            medical_record_id: newRecord.id, clinic_id: clinicId,
-            medicine_name: med.medicine_name,
-            dosage: `${med.timing[0]}-${med.timing[1]}-${med.timing[2]}`,
-            duration: `${med.duration_value} ${med.duration_unit}`, sort_order: i,
-          }))
-        );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save prescription');
       }
 
-      await supabase.from('appointments').update({ status: 'completed' }).eq('id', activeVisit.id);
-      await supabase.from('patients').update({
-        status: 'completed', consultation_fee: consultationFee,
-        is_active: false, updated_at: new Date().toISOString(),
-      }).eq('id', activePatient.id);
+      await finalizeConsultation(snapshotVisit.id, snapshotPatient.id);
 
-      // ── PHARMACY PUSH (NEW) ──────────────────────────────────────
-      await pushToPharmacy(clinicId, newRecord.id);
-
-      toast.success(`✅ Saved & sent to pharmacy! Fee: ₹${consultationFee}`);
-      setActiveVisit(null); setActivePatient(null); setVitalsLoaded(false);
+      toast.success(`Saved successfully. ${getRoutingSuccessMessage('Prescription routed to')}`);
+      resetConsultationWorkspace();
       fetchQueue();
     } catch (err: any) {
       console.error('Error completing visit:', err);
@@ -333,6 +441,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     setSendingWA(true);
     try {
       const doctorName = clinicProfile?.doctor_name ?? profile?.full_name ?? 'Doctor';
+      const medicalRecord = await createMedicalRecord(snapshotPatient);
 
       const result = await savePrescriptionAndGetLink({
         clinicId, patientId: snapshotPatient.id,
@@ -341,42 +450,26 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         patientGender: snapshotPatient.gender,
         clinicName: clinicProfile?.clinic_name_override ?? (clinicProfile as any)?.name ?? 'Clinic',
         doctorName,
-        doctorQualification: clinicProfile?.qualifications ?? null,
+        doctorQualification: getDoctorQualification(),
         doctorRegistrationNo: clinicProfile?.registration_number ?? null,
         clinicAddress: clinicProfile?.clinic_address ?? null,
         clinicPhone: clinicProfile?.phone_number ?? null,
         doctorSignatureBase64: clinicProfile?.signature_base64 ?? null,
+        medicalRecordId: medicalRecord.id,
+        targetPharmacyId: resolvedPharmacyId,
         diagnosis, doctorNotes: notes, feeCollected: consultationFee, paymentMethod,
         medicines: prescription,
-        vitals: (vitalsForm.bp_systolic || vitalsForm.heart_rate || vitalsForm.temperature_f || vitalsForm.weight_kg) ? {
-          bp_systolic: vitalsForm.bp_systolic ? Number(vitalsForm.bp_systolic) : null,
-          bp_diastolic: vitalsForm.bp_diastolic ? Number(vitalsForm.bp_diastolic) : null,
-          heart_rate: vitalsForm.heart_rate ? Number(vitalsForm.heart_rate) : null,
-          weight_kg: vitalsForm.weight_kg ? Number(vitalsForm.weight_kg) : null,
-          temperature_f: vitalsForm.temperature_f ? Number(vitalsForm.temperature_f) : null,
-        } : null,
+        vitals: getVitalsPayload(),
       });
 
       if (!result.success || !result.publicUrl) {
         throw new Error(result.error || 'Failed to generate prescription link');
       }
 
-      await Promise.all([
-        supabase.from('appointments').update({ status: 'completed' }).eq('id', snapshotVisit.id),
-        supabase.from('patients').update({
-          status: 'completed', consultation_fee: consultationFee,
-          is_active: false, updated_at: new Date().toISOString(),
-        }).eq('id', snapshotPatient.id),
-      ]);
+      await finalizeConsultation(snapshotVisit.id, snapshotPatient.id);
 
-      // ── PHARMACY PUSH (NEW) ──────────────────────────────────────
-      if (result.prescriptionId) {
-        await pushToPharmacy(clinicId, result.prescriptionId);
-      }
-
-      toast.success('✅ Prescription sent via WhatsApp & pharmacy notified!');
-      setActiveVisit(null); setActivePatient(null); setVitalsLoaded(false);
-      setDiagnosis(''); setPrescription([]); setNotes('');
+      toast.success(`WhatsApp sent. ${getRoutingSuccessMessage('Prescription routed to')}`);
+      resetConsultationWorkspace();
       fetchQueue();
 
       openWhatsAppWithPrescription(
@@ -547,11 +640,139 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     </div>
                   </div>
 
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <Store size={15} className="text-amber-500" />
+                          Pharmacy Routing
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Auto-send to your linked pharmacy, pick another signed-in pharmacy, or keep this digital only.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={refreshPharmacyNetwork}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-900"
+                      >
+                        Refresh
+                      </button>
+                    </div>
+
+                    {loadingPharmacies ? (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Loader2 size={13} className="animate-spin" />
+                        Loading pharmacy directory...
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPharmacyRoutingMode(defaultPharmacy ? 'default' : (directoryPharmacies.length > 0 ? 'manual' : 'none'))}
+                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'default'
+                              ? 'border-indigo-300 bg-indigo-50'
+                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                              } ${!defaultPharmacy ? 'opacity-60' : ''}`}
+                            disabled={!defaultPharmacy && directoryPharmacies.length === 0}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-xs font-black uppercase tracking-wider text-slate-400">Primary</p>
+                                <p className="text-sm font-bold text-slate-900">
+                                  {defaultPharmacy ? defaultPharmacy.name : 'No primary pharmacy linked'}
+                                </p>
+                              </div>
+                              {defaultPharmacy && (
+                                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                                  Auto route
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPharmacyRoutingMode('manual')}
+                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'manual'
+                              ? 'border-amber-300 bg-amber-50'
+                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                              } ${directoryPharmacies.length === 0 ? 'opacity-60' : ''}`}
+                            disabled={directoryPharmacies.length === 0}
+                          >
+                            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Manual</p>
+                            <p className="text-sm font-bold text-slate-900">
+                              {selectedPharmacy ? `Send this visit to ${selectedPharmacy.name}` : 'Choose from signed-in pharmacies'}
+                            </p>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPharmacyRoutingMode('none')}
+                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'none'
+                              ? 'border-slate-300 bg-slate-100'
+                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                              }`}
+                          >
+                            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Patient only</p>
+                            <p className="text-sm font-bold text-slate-900">Keep this as a digital prescription without pharmacy routing</p>
+                          </button>
+                        </div>
+
+                        {pharmacyRoutingMode === 'manual' && directoryPharmacies.length > 0 && (
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                              Send To Pharmacy
+                            </label>
+                            <select
+                              value={selectedPharmacyId}
+                              onChange={(e) => setSelectedPharmacyId(e.target.value)}
+                              className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 font-medium"
+                            >
+                              {directoryPharmacies.map((pharmacy) => {
+                                const suffix = pharmacy.clinic_id === clinicId
+                                  ? 'Linked to this clinic'
+                                  : pharmacy.clinic_id
+                                    ? 'Linked to another clinic'
+                                    : 'Signed in, not linked yet';
+                                return (
+                                  <option key={pharmacy.id} value={pharmacy.id}>
+                                    {pharmacy.name} · {suffix}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                            {selectedPharmacy && (
+                              <p className="text-xs text-slate-500 mt-2">
+                                {selectedPharmacy.phone || selectedPharmacy.city || 'Signed-in pharmacy account'}.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-2 text-[11px]">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold">
+                            {linkedPharmacies.length} linked
+                          </span>
+                          <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold">
+                            {directoryPharmacies.length} signed-in pharmacies
+                          </span>
+                          {resolvedPharmacy && (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-bold">
+                              This visit routes to {resolvedPharmacy.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="space-y-2.5 pb-4" data-tour="send-prescription">
                     <button onClick={completeVisit} disabled={sending}
                       className="w-full bg-slate-900 hover:bg-black text-white py-4 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 transition">
-                      {sending ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Save size={16} /> Save & Notify Pharmacy · ₹{consultationFee}</>}
+                      {sending ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Save size={16} /> {resolvedPharmacy ? 'Save & Route Prescription' : 'Save Consultation'} · ₹{consultationFee}</>}
                     </button>
                     <div className="grid grid-cols-2 gap-2.5">
                       <button onClick={handleDownloadPDF} disabled={generatingPDF}
@@ -564,7 +785,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                       </button>
                     </div>
                     <p className="text-center text-slate-400 text-[10px] font-semibold tracking-wider uppercase">
-                      Save → pharmacy notified instantly &nbsp;·&nbsp; WhatsApp → sends link to patient
+                      Save → clinical record locked in &nbsp;·&nbsp; WhatsApp → patient gets the live prescription link
                     </p>
                   </div>
                 </div>

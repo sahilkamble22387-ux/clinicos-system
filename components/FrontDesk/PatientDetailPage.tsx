@@ -81,14 +81,14 @@ function statusConfig(status: string) {
 // ─── Fetch full visit history ─────────────────────────────────────────────────
 async function fetchVisits(patientId: string): Promise<VisitRecord[]> {
     const [{ data: records }, { data: appts }] = await Promise.all([
-    supabase.from('medical_records').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
-    supabase.from('appointments').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
+    (supabase as any).from('medical_records').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
+    (supabase as any).from('appointments').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
     ]);
     if (!records) return [];
     const recordIds = records.map(r => r.id);
     let items: any[] = [];
     if (recordIds.length > 0) {
-    const { data } = await supabase.from('prescription_items').select('*').in('medical_record_id',
+    const { data } = await (supabase as any).from('prescription_items').select('*').in('medical_record_id',
     recordIds).order('sort_order', { ascending: true });
     items = data ?? [];
     }
@@ -336,7 +336,7 @@ async function fetchVisits(patientId: string): Promise<VisitRecord[]> {
                             setVisits(data);
 
                             // Find last recorded vitals from any appointment
-                            const { data: appts } = await supabase
+                            const { data: appts } = await (supabase as any)
                             .from('appointments')
                             .select('*')
                             .eq('patient_id', patient.id)

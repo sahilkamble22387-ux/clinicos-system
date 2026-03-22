@@ -884,7 +884,7 @@ export default function OnboardingForm() {
                 updated_at: new Date().toISOString(),
             }
 
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('clinics')
                 .update(payload)
                 .eq('id', clinicId)
@@ -898,7 +898,7 @@ export default function OnboardingForm() {
 
             setCompleted(true)
             toast.success('Profile saved! Welcome to NirogOS 🎉')
-            setTimeout(() => navigate('/dashboard', { replace: true }), 1800)
+            setTimeout(() => navigate('/', { replace: true }), 1800)
 
         } catch (err: any) {
             console.error('[Onboarding]', err)

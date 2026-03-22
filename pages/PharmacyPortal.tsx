@@ -14,11 +14,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/db';
+import { syncAndFetchPharmacyProfile } from '../services/pharmacyService';
 import {
     Pill, Package, CheckCircle, LogOut, Bell, BellOff,
     Clock, User, ChevronRight, Store, Loader2,
     AlertTriangle, Stethoscope, Hash, RefreshCw,
 } from 'lucide-react';
+import { Logo } from '../src/components/Logo';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -75,7 +77,7 @@ const COLUMNS: {
 }[] = [
         { id: 'sent_to_pharmacy', label: 'Incoming', icon: <Bell size={13} />, accent: 'text-amber-600', pill: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
         { id: 'packing', label: 'Packing', icon: <Package size={13} />, accent: 'text-sky-600', pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-400' },
-        { id: 'ready', label: 'Ready', icon: <CheckCircle size={13} />, accent: 'text-emerald-600', pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+        { id: 'ready', label: 'Ready', icon: <CheckCircle size={13} />, accent: 'text-violet-600', pill: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
         { id: 'dispensed', label: 'Dispensed', icon: <Stethoscope size={13} />, accent: 'text-slate-400', pill: 'bg-slate-100 text-slate-500', dot: 'bg-slate-300' },
     ];
 
@@ -103,15 +105,9 @@ const PharmacyPortal: React.FC = () => {
             try {
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 if (sessionError) throw sessionError;
-                if (!session) { window.location.href = '/pharmacy-login'; return; }
+                if (!session) { window.location.href = '/login?portal=pharmacy'; return; }
 
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('role, pharmacy_id, clinic_id')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (profileError) throw profileError;
+                const profileData = await syncAndFetchPharmacyProfile(session.user.id);
 
                 if (!profileData || profileData.role !== 'pharmacy_staff') {
                     setInitError("You don't have pharmacy access. Please use the correct login.");
@@ -122,17 +118,28 @@ const PharmacyPortal: React.FC = () => {
                     setLoading(false); return;
                 }
 
-                const [pharmacyRes, clinicRes] = await Promise.all([
-                    supabase.from('pharmacies').select('name').eq('id', profileData.pharmacy_id).single(),
-                    supabase.from('clinics').select('name').eq('id', profileData.clinic_id).single(),
-                ]);
+                const pharmacyPromise = (supabase as any)
+                    .from('pharmacies')
+                    .select('name')
+                    .eq('id', profileData.pharmacy_id)
+                    .single();
+
+                const clinicPromise = profileData.clinic_id
+                    ? (supabase as any)
+                        .from('clinics')
+                        .select('name')
+                        .eq('id', profileData.clinic_id)
+                        .single()
+                    : Promise.resolve({ data: null });
+
+                const [pharmacyRes, clinicRes] = await Promise.all([pharmacyPromise, clinicPromise]);
 
                 if (cancelled) return;
 
                 setProfile({
                     pharmacy_id: profileData.pharmacy_id,
                     pharmacy_name: pharmacyRes.data?.name ?? 'My Pharmacy',
-                    clinic_name: clinicRes.data?.name ?? 'Linked Clinic',
+                    clinic_name: clinicRes.data?.name ?? 'Clinic link pending',
                 });
 
                 await loadPrescriptions(profileData.pharmacy_id);
@@ -201,7 +208,7 @@ const PharmacyPortal: React.FC = () => {
         setUpdatingIds(prev => new Set([...prev, rx.id]));
         setPrescriptions(prev => prev.map(r => r.id === rx.id ? { ...r, pharmacy_status: next } : r));
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('prescriptions').update({ pharmacy_status: next }).eq('id', rx.id);
 
         if (error) {
@@ -213,7 +220,7 @@ const PharmacyPortal: React.FC = () => {
     const handleLogout = async () => {
         realtimeCleanupRef.current?.();
         await supabase.auth.signOut();
-        window.location.href = '/pharmacy-login';
+        window.location.href = '/login?portal=pharmacy';
     };
 
     if (loading) return (
@@ -259,16 +266,7 @@ const PharmacyPortal: React.FC = () => {
             <header className="bg-white border-b border-slate-200 flex-shrink-0 sticky top-0 z-20">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                            <Pill size={15} className="text-white" />
-                        </div>
-                        <div className="leading-none">
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-black text-slate-900 text-sm tracking-tight">NirogOS</span>
-                                <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-widest">Rx</span>
-                            </div>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{profile?.pharmacy_name}</p>
-                        </div>
+                    <Logo variant="full" usage="navbar" theme="dark" />
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -455,7 +453,7 @@ const PrescriptionCard: React.FC<{
                             {nextLabel}
                         </button>
                     ) : (
-                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                        <span className="text-[10px] text-violet-600 font-bold flex items-center gap-1">
                             <CheckCircle size={10} /> Done
                         </span>
                     )}

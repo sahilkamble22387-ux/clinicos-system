@@ -78,7 +78,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
         ?? user?.user_metadata?.first_name
         ?? user?.email?.split('@')[0]
         ?? 'Doctor';
-      const { data } = await supabase.from('clinics').select('name').eq('id', clinicId).single();
+      const { data } = await (supabase as any).from('clinics').select('name').eq('id', clinicId).single();
       await downloadAnalyticsReport(clinicId, data?.name ?? 'Clinic', docName);
       toast.success('Report downloaded!');
     } catch (err: any) {
@@ -104,7 +104,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
     // ── BUG FIX 1: Replace 7 sequential loop queries with 2 parallel batch queries ──
     const [patientsRes, recordsRes, qrRes, deskRes, completedRes] = await Promise.all([
       // All patients in the last 7 days
-      supabase
+      (supabase as any)
         .from('patients')
         .select('created_at')
         .eq('clinic_id', clinicId)
@@ -112,27 +112,27 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ clinicId }) => 
         .lte('created_at', rangeEnd),
 
       // All medical records ever (for diagnosis + revenue)
-      supabase
+      (supabase as any)
         .from('medical_records')
         .select('diagnosis, fee_collected, payment_method, created_at')
         .eq('clinic_id', clinicId),
 
       // QR check-in count
-      supabase
+      (supabase as any)
         .from('patients')
         .select('*', { count: 'exact', head: true })
         .eq('clinic_id', clinicId)
         .eq('source', 'QR_Checkin'),
 
       // Front desk count
-      supabase
+      (supabase as any)
         .from('patients')
         .select('*', { count: 'exact', head: true })
         .eq('clinic_id', clinicId)
         .neq('source', 'QR_Checkin'),
 
       // Today's completed appointments (for wait time)
-      supabase
+      (supabase as any)
         .from('appointments')
         .select('created_at, updated_at')
         .eq('clinic_id', clinicId)

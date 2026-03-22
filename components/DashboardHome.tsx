@@ -32,13 +32,13 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
         fetchStats();
 
         const clinicId = clinic?.id || '00000000-0000-0000-0000-000000000000';
-        const channel = supabase
+        const channel = (supabase as any)
             .channel('dashboard_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'patients', filter: `clinic_id=eq.${clinicId}` }, () => fetchStats())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_records', filter: `clinic_id=eq.${clinicId}` }, () => fetchStats())
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        return () => { (supabase as any).removeChannel(channel); };
     }, [clinic]);
 
     const fetchStats = async () => {
@@ -46,18 +46,18 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
         const today = new Date().toISOString().split('T')[0];
 
         try {
-            const { count: totalPatients } = await supabase
+            const { count: totalPatients } = await (supabase as any)
                 .from('patients')
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId);
 
-            const { count: waitingCount } = await supabase
+            const { count: waitingCount } = await (supabase as any)
                 .from('patients')
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId)
                 .eq('status', 'waiting');
 
-            const { count: completedCount } = await supabase
+            const { count: completedCount } = await (supabase as any)
                 .from('patients')
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId)
@@ -66,7 +66,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
                 .lte('updated_at', `${today}T23:59:59`);
 
             // Today's revenue from medical_records
-            const { data: todayRecords } = await supabase
+            const { data: todayRecords } = await (supabase as any)
                 .from('medical_records')
                 .select('fee_collected')
                 .eq('clinic_id', clinicId)
@@ -76,7 +76,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ clinic, onNavigate, sessi
             const todayRevenue = todayRecords?.reduce((sum, r) => sum + (Number(r.fee_collected) || 0), 0) || 0;
 
             // QR check-ins today
-            const { count: qrCount } = await supabase
+            const { count: qrCount } = await (supabase as any)
                 .from('patients')
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId)

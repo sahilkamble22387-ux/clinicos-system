@@ -61,7 +61,7 @@ const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
         let cancelled = false;
 
         const fetchInfo = async () => {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('patients')
                 .select('full_name, source')
                 .eq('id', visit.patientId)

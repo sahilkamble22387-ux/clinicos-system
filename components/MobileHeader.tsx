@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Pill, X, LogOut, Settings, User as UserIcon, ChevronRight, Sparkles } from 'lucide-react'
 import { useSubscription } from '../hooks/useSubscription'
-import { Clinic } from '../types'
-import { ViewMode } from '../types'
+import { ViewMode, Clinic } from '../types'
+import { Logo } from '../src/components/Logo'
 
 interface MobileHeaderProps {
     session: any
@@ -40,19 +40,8 @@ export function MobileHeader({ session, clinic, onSignOut, authResolved, onNavig
                 className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 flex-shrink-0 relative z-[45]"
                 style={{ paddingTop: 'calc(var(--sat) + 12px)' }}
             >
-                {/* Logo */}
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shadow-sm shadow-indigo-500/30">
-                        <Pill className="text-white w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-black text-sm text-slate-900 leading-none">NirogOS</span>
-                        {fullName && (
-                            <span className="text-[10px] text-slate-400 font-medium leading-none mt-0.5 truncate max-w-[120px]">
-                                {fullName}
-                            </span>
-                        )}
-                    </div>
+                    <Logo variant="full" usage="navbar" theme="dark" />
                 </div>
 
                 {/* Right side — subscription badge + avatar */}

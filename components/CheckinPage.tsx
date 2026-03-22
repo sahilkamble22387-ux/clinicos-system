@@ -25,7 +25,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
     useEffect(() => {
         const validate = async () => {
             try {
-                const { data, error } = await supabasePublic
+                const { data, error } = await (supabasePublic as any)
                     .from('clinics')
                     .select('id, name, queue_accepting_patients, emergency_mode')
                     .eq('id', clinicId)
@@ -46,7 +46,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
         validate();
 
         // Realtime subscription for queue status updates
-        const channel = supabasePublic
+        const channel = (supabasePublic as any)
             .channel(`checkin-queue-${clinicId}`)
             .on('postgres_changes', {
                 event: 'UPDATE',
@@ -60,7 +60,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
             })
             .subscribe();
 
-        return () => { supabasePublic.removeChannel(channel); };
+        return () => { (supabasePublic as any).removeChannel(channel); };
     }, [clinicId]);
 
     const isBlocked = !queueAccepting || emergencyMode;
@@ -73,7 +73,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
 
         try {
             // 1. Check if patient already exists by phone + clinic
-            const { data: existing } = await supabasePublic
+            const { data: existing } = await (supabasePublic as any)
                 .from('patients')
                 .select('id')
                 .eq('phone', form.phone.trim())
@@ -85,7 +85,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
             if (existing) {
                 patientId = existing.id;
                 // Update status to waiting
-                await supabasePublic
+                await (supabasePublic as any)
                     .from('patients')
                     .update({
                         status: 'waiting',
@@ -96,7 +96,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
                     .eq('id', patientId);
             } else {
                 // Create new patient
-                const { data: newPatient, error: patientError } = await supabasePublic
+                const { data: newPatient, error: patientError } = await (supabasePublic as any)
                     .from('patients')
                     .insert({
                         full_name: form.full_name.trim(),
@@ -117,7 +117,7 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
             }
 
             // 2. Create appointment
-            const { error: apptError } = await supabasePublic
+            const { error: apptError } = await (supabasePublic as any)
                 .from('appointments')
                 .insert({
                     patient_id: patientId,

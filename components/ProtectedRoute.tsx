@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ShieldX } from 'lucide-react';
 import { supabase } from '../services/db';
+import { syncAndFetchPharmacyProfile } from '../services/pharmacyService';
 
 export type AppRole = 'admin' | 'doctor' | 'pharmacy_staff';
 
@@ -47,21 +48,27 @@ export function ProtectedRoute({ allowedRoles, redirectTo, children }: Protected
                     return;
                 }
 
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .single();
+                const profile = allowedRoles.includes('pharmacy_staff')
+                    ? await syncAndFetchPharmacyProfile(session.user.id)
+                    : await (async () => {
+                        const { data, error } = await (supabase as any)
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', session.user.id)
+                            .maybeSingle();
+                        if (error) throw error;
+                        return data;
+                    })();
 
                 if (cancelled) return;
 
-                if (error || !profile) {
+                if (!profile) {
                     setState('denied');
                     navigate(redirectTo, { replace: true });
                     return;
                 }
 
-                if (!allowedRoles.includes(profile.role as AppRole)) {
+                if (!allowedRoles.includes((profile as any).role as AppRole)) {
                     setState('denied');
                     // Route wrong-role users to their correct home
                     const roleHome: Record<AppRole, string> = {
@@ -69,7 +76,7 @@ export function ProtectedRoute({ allowedRoles, redirectTo, children }: Protected
                         doctor: '/',
                         pharmacy_staff: '/pharmacy-portal',
                     };
-                    navigate(roleHome[profile.role as AppRole] ?? redirectTo, { replace: true });
+                    navigate(roleHome[(profile as any).role as AppRole] ?? redirectTo, { replace: true });
                     return;
                 }
 

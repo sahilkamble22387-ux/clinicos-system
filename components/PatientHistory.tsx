@@ -29,7 +29,7 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
     try {
       setLoading(true);
       const clinicId = clinic?.id || '00000000-0000-0000-0000-000000000000';
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('patients').select('*')
         .eq('clinic_id', clinicId).eq('status', 'completed')
         .order('updated_at', { ascending: false });
@@ -47,7 +47,7 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
       const clinicId = clinic?.id || '00000000-0000-0000-0000-000000000000';
 
       // 1. Get all completed patients
-      const { data: patientsData } = await supabase
+      const { data: patientsData } = await (supabase as any)
         .from('patients').select('*')
         .eq('clinic_id', clinicId).eq('status', 'completed')
         .order('updated_at', { ascending: false });
@@ -57,13 +57,13 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
       const patientIds = patientsData.map(p => p.id);
 
       // 2. Get all medical records
-      const { data: records } = await supabase
+      const { data: records } = await (supabase as any)
         .from('medical_records').select('*')
         .in('patient_id', patientIds)
         .order('created_at', { ascending: false });
 
       // 3. Get all appointments (for vitals)
-      const { data: appointments } = await supabase
+      const { data: appointments } = await (supabase as any)
         .from('appointments')
         .select('id, patient_id, bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f, created_at')
         .in('patient_id', patientIds);
@@ -72,7 +72,7 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ clinic, onBack }) => {
       const recordIds = (records ?? []).map(r => r.id);
       let prescriptionItems: any[] = [];
       if (recordIds.length > 0) {
-        const { data: items } = await supabase
+        const { data: items } = await (supabase as any)
           .from('prescription_items').select('*')
           .in('medical_record_id', recordIds)
           .order('sort_order', { ascending: true });
@@ -294,13 +294,13 @@ interface VisitRecord {
 }
 
 async function fetchPatientHistory(patientId: string): Promise<VisitRecord[]> {
-  const { data: records, error } = await supabase.from('medical_records').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
+  const { data: records, error } = await (supabase as any).from('medical_records').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
   if (error || !records) return [];
-  const { data: appointments } = await supabase.from('appointments').select('id, patient_id, bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f, created_at').eq('patient_id', patientId).order('created_at', { ascending: false });
+  const { data: appointments } = await (supabase as any).from('appointments').select('id, patient_id, bp_systolic, bp_diastolic, heart_rate, weight_kg, temperature_f, created_at').eq('patient_id', patientId).order('created_at', { ascending: false });
   const recordIds = records.map(r => r.id);
   let prescriptionItems: any[] = [];
   if (recordIds.length > 0) {
-    const { data: items } = await supabase.from('prescription_items').select('*').in('medical_record_id', recordIds).order('sort_order', { ascending: true });
+    const { data: items } = await (supabase as any).from('prescription_items').select('*').in('medical_record_id', recordIds).order('sort_order', { ascending: true });
     prescriptionItems = items ?? [];
   }
   return records.map(record => {

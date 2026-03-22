@@ -26,6 +26,7 @@ export interface SavePrescriptionInput {
 
     // Consultation
     medicalRecordId?: string | null
+    targetPharmacyId?: string | null
     diagnosis: string
     doctorNotes?: string | null
     feeCollected: number
@@ -65,12 +66,14 @@ export async function savePrescriptionAndGetLink(
             instructions: m.instructions,
         }))
 
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from('prescriptions')
             .insert({
                 clinic_id: input.clinicId,
                 patient_id: input.patientId,
                 medical_record_id: input.medicalRecordId ?? null,
+                pharmacy_id: input.targetPharmacyId ?? null,
+                pharmacy_status: input.targetPharmacyId ? 'sent_to_pharmacy' : 'not_sent',
 
                 // Patient snapshot
                 patient_name: input.patientName,

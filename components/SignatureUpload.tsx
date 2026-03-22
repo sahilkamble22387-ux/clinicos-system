@@ -81,7 +81,7 @@ export function SignatureUpload({ clinicId, currentSignature, onSaved }: Signatu
         if (!base64 || !clinicId) return
         setSaving(true)
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('clinics')
             .update({ doctor_signature_base64: base64 })
             .eq('id', clinicId)
@@ -101,7 +101,7 @@ export function SignatureUpload({ clinicId, currentSignature, onSaved }: Signatu
         setPreview(null)
         setBase64(null)
 
-        await supabase
+        await (supabase as any)
             .from('clinics')
             .update({ doctor_signature_base64: null })
             .eq('id', clinicId)

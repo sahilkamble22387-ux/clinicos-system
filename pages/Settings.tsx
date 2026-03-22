@@ -13,9 +13,9 @@ export default function Settings() {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session)
             if (session) {
-                const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', session.user.id).single()
+                const { data: profile } = await (supabase as any).from('profiles').select('clinic_id').eq('id', session.user.id).single()
                 if (profile?.clinic_id) {
-                    const { data: clinicData } = await supabase.from('clinics').select('*').eq('id', profile.clinic_id).single()
+                    const { data: clinicData } = await (supabase as any).from('clinics').select('*').eq('id', profile.clinic_id).single()
                     setClinic(clinicData)
                 }
             }
@@ -180,17 +180,32 @@ export default function Settings() {
                 {/* Danger zone */}
                 <div>
                     <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2 px-1">
-                        Account
+                        Danger Zone
                     </p>
-                    <div className="bg-white rounded-2xl border border-red-100 overflow-hidden shadow-sm">
+                    <div className="bg-white rounded-2xl border border-red-100 overflow-hidden shadow-sm divide-y divide-red-50">
                         <button
-                            onClick={handleSignOut}
-                            className="w-full flex items-center gap-3 px-4 py-4 active:bg-red-50 transition"
+                            onClick={() => console.log('Unlink clinic')}
+                            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-red-50 active:bg-red-100 transition"
                         >
                             <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                                 <LogOut size={16} className="text-red-600" />
                             </div>
-                            <span className="font-bold text-red-600 text-sm">Sign Out</span>
+                            <div className="flex-1 text-left">
+                                <p className="font-bold text-red-600 text-sm">Unlink Clinic</p>
+                                <p className="text-red-400 text-xs mt-0.5">Remove your access to this clinic</p>
+                            </div>
+                            <ChevronRight size={14} className="text-red-300 flex-shrink-0" />
+                        </button>
+                        <button
+                            onClick={handleSignOut}
+                            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-slate-50 active:bg-slate-100 transition"
+                        >
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100">
+                                <LogOut size={16} className="text-slate-600" />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="font-bold text-slate-700 text-sm">Sign Out</p>
+                            </div>
                         </button>
                     </div>
                 </div>

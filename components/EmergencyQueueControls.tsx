@@ -92,7 +92,7 @@ export function EmergencyQueueControls({ clinicId }: EmergencyQueueControlsProps
     // Fetch current state
     useEffect(() => {
         if (!clinicId) return
-        supabase
+        (supabase as any)
             .from('clinics')
             .select('queue_accepting_patients, emergency_mode, emergency_triggered_at')
             .eq('id', clinicId)
@@ -102,7 +102,7 @@ export function EmergencyQueueControls({ clinicId }: EmergencyQueueControlsProps
             })
 
         // Realtime subscription for self-reflection (in case another tab changes it)
-        const channel = supabase
+        const channel = (supabase as any)
             .channel(`clinic-controls-${clinicId}`)
             .on('postgres_changes', {
                 event: 'UPDATE',
@@ -120,12 +120,12 @@ export function EmergencyQueueControls({ clinicId }: EmergencyQueueControlsProps
             })
             .subscribe()
 
-        return () => { supabase.removeChannel(channel) }
+        return () => { (supabase as any).removeChannel(channel) }
     }, [clinicId])
 
     async function toggleQueue(accepting: boolean) {
         setLoading(true)
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('clinics')
             .update({ queue_accepting_patients: accepting })
             .eq('id', clinicId)
@@ -142,7 +142,7 @@ export function EmergencyQueueControls({ clinicId }: EmergencyQueueControlsProps
     async function triggerEmergency() {
         setConfirmDialog(null)
         setLoading(true)
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('clinics')
             .update({
                 emergency_mode: true,
@@ -164,7 +164,7 @@ export function EmergencyQueueControls({ clinicId }: EmergencyQueueControlsProps
     async function clearEmergency() {
         setConfirmDialog(null)
         setLoading(true)
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('clinics')
             .update({
                 emergency_mode: false,
@@ -269,7 +269,7 @@ export function EmergencyBanner({
         if (!clinicId) return
 
         // Initial fetch
-        supabase
+        (supabase as any)
             .from('clinics')
             .select('emergency_mode, queue_accepting_patients')
             .eq('id', clinicId)
@@ -284,7 +284,7 @@ export function EmergencyBanner({
             })
 
         // Realtime listener
-        const channel = supabase
+        const channel = (supabase as any)
             .channel(`front-desk-emergency-${clinicId}`)
             .on('postgres_changes', {
                 event: 'UPDATE',
@@ -300,7 +300,7 @@ export function EmergencyBanner({
             })
             .subscribe()
 
-        return () => { supabase.removeChannel(channel) }
+        return () => { (supabase as any).removeChannel(channel) }
     }, [clinicId])
 
     if (!state.emergency_mode && state.queue_accepting_patients) return null
