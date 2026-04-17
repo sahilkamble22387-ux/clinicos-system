@@ -47,6 +47,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import SupportPage from './pages/SupportPage';
 import RefundPolicyPage from './pages/RefundPolicyPage';
 import RxPage from './pages/RxPage';
+import { ensureDoctorClinicSetup } from './services/doctorService';
 import { syncAndFetchPharmacyProfile } from './services/pharmacyService';
 
 // ── Rebrand localStorage migration ───────────────────────────────
@@ -62,16 +63,6 @@ legacyStorageKeys.forEach(([oldKey, newKey]) => {
     if (val !== null) { localStorage.setItem(newKey, val); localStorage.removeItem(oldKey); }
   } catch { /* ignore */ }
 });
-
-function normalizeClinic(data: any, fallbackName: string): Clinic {
-  return {
-    ...data,
-    name: data.name === 'My Clinic' ? fallbackName : data.name,
-    qualifications: Array.isArray(data.qualifications)
-      ? data.qualifications.join(', ')
-      : data.qualifications,
-  };
-}
 
 const Toast = ({ message, onClose }: { message: string; onClose: () => void }) => (
   <div className="fixed top-4 right-4 bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 z-50 max-w-sm border border-slate-700">
@@ -163,67 +154,30 @@ const DoctorApp: React.FC = () => {
     return () => clearTimeout(t);
   }, [toastMessage]);
 
-  const fetchClinic = useCallback(async (userId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const meta = user?.user_metadata;
-      const firstName = meta?.first_name || meta?.full_name?.split(' ')[0] || (user?.email?.split('@')[0] ?? 'Doctor');
-      const lastName = meta?.last_name ?? '';
-      const derivedName = lastName ? `${firstName} ${lastName}` : firstName;
-      const personalClinicName = `Dr. ${firstName}'s Clinic`;
+  const fetchClinic = useCallback(async (authUser: any) => {
+    if (!authUser?.id) {
+      setClinic(null);
+      setLoading(false);
+      return;
+    }
 
-      const metaRole = meta?.role;
+    try {
+      const metaRole = authUser?.user_metadata?.role;
       const profile = metaRole === 'pharmacy_staff'
-        ? await syncAndFetchPharmacyProfile(userId)
-        : await (async () => {
-          const { data } = await (supabase as any)
-            .from('profiles')
-            .select('clinic_id, role')
-            .eq('id', userId)
-            .maybeSingle();
-          return data;
-        })();
+        ? await syncAndFetchPharmacyProfile(authUser.id)
+        : await ensureDoctorClinicSetup(authUser);
 
       if (profile?.role === 'pharmacy_staff') {
         navigate('/pharmacy-portal', { replace: true });
         return;
       }
 
-      if (profile?.clinic_id) {
-        const { data: clinicData } = await (supabase as any)
-          .from('clinics').select('*').eq('id', profile.clinic_id).single();
-        if (clinicData) {
-          const resolved = normalizeClinic(clinicData, personalClinicName);
-          if (clinicData.name === 'My Clinic') {
-            await (supabase as any).from('clinics').update({ name: personalClinicName }).eq('id', clinicData.id);
-          }
-          setClinic(resolved);
-          setLoading(false);
-          return;
-        }
+      if (profile?.clinic) {
+        setClinic(profile.clinic as Clinic);
+        return;
       }
 
-      const { data: ownedClinic } = await (supabase as any)
-        .from('clinics').select('*').eq('owner_id', userId).single();
-
-      if (ownedClinic) {
-        const resolved = normalizeClinic(ownedClinic, personalClinicName);
-        if (ownedClinic.name === 'My Clinic') {
-          await (supabase as any).from('clinics').update({ name: personalClinicName }).eq('id', ownedClinic.id);
-        }
-        setClinic(resolved);
-      } else {
-        const { data: newClinic, error: createError } = await (supabase as any)
-          .from('clinics')
-          .insert([{ id: userId, name: personalClinicName, owner_id: userId }])
-          .select().single();
-        if (!createError && newClinic) {
-          setClinic(newClinic);
-          await (supabase as any).from('profiles').insert([
-            { id: userId, clinic_id: (newClinic as any).id, role: 'doctor', full_name: derivedName },
-          ]);
-        }
-      }
+      setToastMessage('We could not find your clinic profile yet. Please refresh.');
     } catch (err) {
       console.error('[DoctorApp] fetchClinic error:', err);
       setToastMessage('Failed to load clinic profile. Please refresh.');
@@ -233,12 +187,34 @@ const DoctorApp: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    let active = true;
+
+    const applySession = async (newSession: any) => {
+      if (!active) return;
+
       setSession(newSession);
-      if (newSession) { fetchClinic(newSession.user.id); }
-      else { setClinic(null); setLoading(false); }
+
+      if (newSession?.user) {
+        setLoading(true);
+        await fetchClinic(newSession.user);
+      } else {
+        setClinic(null);
+        setLoading(false);
+      }
+    };
+
+    void supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      void applySession(currentSession);
     });
-    return () => subscription.unsubscribe();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      void applySession(newSession);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [fetchClinic]);
 
   useEffect(() => {

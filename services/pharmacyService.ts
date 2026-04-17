@@ -27,13 +27,103 @@ export interface DoctorPharmacyNetwork {
     defaultPharmacyId: string | null;
 }
 
+interface PharmacySignupMetadata {
+    pharmacy_name?: string;
+    owner_name?: string;
+    license_number?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    city?: string;
+    pincode?: string;
+    clinic_id?: string | null;
+    invite_token?: string | null;
+}
+
 function defaultPharmacyKey(clinicId: string) {
     return `clinic:${clinicId}:default_pharmacy_id`;
 }
 
-export async function ensurePharmacyFromMetadata(): Promise<void> {
+function readPharmacySignupMetadata(user: any): PharmacySignupMetadata | null {
+    const raw = user?.user_metadata?.pharmacy_signup;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    return raw as PharmacySignupMetadata;
+}
+
+async function persistPharmacyFromAuthMetadata(userId?: string): Promise<boolean> {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) return false;
+    if (userId && user.id !== userId) return false;
+
+    const pharmacy = readPharmacySignupMetadata(user);
+    if (!pharmacy) return false;
+
+    const clinicId = typeof pharmacy.clinic_id === 'string' && pharmacy.clinic_id.trim()
+        ? pharmacy.clinic_id.trim()
+        : null;
+
+    const { error: pharmacyError } = await (supabase as any)
+        .from('pharmacies')
+        .upsert([{
+            id: user.id,
+            clinic_id: clinicId,
+            owner_name: pharmacy.owner_name?.trim() || null,
+            name: pharmacy.pharmacy_name?.trim() || 'Pharmacy',
+            license_number: pharmacy.license_number?.trim() || null,
+            phone: pharmacy.phone?.trim() || null,
+            email: pharmacy.email?.trim() || user.email || null,
+            address: pharmacy.address?.trim() || null,
+            city: pharmacy.city?.trim() || null,
+            pincode: pharmacy.pincode?.trim() || null,
+            is_verified: false,
+        }], { onConflict: 'id' });
+
+    if (pharmacyError) throw pharmacyError;
+
+    const { error: profileError } = await (supabase as any)
+        .from('profiles')
+        .upsert([{
+            id: user.id,
+            role: 'pharmacy_staff',
+            pharmacy_id: user.id,
+            clinic_id: clinicId,
+            full_name: pharmacy.owner_name?.trim() || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Pharmacy Staff',
+        }], { onConflict: 'id' });
+
+    if (profileError) throw profileError;
+
+    const inviteToken = pharmacy.invite_token?.trim();
+    if (inviteToken) {
+        const { error: inviteError } = await (supabase as any)
+            .from('pharmacy_invites')
+            .update({ status: 'used' })
+            .eq('token', inviteToken)
+            .eq('status', 'pending');
+
+        if (inviteError) {
+            console.warn('[pharmacyService] Failed to mark invite as used:', inviteError);
+        }
+    }
+
+    return true;
+}
+
+export async function ensurePharmacyFromMetadata(userId?: string): Promise<void> {
+    let directWriteError: any = null;
+
+    try {
+        const wroteDirectly = await persistPharmacyFromAuthMetadata(userId);
+        if (wroteDirectly) return;
+    } catch (error) {
+        directWriteError = error;
+    }
+
     const { error } = await (supabase as any).rpc('ensure_pharmacy_from_metadata');
     if (error) {
+        if (directWriteError) {
+            throw directWriteError;
+        }
         throw error;
     }
 }
@@ -51,7 +141,7 @@ export async function fetchProfileRole(userId: string): Promise<PharmacyProfileR
 
 export async function syncAndFetchPharmacyProfile(userId: string): Promise<PharmacyProfileRow | null> {
     try {
-        await ensurePharmacyFromMetadata();
+        await ensurePharmacyFromMetadata(userId);
     } catch (error: any) {
         const message = String(error?.message ?? '');
         if (!message.toLowerCase().includes('ensure_pharmacy_from_metadata')) {
@@ -59,7 +149,19 @@ export async function syncAndFetchPharmacyProfile(userId: string): Promise<Pharm
         }
     }
 
-    return fetchProfileRole(userId);
+    let profile = await fetchProfileRole(userId);
+    if (profile) return profile;
+
+    try {
+        const wroteDirectly = await persistPharmacyFromAuthMetadata(userId);
+        if (wroteDirectly) {
+            profile = await fetchProfileRole(userId);
+        }
+    } catch (error) {
+        console.warn('[pharmacyService] Metadata sync fallback failed:', error);
+    }
+
+    return profile;
 }
 
 export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<DoctorPharmacyNetwork> {

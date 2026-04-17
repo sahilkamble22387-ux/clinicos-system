@@ -17,6 +17,7 @@ import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion'
 import { toast } from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/db';
+import { ensureDoctorClinicSetup } from '../services/doctorService';
 import { fetchProfileRole, syncAndFetchPharmacyProfile } from '../services/pharmacyService';
 import { Logo } from '../src/components/Logo';
 
@@ -672,6 +673,7 @@ const THEME = {
 export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const requestedSignupMode = searchParams.get('mode') === 'signup' || searchParams.get('signup') === '1';
 
     const [portalMode, setPortalMode] = useState<PortalMode>(
         searchParams.get('portal') === 'pharmacy' ? 'pharmacy' : 'doctor',
@@ -682,7 +684,7 @@ export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => 
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isSignUp, setIsSignUp] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(requestedSignupMode && searchParams.get('portal') !== 'pharmacy');
     const [error, setError] = useState<string | null>(null);
     const [emotion, setEmotion] = useState('idle');
     const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -712,7 +714,7 @@ export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => 
                 return;
             }
 
-            navigate('/', { replace: true });
+            navigate('/app', { replace: true });
         };
         check();
     }, [navigate]);
@@ -720,6 +722,7 @@ export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => 
     useEffect(() => {
         const requestedPortalMode = searchParams.get('portal') === 'pharmacy' ? 'pharmacy' : 'doctor';
         setPortalMode(prev => (prev === requestedPortalMode ? prev : requestedPortalMode));
+        setIsSignUp(requestedPortalMode === 'doctor' && requestedSignupMode);
     }, [searchParams]);
 
     const switchPortal = (mode: PortalMode) => {
@@ -804,7 +807,14 @@ export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => 
                     clearForm();
                     setTimeout(() => { setEmotion('idle'); setIsSignUp(false); }, 3500);
                 } else {
-                    toast.success('Account created!');
+                    const doctorAccount = await ensureDoctorClinicSetup(data.user);
+                    if (!doctorAccount.clinic?.id) {
+                        throw new Error('We could not initialize your clinic workspace yet. Please try again.');
+                    }
+
+                    toast.success('Account created! Let’s finish your onboarding.');
+                    navigate('/onboarding', { replace: true });
+                    return;
                 }
             } else {
                 const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
@@ -854,6 +864,8 @@ export const LoginPage = ({ onNavigate }: { onNavigate?: (v: any) => void }) => 
                         return;
                     }
                     toast.success('Signed in!');
+                    setTimeout(() => navigate('/app', { replace: true }), 350);
+                    return;
                 }
             }
         } catch (err: any) {

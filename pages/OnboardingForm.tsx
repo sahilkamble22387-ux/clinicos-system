@@ -898,7 +898,7 @@ export default function OnboardingForm() {
 
             setCompleted(true)
             toast.success('Profile saved! Welcome to NirogOS 🎉')
-            setTimeout(() => navigate('/', { replace: true }), 1800)
+            setTimeout(() => navigate('/app', { replace: true }), 1800)
 
         } catch (err: any) {
             console.error('[Onboarding]', err)

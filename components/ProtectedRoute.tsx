@@ -72,8 +72,8 @@ export function ProtectedRoute({ allowedRoles, redirectTo, children }: Protected
                     setState('denied');
                     // Route wrong-role users to their correct home
                     const roleHome: Record<AppRole, string> = {
-                        admin: '/',
-                        doctor: '/',
+                        admin: '/app',
+                        doctor: '/app',
                         pharmacy_staff: '/pharmacy-portal',
                     };
                     navigate(roleHome[(profile as any).role as AppRole] ?? redirectTo, { replace: true });

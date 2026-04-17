@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NirogOS | Clinic + Pharmacy Operating System</title>
+    <meta name="description"
+        content="NirogOS connects doctors, staff, patients, and pharmacies in one fast operating system for modern clinics." />
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/nirogos-mark-light.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #07101f;
+            --panel: rgba(9, 18, 37, 0.82);
+            --panel-solid: #0d1830;
+            --panel-soft: rgba(17, 28, 53, 0.68);
+            --line: rgba(148, 163, 184, 0.16);
+            --text: #e5eefc;
+            --muted: #98a9c7;
+            --indigo: #6d7cff;
+            --violet: #8b5cf6;
+            --cyan: #67e8f9;
+            --emerald: #34d399;
+            --amber: #fbbf24;
+            --danger: #fb7185;
+            --shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+            --max: 1180px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Manrope", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(109, 124, 255, 0.22), transparent 32%),
+                radial-gradient(circle at top right, rgba(103, 232, 249, 0.15), transparent 26%),
+                linear-gradient(180deg, #081224 0%, #060c18 52%, #050912 100%);
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        .shell {
+            width: min(var(--max), calc(100vw - 40px));
+            margin: 0 auto;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border: 1px solid rgba(109, 124, 255, 0.22);
+            border-radius: 999px;
+            background: rgba(109, 124, 255, 0.08);
+            color: #c9d5ff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--cyan), var(--indigo));
+            box-shadow: 0 0 14px rgba(103, 232, 249, 0.7);
+        }
+
+        .site-nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(18px);
+            background: rgba(5, 10, 20, 0.78);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+        }
+
+        .site-nav .shell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-height: 78px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            padding: 9px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(109, 124, 255, 0.22), rgba(139, 92, 246, 0.26));
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            box-shadow: 0 18px 40px rgba(67, 56, 202, 0.18);
+        }
+
+        .nav-links,
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.18s ease, transform 0.18s ease;
+        }
+
+        .nav-links a:hover {
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .nav-toggle {
+            display: none;
+            border: 0;
+            background: transparent;
+            color: white;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .button,
+        .ghost-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 0 22px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 15px;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .button {
+            color: white;
+            background: linear-gradient(135deg, var(--indigo), var(--violet));
+            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.34);
+        }
+
+        .button:hover,
+        .ghost-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .ghost-button {
+            color: #d9e3fb;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .hero {
+            position: relative;
+            padding: 92px 0 56px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.03fr 0.97fr;
+            gap: 44px;
+            align-items: center;
+        }
+
+        .hero h1 {
+            margin: 20px 0 16px;
+            font-family: "Fraunces", serif;
+            font-size: clamp(46px, 7vw, 76px);
+            line-height: 0.98;
+            letter-spacing: -0.04em;
+            max-width: 12ch;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 640px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.78;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 30px;
+        }
+
+        .hero-proof {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 24px;
+            color: #c8d3e8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .hero-proof span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-proof span::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--emerald);
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+        }
+
+        .spotlight-card,
+        .section-card,
+        .screen,
+        .price-card,
+        .faq-item,
+        .footer-card {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .spotlight-card {
+            padding: 22px;
+            border-radius: var(--radius-xl);
+        }
+
+        .mini-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            margin-bottom: 18px;
+        }
+
+        .mini-dots {
+            display: inline-flex;
+            gap: 8px;
+        }
+
+        .mini-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mini-dots span:first-child {
+            background: #f87171;
+        }
+
+        .mini-dots span:nth-child(2) {
+            background: #fbbf24;
+        }
+
+        .mini-dots span:nth-child(3) {
+            background: #34d399;
+        }
+
+        .health-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(52, 211, 153, 0.1);
+            color: #b9f4dd;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .health-status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--emerald);
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.75);
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 18px;
+        }
+
+        .screen {
+            border-radius: 24px;
+            padding: 18px;
+        }
+
+        .screen-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #cad6ee;
+            font-weight: 800;
+        }
+
+        .screen-kpis {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .kpi {
+            padding: 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .kpi strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .kpi span,
+        .feed-item small,
+        .metric-note,
+        .stat-chip,
+        .faq-answer,
+        .section-copy p,
+        .price-card p,
+        footer p,
+        footer li a {
+            color: var(--muted);
+        }
+
+        .queue {
+            display: grid;
+            gap: 10px;
+        }
+
+        .queue-row,
+        .feed-item,
+        .feature,
+        .stat-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 13px 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .queue-row strong,
+        .feed-item strong {
+            display: block;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 11px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .badge.waiting {
+            background: rgba(251, 191, 36, 0.12);
+            color: #fde68a;
+        }
+
+        .badge.live {
+            background: rgba(52, 211, 153, 0.12);
+            color: #bbf7d0;
+        }
+
+        .badge.ready {
+            background: rgba(103, 232, 249, 0.12);
+            color: #bae6fd;
+        }
+
+        .badge.sent {
+            background: rgba(139, 92, 246, 0.14);
+            color: #ddd6fe;
+        }
+
+        section {
+            padding: 34px 0 24px;
+        }
+
+        .section-card {
+            border-radius: var(--radius-xl);
+            padding: 34px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .section-head h2 {
+            margin: 12px 0 10px;
+            font-family: "Fraunces", serif;
+            font-size: clamp(30px, 4vw, 46px);
+            line-height: 1.02;
+            letter-spacing: -0.03em;
+        }
+
+        .section-copy p {
+            margin: 0;
+            max-width: 620px;
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .stats,
+        .features-grid,
+        .pricing-grid,
+        .faq-grid,
+        .footer-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .stat-line {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .stat-line strong {
+            font-size: 30px;
+            letter-spacing: -0.04em;
+        }
+
+        .features-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .feature {
+            align-items: flex-start;
+            flex-direction: column;
+            min-height: 220px;
+        }
+
+        .feature-icon {
+            width: 46px;
+            height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            font-size: 22px;
+            background: linear-gradient(135deg, rgba(109, 124, 255, 0.18), rgba(139, 92, 246, 0.2));
+            border: 1px solid rgba(129, 140, 248, 0.2);
+        }
+
+        .feature h3,
+        .price-card h3,
+        .faq-question,
+        .footer-title {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .feature p,
+        .price-card p,
+        .faq-answer,
+        .footer-list {
+            margin: 0;
+            line-height: 1.72;
+        }
+
+        .pricing-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .price-card {
+            border-radius: 28px;
+            padding: 26px;
+        }
+
+        .price-card.featured {
+            background:
+                radial-gradient(circle at top right, rgba(139, 92, 246, 0.18), transparent 32%),
+                linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.86));
+            border-color: rgba(129, 140, 248, 0.3);
+            transform: translateY(-10px);
+        }
+
+        .price-tag {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin: 20px 0 18px;
+        }
+
+        .price-tag strong {
+            font-size: 44px;
+            letter-spacing: -0.05em;
+        }
+
+        .price-list {
+            display: grid;
+            gap: 10px;
+            margin: 22px 0 28px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .price-list li {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            color: #d9e4f8;
+            line-height: 1.55;
+        }
+
+        .price-list li::before {
+            content: "•";
+            color: var(--emerald);
+            font-weight: 900;
+        }
+
+        .security-grid,
+        .faq-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .faq-item {
+            border-radius: 24px;
+            padding: 22px;
+        }
+
+        .faq-question {
+            margin-bottom: 10px;
+        }
+
+        .footer-card {
+            margin: 40px auto 28px;
+            padding: 30px;
+            border-radius: var(--radius-xl);
+        }
+
+        .footer-grid {
+            grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr;
+        }
+
+        .footer-list {
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 12px;
+        }
+
+        .footer-list a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 0 0 42px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1040px) {
+            .hero-grid,
+            .portal-grid,
+            .features-grid,
+            .pricing-grid,
+            .security-grid,
+            .faq-grid,
+            .footer-grid,
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .price-card.featured {
+                transform: none;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .nav-links,
+            .nav-actions .ghost-button {
+                display: none;
+            }
+
+            .nav-toggle {
+                display: inline-flex;
+            }
+
+            .site-nav.open .nav-links {
+                position: absolute;
+                left: 20px;
+                right: 20px;
+                top: 84px;
+                display: grid;
+                gap: 14px;
+                padding: 20px;
+                border-radius: 24px;
+                background: rgba(6, 12, 24, 0.96);
+                border: 1px solid rgba(148, 163, 184, 0.1);
+                box-shadow: var(--shadow);
+            }
+
+            .hero {
+                padding-top: 64px;
+            }
+
+            .shell {
+                width: min(var(--max), calc(100vw - 24px));
+            }
+
+            .section-card,
+            .spotlight-card,
+            .footer-card {
+                padding: 22px;
+            }
+
+            .screen-kpis {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="site-nav" id="site-nav">
+        <div class="shell">
+            <a class="brand" href="#top">
+                <span class="brand-mark">
+                    <img src="/assets/logo/nirogos-mark-light.svg" alt="NirogOS mark" />
+                </span>
+                <span>NirogOS</span>
+            </a>
+
+            <div class="nav-links">
+                <a href="#about">About Us</a>
+                <a href="#product">Product</a>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#security">Security</a>
+            </div>
+
+            <div class="nav-actions">
+                <a class="ghost-button" href="/login">Open App Login</a>
+                <a class="button" href="/login?mode=signup">Try Now Free for 5 Days</a>
+            </div>
+
+            <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">+</button>
+        </div>
+    </nav>
+
+    <main id="top">
+        <section class="hero">
+            <div class="shell hero-grid">
+                <div>
+                    <span class="eyebrow">Clinic OS built for India</span>
+                    <h1>One fast system for doctors, staff, patients, and pharmacy.</h1>
+                    <p>
+                        NirogOS turns your front desk, doctor workflow, prescription flow, patient history, and local
+                        pharmacy coordination into one clean operating system. No scattered tools. No waiting-room chaos.
+                        No handoff lag between consultation and medicine readiness.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a class="button" href="/login?mode=signup">Try Now Free for 5 Days</a>
+                        <a class="ghost-button" href="/pharmacy/signup">Pharmacy Signup</a>
+                    </div>
+
+                    <div class="hero-proof">
+                        <span>Doctor onboarding in minutes</span>
+                        <span>5-day free trial</span>
+                        <span>Doctor portal + pharmacy portal</span>
+                    </div>
+                </div>
+
+                <div class="spotlight-card">
+                    <div class="mini-bar">
+                        <div class="mini-dots"><span></span><span></span><span></span></div>
+                        <span class="health-status">System online</span>
+                    </div>
+
+                    <div class="portal-grid">
+                        <article class="screen">
+                            <div class="screen-title">
+                                <span>Doctor Portal</span>
+                                <span class="badge live">Live Queue</span>
+                            </div>
+                            <div class="screen-kpis">
+                                <div class="kpi">
+                                    <span>Waiting</span>
+                                    <strong>18</strong>
+                                </div>
+                                <div class="kpi">
+                                    <span>Consulting</span>
+                                    <strong>4</strong>
+                                </div>
+                                <div class="kpi">
+                                    <span>Today Rx</span>
+                                    <strong>29</strong>
+                                </div>
+                            </div>
+                            <div class="queue">
+                                <div class="queue-row">
+                                    <div>
+                                        <strong>Shruti Kulkarni</strong>
+                                        <small>QR check-in · BP follow-up</small>
+                                    </div>
+                                    <span class="badge waiting">Waiting</span>
+                                </div>
+                                <div class="queue-row">
+                                    <div>
+                                        <strong>Arjun Salve</strong>
+                                        <small>Prescription ready to send</small>
+                                    </div>
+                                    <span class="badge sent">Rx Drafted</span>
+                                </div>
+                                <div class="queue-row">
+                                    <div>
+                                        <strong>Meera Joshi</strong>
+                                        <small>WhatsApp link delivered</small>
+                                    </div>
+                                    <span class="badge ready">Shared</span>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="screen">
+                            <div class="screen-title">
+                                <span>Pharmacy Portal</span>
+                                <span class="badge live">Connected</span>
+                            </div>
+                            <div class="queue">
+                                <div class="feed-item">
+                                    <div>
+                                        <strong>Rx #A-2049</strong>
+                                        <small>Incoming from Dr. S. Patil</small>
+                                    </div>
+                                    <span class="badge sent">Incoming</span>
+                                </div>
+                                <div class="feed-item">
+                                    <div>
+                                        <strong>Rx #A-2044</strong>
+                                        <small>3 medicines packed</small>
+                                    </div>
+                                    <span class="badge ready">Ready</span>
+                                </div>
+                                <div class="feed-item">
+                                    <div>
+                                        <strong>Rx #A-2038</strong>
+                                        <small>Collected by patient</small>
+                                    </div>
+                                    <span class="badge live">Dispensed</span>
+                                </div>
+                            </div>
+                            <p class="metric-note" style="margin-top:14px;">The public website matches the app's indigo
+                                clinical theme, and every CTA opens the real login or signup flow.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about">
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">About Us</span>
+                        <h2>Built for clinics that want calm operations and a stronger local care network.</h2>
+                        <p>
+                            NirogOS was designed to feel like the actual control center of your clinic, not another bloated
+                            admin tool. Doctors move faster, staff can see the whole day clearly, and pharmacies receive
+                            prescriptions in a reliable flow that respects local relationships.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-line">
+                        <strong>5 days</strong>
+                        <span>free trial on signup</span>
+                    </div>
+                    <div class="stat-line">
+                        <strong>1 login</strong>
+                        <span>for clinic workflow and onboarding</span>
+                    </div>
+                    <div class="stat-line">
+                        <strong>Real-time</strong>
+                        <span>prescription updates to pharmacy</span>
+                    </div>
+                    <div class="stat-line">
+                        <strong>Professional</strong>
+                        <span>doctor and pharmacy portals</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="product">
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">Product Preview</span>
+                        <h2>Website visuals shaped around the real app flows.</h2>
+                        <p>
+                            The previews below mirror the actual product structure: queue on the left, doctor action in the
+                            middle, and pharmacy execution on the right. That gives the marketing site the same visual
+                            language as the product users enter after login.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <article class="feature">
+                        <span class="feature-icon">🩺</span>
+                        <h3>Doctor Workspace</h3>
+                        <p>Fast patient flow, prescription drafting, visit records, and guided onboarding that lands new
+                            doctors directly in the setup form instead of leaving them waiting on the login screen.</p>
+                    </article>
+
+                    <article class="feature">
+                        <span class="feature-icon">🏥</span>
+                        <h3>Front Desk Control</h3>
+                        <p>Staff can see today’s movement instantly, handle walk-ins, track waiting patients, and keep
+                            every visit visible from one dashboard.</p>
+                    </article>
+
+                    <article class="feature">
+                        <span class="feature-icon">💊</span>
+                        <h3>Pharmacy Handoff</h3>
+                        <p>Prescriptions move into the pharmacy portal with status tracking for incoming, packing, ready,
+                            and dispensed, so the handoff is clear to everyone.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="features">
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">Features</span>
+                        <h2>Everything you need to run a modern clinic on one system.</h2>
+                        <p>
+                            These are the workflows users actually touch every day: login, onboarding, live patient queue,
+                            prescription routing, pharmacy visibility, analytics, and a clean public website that sends
+                            people into the correct flow.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <article class="feature">
+                        <span class="feature-icon">⚡</span>
+                        <h3>Faster account creation</h3>
+                        <p>Doctor signup now initializes the clinic profile right away and routes directly into onboarding,
+                            reducing the dead time between account creation and first use.</p>
+                    </article>
+
+                    <article class="feature">
+                        <span class="feature-icon">🔐</span>
+                        <h3>Reliable pharmacy auth</h3>
+                        <p>Pharmacy signup and login now attempt immediate profile creation in Supabase and still support
+                            metadata-based sync for older accounts.</p>
+                    </article>
+
+                    <article class="feature">
+                        <span class="feature-icon">📲</span>
+                        <h3>Clear trial CTA</h3>
+                        <p>The public homepage now sends interested doctors straight into the signup flow with a “Try Now
+                            Free for 5 Days” call to action.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing">
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">Pricing</span>
+                        <h2>Start with a 5-day free trial. Upgrade when the clinic is ready.</h2>
+                        <p>
+                            Every plan keeps the core workflow clean. The difference is how much automation, visibility, and
+                            growth support you want layered on top.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pricing-grid">
+                    <article class="price-card">
+                        <h3>Essential</h3>
+                        <p>Paperless basics for doctors who want a simpler day.</p>
+                        <div class="price-tag"><strong>₹999</strong><span>/ month</span></div>
+                        <ul class="price-list">
+                            <li>Doctor portal with prescriptions and patient records</li>
+                            <li>Front desk patient registration</li>
+                            <li>Downloadable prescription output</li>
+                        </ul>
+                        <a class="ghost-button" href="/pricing">See plan details</a>
+                    </article>
+
+                    <article class="price-card featured">
+                        <span class="badge sent">Most Popular</span>
+                        <h3 style="margin-top:16px;">Professional</h3>
+                        <p>Automation for busy clinics that want speed without losing control.</p>
+                        <div class="price-tag"><strong>₹1999</strong><span>/ month</span></div>
+                        <ul class="price-list">
+                            <li>Everything in Essential</li>
+                            <li>QR patient check-in and live prescription sharing</li>
+                            <li>WhatsApp prescription delivery and pharmacy-ready workflow</li>
+                        </ul>
+                        <a class="button" href="/login?mode=signup">Try Now Free for 5 Days</a>
+                    </article>
+
+                    <article class="price-card">
+                        <h3>Elite</h3>
+                        <p>Business-level visibility for clinics that want analytics and premium support.</p>
+                        <div class="price-tag"><strong>₹2999</strong><span>/ month</span></div>
+                        <ul class="price-list">
+                            <li>Everything in Professional</li>
+                            <li>Analytics dashboard and advanced reporting</li>
+                            <li>Priority support and dedicated onboarding help</li>
+                        </ul>
+                        <a class="ghost-button" href="/pricing">Compare plans</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="security">
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">Security & Trust</span>
+                        <h2>Built so clinic data stays organized, role-aware, and controlled.</h2>
+                        <p>
+                            Access is separated for doctors and pharmacy staff, profile rows are synced against the active
+                            user session, and every path now points users to the correct portal instead of letting them get
+                            stuck in the wrong login flow.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="security-grid">
+                    <article class="feature">
+                        <span class="feature-icon">🧭</span>
+                        <h3>Role-based routing</h3>
+                        <p>Doctor accounts land in the clinic workspace. Pharmacy accounts land in the pharmacy portal.
+                            Wrong-portal sign-ins are handled cleanly.</p>
+                    </article>
+
+                    <article class="feature">
+                        <span class="feature-icon">🧾</span>
+                        <h3>Consistent profile writes</h3>
+                        <p>Doctor clinics and pharmacy records are now created earlier in the flow, which makes onboarding
+                            and portal access much more reliable.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="shell section-card">
+                <div class="section-head">
+                    <div class="section-copy">
+                        <span class="eyebrow">FAQ</span>
+                        <h2>Everything working, clearly linked.</h2>
+                        <p>
+                            The public website, legal pages, pricing, doctor signup, and pharmacy signup all link into the
+                            live app routes now, so the site behaves like a real product entry point instead of a detached
+                            static page.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-grid">
+                    <article class="faq-item">
+                        <h3 class="faq-question">How does the free trial work?</h3>
+                        <p class="faq-answer">Click “Try Now Free for 5 Days” and you’ll open the doctor signup flow
+                            directly. Once the account is created, onboarding starts immediately.</p>
+                    </article>
+
+                    <article class="faq-item">
+                        <h3 class="faq-question">Can pharmacies create their own account?</h3>
+                        <p class="faq-answer">Yes. Pharmacies can use the dedicated signup route, and the app now attempts
+                            to create the matching Supabase records right away.</p>
+                    </article>
+
+                    <article class="faq-item">
+                        <h3 class="faq-question">Does the website match the app?</h3>
+                        <p class="faq-answer">Yes. The public site now uses the same indigo/slate product language and
+                            showcases doctor and pharmacy views that mirror the real workflow.</p>
+                    </article>
+
+                    <article class="faq-item">
+                        <h3 class="faq-question">Where do legal and support links go?</h3>
+                        <p class="faq-answer">Terms, privacy, refund policy, and support all point to the live app routes
+                            instead of placeholder anchors.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="shell">
+        <div class="footer-card">
+            <div class="footer-grid">
+                <div>
+                    <div class="brand" style="margin-bottom:14px;">
+                        <span class="brand-mark">
+                            <img src="/assets/logo/nirogos-mark-light.svg" alt="NirogOS mark" />
+                        </span>
+                        <span>NirogOS</span>
+                    </div>
+                    <p style="max-width:320px; line-height:1.78;">
+                        A connected operating system for clinics that want faster workflows, cleaner patient movement, and
+                        a dependable doctor-to-pharmacy handoff.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="footer-title">Product</h3>
+                    <ul class="footer-list">
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#product">Product</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="footer-title">App</h3>
+                    <ul class="footer-list">
+                        <li><a href="/login">Doctor Login</a></li>
+                        <li><a href="/login?mode=signup">Doctor Signup</a></li>
+                        <li><a href="/pharmacy/signup">Pharmacy Signup</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="footer-title">Legal</h3>
+                    <ul class="footer-list">
+                        <li><a href="/terms">Terms</a></li>
+                        <li><a href="/privacy">Privacy</a></li>
+                        <li><a href="/refund-policy">Refund Policy</a></li>
+                        <li><a href="/support">Support</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© <span id="year"></span> NirogOS. All rights reserved.</span>
+            <span>Designed to look and feel like the product users actually enter.</span>
+        </div>
+    </footer>
+
+    <script>
+        const nav = document.getElementById('site-nav');
+        const toggle = document.getElementById('nav-toggle');
+        toggle.addEventListener('click', () => {
+            nav.classList.toggle('open');
+            toggle.textContent = nav.classList.contains('open') ? '×' : '+';
+        });
+
+        document.querySelectorAll('.nav-links a').forEach((link) => {
+            link.addEventListener('click', () => {
+                nav.classList.remove('open');
+                toggle.textContent = '+';
+            });
+        });
+
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

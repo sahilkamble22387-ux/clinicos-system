@@ -3,7 +3,7 @@ import { Mail, Phone, User, MapPin, Lock, ShieldCheck, Building2, Store } from '
 import { toast } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../../services/db';
-import { ensurePharmacyFromMetadata } from '../../../services/pharmacyService';
+import { syncAndFetchPharmacyProfile } from '../../../services/pharmacyService';
 import { Logo } from '../../../src/components/Logo';
 
 type Step = 1 | 2;
@@ -128,7 +128,10 @@ const PharmacySignup: React.FC = () => {
         return;
       }
 
-      await ensurePharmacyFromMetadata();
+      const profile = await syncAndFetchPharmacyProfile(userId);
+      if (!profile?.pharmacy_id) {
+        throw new Error('Your pharmacy profile could not be created yet. Please try signing in once more.');
+      }
 
       toast.success('Account created! Opening pharmacy portal…');
       window.location.href = '/pharmacy-portal';
