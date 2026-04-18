@@ -46,6 +46,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import SupportPage from './pages/SupportPage';
 import RefundPolicyPage from './pages/RefundPolicyPage';
 import RxPage from './pages/RxPage';
+import AdminDashboard from './pages/AdminDashboard';
 import { ensureDoctorClinicSetup } from './services/doctorService';
 import { syncAndFetchPharmacyProfile } from './services/pharmacyService';
 
@@ -101,6 +102,7 @@ const App: React.FC = () => (
       <Route path="/support" element={<SupportPage />} />
       <Route path="/refund-policy" element={<RefundPolicyPage />} />
       <Route path="/rx/:prescriptionId" element={<RxPage />} />
+      <Route path="/admin" element={<AdminDashboard />} />
 
       {/* Pharmacy portal — role-gated */}
       <Route

@@ -730,8 +730,8 @@ export default function EditProfile() {
 
                 {/* ═══ 5: Pharmacy Integration ═══ */}
                 {clinicId && user && (
-                    <Section index={5} icon={Store} title="Linked Pharmacy"
-                        subtitle="Invite your local pharmacy to receive prescriptions instantly" accent="#f59e0b">
+                    <Section index={5} icon={Store} title="Pharmacy Linking"
+                        subtitle="Manage linked pharmacies, send requests, and keep a primary destination" accent="#f59e0b">
                         <PharmacyInvitePanel clinicId={clinicId} doctorProfileId={user.id} />
                     </Section>
                 )}
