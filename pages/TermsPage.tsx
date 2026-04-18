@@ -8,7 +8,7 @@ interface TermsPageProps {
 
 const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
     const navigate = useNavigate();
-    const handleBack = onBack ?? (() => navigate('/login'));
+    const handleBack = onBack ?? (() => navigate('/'));
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Top bar */}
@@ -19,7 +19,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
                         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors"
                     >
                         <ArrowLeft size={17} />
-                        Back to Sign In
+                        Back to Website
                     </button>
                 </div>
             </div>

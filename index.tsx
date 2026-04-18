@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import CheckIn from './pages/CheckIn';
 import RxPage from './pages/RxPage';
 import Maintenance from './pages/Maintenance';
+import LandingPage from './pages/LandingPage';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
           </Routes>
         ) : (
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />

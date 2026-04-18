@@ -10,11 +10,11 @@ const SupportPage: React.FC = () => {
             <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-100">
                 <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
                     <button
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate('/')}
                         className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold text-sm transition-colors"
                     >
                         <ArrowLeft size={17} />
-                        Back to Sign In
+                        Back to Website
                     </button>
                 </div>
             </div>
