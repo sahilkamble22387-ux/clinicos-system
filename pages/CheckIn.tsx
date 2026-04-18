@@ -59,36 +59,67 @@ export default function CheckIn() {
         setSubmitting(true)
 
         try {
-            // 1. Insert patient row
-            const { data: patient, error: patientError } = await (supabase as any)
+            const cleanPhone = form.phone.trim().replace(/\D/g, '')
+            const { data: existingPatient, error: existingPatientError } = await (supabase as any)
                 .from('patients')
-                .insert({
-                    full_name: form.full_name.trim(),
-                    phone: form.phone.trim(),
-                    clinic_id: clinicId,          // ← CRITICAL: locks to this clinic
-                    status: 'waiting',
-                    is_active: true,
-                    source: 'QR_Checkin',
-                    consultation_fee: 0,
-                })
                 .select('id')
-                .single()
+                .eq('clinic_id', clinicId)
+                .eq('phone', cleanPhone)
+                .maybeSingle()
 
-            if (patientError) throw patientError
+            if (existingPatientError) throw existingPatientError
+
+            let patientId = existingPatient?.id as string | undefined
+
+            if (patientId) {
+                const { error: updatePatientError } = await (supabase as any)
+                    .from('patients')
+                    .update({
+                        full_name: form.full_name.trim(),
+                        phone: cleanPhone,
+                        gender: form.gender || null,
+                        status: 'waiting',
+                        is_active: true,
+                        source: 'QR_Checkin',
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', patientId)
+
+                if (updatePatientError) throw updatePatientError
+            } else {
+                const { data: patient, error: patientError } = await (supabase as any)
+                    .from('patients')
+                    .insert({
+                        full_name: form.full_name.trim(),
+                        phone: cleanPhone,
+                        clinic_id: clinicId,
+                        status: 'waiting',
+                        is_active: true,
+                        source: 'QR_Checkin',
+                        consultation_fee: 0,
+                        gender: form.gender || null,
+                    })
+                    .select('id')
+                    .single()
+
+                if (patientError) throw patientError
+                patientId = patient.id
+            }
 
             // 2. Create appointment row
-            await (supabase as any)
+            const { error: appointmentError } = await (supabase as any)
                 .from('appointments')
                 .insert({
-                    patient_id: patient.id,
-                    clinic_id: clinicId,           // ← CRITICAL: locks to this clinic
+                    patient_id: patientId,
+                    clinic_id: clinicId,
                     status: 'waiting',
-                    chief_complaint: form.chief_complaint || null,
                 })
+
+            if (appointmentError) throw appointmentError
 
             // 3. Get their position in queue
             const { count } = await (supabase as any)
-                .from('patients')
+                .from('appointments')
                 .select('id', { count: 'exact', head: true })
                 .eq('clinic_id', clinicId)
                 .eq('status', 'waiting')

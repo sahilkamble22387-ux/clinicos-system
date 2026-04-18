@@ -146,16 +146,53 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const vitalsRisk: VitalsRiskResult = analyzeVitals(vitalsForm);
 
   const fetchQueue = async () => {
-    const { data, error } = await (supabase as any)
-      .from('appointments').select('*, patients(*)')
-      .eq('clinic_id', clinicId).eq('status', 'waiting').order('created_at', { ascending: true });
-    if (error) { console.error('Error fetching queue:', error); return; }
-    if (data) {
-      setQueue(data.map((item: any) => ({
-        id: item.id, patientId: item.patient_id, arrivalTime: item.created_at,
-        status: VisitStatus.WAITING, patientName: item.patients?.full_name, source: item.patients?.source,
-      })));
+    const { data: appointments, error } = await (supabase as any)
+      .from('appointments')
+      .select('id, patient_id, created_at')
+      .eq('clinic_id', clinicId)
+      .eq('status', 'waiting')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching queue:', error);
+      return;
     }
+
+    const patientIds = Array.from(
+      new Set((appointments ?? []).map((item: any) => item.patient_id).filter(Boolean))
+    );
+
+    let patientMap = new Map<string, { full_name: string | null; source: string | null }>();
+
+    if (patientIds.length > 0) {
+      const { data: patients, error: patientsError } = await (supabase as any)
+        .from('patients')
+        .select('id, full_name, source')
+        .in('id', patientIds);
+
+      if (patientsError) {
+        console.error('Error fetching queue patients:', patientsError);
+      } else {
+        patientMap = new Map(
+          (patients ?? []).map((patient: any) => [
+            patient.id,
+            { full_name: patient.full_name ?? null, source: patient.source ?? null },
+          ])
+        );
+      }
+    }
+
+    setQueue((appointments ?? []).map((item: any) => {
+      const patient = patientMap.get(item.patient_id);
+      return {
+        id: item.id,
+        patientId: item.patient_id,
+        arrivalTime: item.created_at,
+        status: VisitStatus.WAITING,
+        patientName: patient?.full_name ?? 'Unknown Patient',
+        source: patient?.source ?? null,
+      };
+    }));
   };
 
   useEffect(() => {

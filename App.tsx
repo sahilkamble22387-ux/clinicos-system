@@ -221,7 +221,7 @@ const DoctorApp: React.FC = () => {
     if (!clinic?.id) return;
     const fetchWaiting = async () => {
       const { count } = await supabase
-        .from('patients').select('*', { count: 'exact', head: true })
+        .from('appointments').select('id', { count: 'exact', head: true })
         .eq('clinic_id', clinic.id).eq('status', 'waiting');
       setWaitingCount(count ?? 0);
     };
@@ -313,8 +313,8 @@ const DoctorApp: React.FC = () => {
                         <button key={item.key}
                           onClick={() => { setView(item.key); setSelectedPatient(null); }}
                           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${view === item.key
-                              ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20'
-                              : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                            ? 'bg-indigo-500/20 text-indigo-300 shadow-lg shadow-indigo-500/10 border border-indigo-500/20'
+                            : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
                             }`}>
                           {view === item.key && (
                             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-r-full" />

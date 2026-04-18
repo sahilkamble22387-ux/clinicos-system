@@ -7,7 +7,6 @@ export interface PharmacyDirectoryItem {
     name: string;
     license_number: string | null;
     phone: string | null;
-    email: string | null;
     address: string | null;
     city: string | null;
     pincode: string | null;
@@ -19,6 +18,7 @@ export interface PharmacyProfileRow {
     role: string | null;
     pharmacy_id: string | null;
     clinic_id: string | null;
+    full_name?: string | null;
 }
 
 export interface DoctorPharmacyNetwork {
@@ -72,14 +72,14 @@ async function persistPharmacyFromAuthMetadata(userId?: string): Promise<boolean
             name: pharmacy.pharmacy_name?.trim() || 'Pharmacy',
             license_number: pharmacy.license_number?.trim() || null,
             phone: pharmacy.phone?.trim() || null,
-            email: pharmacy.email?.trim() || user.email || null,
             address: pharmacy.address?.trim() || null,
             city: pharmacy.city?.trim() || null,
             pincode: pharmacy.pincode?.trim() || null,
             is_verified: false,
         }], { onConflict: 'id' });
-
-    if (pharmacyError) throw pharmacyError;
+    if (pharmacyError) {
+        console.warn('[pharmacyService] Could not upsert pharmacy directory row:', pharmacyError);
+    }
 
     const { error: profileError } = await (supabase as any)
         .from('profiles')
@@ -131,7 +131,7 @@ export async function ensurePharmacyFromMetadata(userId?: string): Promise<void>
 export async function fetchProfileRole(userId: string): Promise<PharmacyProfileRow | null> {
     const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('role, pharmacy_id, clinic_id')
+        .select('role, pharmacy_id, clinic_id, full_name')
         .eq('id', userId)
         .maybeSingle();
 
@@ -144,7 +144,8 @@ export async function syncAndFetchPharmacyProfile(userId: string): Promise<Pharm
         await ensurePharmacyFromMetadata(userId);
     } catch (error: any) {
         const message = String(error?.message ?? '');
-        if (!message.toLowerCase().includes('ensure_pharmacy_from_metadata')) {
+        console.warn('[pharmacyService] Metadata sync warning:', error);
+        if (!message.toLowerCase().includes('ensure_pharmacy_from_metadata') && !message.toLowerCase().includes('row-level security')) {
             throw error;
         }
     }
@@ -167,17 +168,62 @@ export async function syncAndFetchPharmacyProfile(userId: string): Promise<Pharm
 export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<DoctorPharmacyNetwork> {
     const { data: pharmacies, error: pharmaciesError } = await (supabase as any)
         .from('pharmacies')
-        .select('id, clinic_id, owner_name, name, license_number, phone, email, address, city, pincode, is_verified, created_at')
+        .select('id, clinic_id, owner_name, name, license_number, phone, address, city, pincode, is_verified, created_at')
         .order('created_at', { ascending: false });
 
-    if (pharmaciesError) throw pharmaciesError;
+    let all = (pharmacies ?? []) as PharmacyDirectoryItem[];
 
-    const all = (pharmacies ?? []) as PharmacyDirectoryItem[];
-    const linkedPharmacies = all
+    if (pharmaciesError) {
+        console.warn('[pharmacyService] Global pharmacy directory read failed, falling back to clinic-linked pharmacies only:', pharmaciesError);
+
+        const { data: linkedOnly, error: linkedOnlyError } = await (supabase as any)
+            .from('pharmacies')
+            .select('id, clinic_id, owner_name, name, license_number, phone, address, city, pincode, is_verified, created_at')
+            .eq('clinic_id', clinicId)
+            .order('created_at', { ascending: false });
+
+        if (linkedOnlyError) throw linkedOnlyError;
+        all = (linkedOnly ?? []) as PharmacyDirectoryItem[];
+    }
+
+    const { data: profileRows, error: profilesError } = await (supabase as any)
+        .from('profiles')
+        .select('id, clinic_id, full_name, pharmacy_id, role')
+        .eq('role', 'pharmacy_staff');
+
+    if (profilesError) throw profilesError;
+
+    const merged = new Map<string, PharmacyDirectoryItem>();
+
+    all.forEach((pharmacy) => {
+        merged.set(pharmacy.id, pharmacy);
+    });
+
+    (profileRows ?? []).forEach((profile: any) => {
+        const pharmacyId = profile.pharmacy_id || profile.id;
+        const existing = merged.get(pharmacyId);
+        merged.set(pharmacyId, {
+            id: pharmacyId,
+            clinic_id: profile.clinic_id ?? existing?.clinic_id ?? null,
+            owner_name: existing?.owner_name ?? profile.full_name ?? null,
+            name: existing?.name ?? profile.full_name ?? 'Pharmacy',
+            license_number: existing?.license_number ?? null,
+            phone: existing?.phone ?? null,
+            address: existing?.address ?? null,
+            city: existing?.city ?? null,
+            pincode: existing?.pincode ?? null,
+            is_verified: existing?.is_verified ?? null,
+            created_at: existing?.created_at ?? new Date(0).toISOString(),
+        });
+    });
+
+    const mergedPharmacies = Array.from(merged.values());
+
+    const linkedPharmacies = mergedPharmacies
         .filter(pharmacy => pharmacy.clinic_id === clinicId)
         .sort((a, b) => a.name.localeCompare(b.name));
 
-    const directoryPharmacies = all
+    const directoryPharmacies = mergedPharmacies
         .sort((a, b) => {
             if (a.clinic_id === clinicId && b.clinic_id !== clinicId) return -1;
             if (!a.clinic_id && b.clinic_id) return -1;
@@ -192,7 +238,9 @@ export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<Doct
         .eq('key', defaultPharmacyKey(clinicId))
         .maybeSingle();
 
-    if (defaultError) throw defaultError;
+    if (defaultError) {
+        console.warn('[pharmacyService] Could not load clinic default pharmacy setting:', defaultError);
+    }
 
     const savedDefault = typeof defaultSetting?.value === 'string' ? defaultSetting.value : null;
     const defaultPharmacyId = linkedPharmacies.some(pharmacy => pharmacy.id === savedDefault)
@@ -229,7 +277,9 @@ export async function linkPharmacyToClinic(clinicId: string, pharmacyId: string)
         .update({ clinic_id: clinicId })
         .eq('id', pharmacyId);
 
-    if (pharmacyError) throw pharmacyError;
+    if (pharmacyError) {
+        console.warn('[pharmacyService] Could not update pharmacy directory row during link:', pharmacyError);
+    }
 
     const { error: profileError } = await (supabase as any)
         .from('profiles')
@@ -250,7 +300,9 @@ export async function unlinkPharmacyFromClinic(clinicId: string, pharmacyId: str
         .eq('id', pharmacyId)
         .eq('clinic_id', clinicId);
 
-    if (pharmacyError) throw pharmacyError;
+    if (pharmacyError) {
+        console.warn('[pharmacyService] Could not update pharmacy directory row during unlink:', pharmacyError);
+    }
 
     const { error: profileError } = await (supabase as any)
         .from('profiles')

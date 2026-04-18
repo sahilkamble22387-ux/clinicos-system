@@ -39,8 +39,8 @@ function avatarSeed(name: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
-    const [patientName, setPatientName] = useState<string>('');
-    const [patientSource, setPatientSource] = useState<string | null>(null);
+    const [patientName, setPatientName] = useState<string>(visit.patientName?.trim() || '');
+    const [patientSource, setPatientSource] = useState<string | null>(visit.source ?? null);
     const [loadError, setLoadError] = useState(false);
     const [waitSeconds, setWaitSeconds] = useState(0);
 
@@ -53,6 +53,14 @@ const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
 
     // BUG FIX 2: handle fetch error — original silently left name as 'Loading...' on failure
     useEffect(() => {
+        setPatientName(visit.patientName?.trim() || '');
+        setPatientSource(visit.source ?? null);
+        setLoadError(false);
+    }, [visit.patientId, visit.patientName, visit.source]);
+
+    useEffect(() => {
+        if (visit.patientName?.trim()) return;
+
         if (!visit.patientId) {
             setPatientName('Unknown Patient');
             return;
@@ -81,7 +89,7 @@ const QueueItem: React.FC<QueueItemProps> = ({ visit, onClick }) => {
 
         fetchInfo();
         return () => { cancelled = true; };
-    }, [visit.patientId]);
+    }, [visit.patientId, visit.patientName]);
 
     // BUG FIX 4: arrivalTime could be invalid — guard against NaN elapsed time
     useEffect(() => {

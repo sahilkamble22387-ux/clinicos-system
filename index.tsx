@@ -10,6 +10,7 @@ import CheckIn from './pages/CheckIn';
 import RxPage from './pages/RxPage';
 import Maintenance from './pages/Maintenance';
 import LandingPage from './pages/LandingPage';
+import AuthCallback from './pages/AuthCallback';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/checkin/:clinicId" element={<CheckIn />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/rx/:prescriptionId" element={<RxPage />} />
             <Route path="/*" element={<App />} />
           </Routes>

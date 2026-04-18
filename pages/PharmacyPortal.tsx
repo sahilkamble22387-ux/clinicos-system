@@ -138,7 +138,7 @@ const PharmacyPortal: React.FC = () => {
 
                 setProfile({
                     pharmacy_id: profileData.pharmacy_id,
-                    pharmacy_name: pharmacyRes.data?.name ?? 'My Pharmacy',
+                    pharmacy_name: pharmacyRes.data?.name ?? profileData.full_name ?? 'My Pharmacy',
                     clinic_name: clinicRes.data?.name ?? 'Clinic link pending',
                 });
 
