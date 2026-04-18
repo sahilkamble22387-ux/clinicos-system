@@ -26,7 +26,6 @@ import {
   QrCode, DollarSign, Settings as SettingsIcon, Pill,
 } from 'lucide-react';
 import { supabase } from './services/db';
-import { Toaster } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { SubscriptionGate } from './components/SubscriptionGate';
 import { FeatureGate } from './components/FeatureGate';
@@ -281,7 +280,6 @@ const DoctorApp: React.FC = () => {
           <OnboardingGuard>
             <SubscriptionGate clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading} onSignOut={handleLogout}>
               <div className="h-screen flex overflow-hidden bg-slate-50">
-                <Toaster position="top-right" toastOptions={{ style: { borderRadius: '12px', fontSize: '13px', fontWeight: 500 }, success: { iconTheme: { primary: '#6366f1', secondary: '#fff' } } }} />
                 {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
                 {/* Desktop sidebar */}
