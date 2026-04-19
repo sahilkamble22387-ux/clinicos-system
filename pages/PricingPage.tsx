@@ -15,14 +15,14 @@ import toast from 'react-hot-toast'
 const TIERS = [
     {
         id: 'essential',
-        name: 'Essential',
+        name: 'Basic',
         badge: null as string | null,
         icon: Zap,
         tagline: 'The Manual Digital Clinic',
         description: 'Everything to go paperless — you stay in control of every click.',
-        monthlyPrice: 999,
-        yearlyPrice: 833,
-        perDay: 33,
+        monthlyPrice: 499,
+        yearlyPrice: 414,
+        perDay: 17,
         color: 'slate' as const,
         highlighted: false,
         accentClass: 'border-slate-200',
@@ -44,9 +44,9 @@ const TIERS = [
         icon: Star,
         tagline: 'The Automated Clinic',
         description: 'Save 2 hours/day. Patients check in themselves. Prescriptions send themselves.',
-        monthlyPrice: 1999,
-        yearlyPrice: 1666,
-        perDay: 67,
+        monthlyPrice: 999,
+        yearlyPrice: 829,
+        perDay: 33,
         color: 'indigo' as const,
         highlighted: true,
         accentClass: 'border-indigo-500 shadow-2xl shadow-indigo-100',
@@ -63,14 +63,14 @@ const TIERS = [
     },
     {
         id: 'elite',
-        name: 'Elite',
+        name: 'Premium',
         badge: '🏆 Best Value',
         icon: Trophy,
         tagline: 'The Business Clinic',
         description: 'Run your clinic like a CEO. Know your numbers. Grow with data.',
-        monthlyPrice: 2999,
-        yearlyPrice: 2499,
-        perDay: 100,
+        monthlyPrice: 1499,
+        yearlyPrice: 1244,
+        perDay: 50,
         color: 'violet' as const,
         highlighted: false,
         accentClass: 'border-violet-200',
@@ -90,7 +90,7 @@ const TIERS = [
 const FAQS = [
     {
         q: 'How does the free trial work?',
-        a: "You get 5 days of full access to test all features. No payment required upfront. After the trial, you choose a plan and pay via UPI.",
+        a: "You get 30 days of full access to test all features. No payment required upfront. After the trial, you choose a plan and pay via UPI.",
     },
     {
         q: 'How do I pay?',
@@ -106,7 +106,7 @@ const FAQS = [
     },
     {
         q: 'Is patient data secure?',
-        a: "Yes. All data is encrypted at rest and in transit. Hosted on Supabase (SOC 2 compliant) with Row Level Security on every table.",
+        a: "Yes. All data is encrypted at rest and in transit on secure cloud infrastructure with Row Level Security on every table.",
     },
 ]
 
@@ -374,7 +374,7 @@ export default function PricingPage() {
         navigate('/dashboard')
     }
 
-    const yearlyDiscount = Math.round((1 - (1999 * 10) / (1999 * 12)) * 100)
+    const yearlyDiscount = 17
 
     const doctorName =
         (clinicProfile as { doctor_name?: string })?.doctor_name ??
@@ -402,7 +402,7 @@ export default function PricingPage() {
             <div className="max-w-5xl mx-auto px-4 pt-14 pb-2 text-center">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-bold text-indigo-700 mb-6">
                     <Sparkles size={12} />
-                    Used by 200+ doctors across Maharashtra
+                    Founder's Plan live for the first 50 clinics
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
                     {user ? 'Upgrade your plan' : 'Simple, honest pricing'}
@@ -410,7 +410,7 @@ export default function PricingPage() {
                 <p className="text-slate-500 text-lg max-w-xl mx-auto font-medium mb-8">
                     {user
                         ? 'Choose the plan that fits your clinic. Pay via UPI on WhatsApp.'
-                        : 'Start your 5-day free trial. No credit card required. No setup fees.'
+                        : 'Start your 30-day free trial. No credit card required. No setup fees.'
                     }
                 </p>
 
@@ -522,7 +522,7 @@ export default function PricingPage() {
                                     </div>
                                 )}
                                 {tier.id === 'professional' && (
-                                    <p className="text-xs text-indigo-600 font-semibold mb-4">127 doctors in Maharashtra use this plan</p>
+                                    <p className="text-xs text-teal-600 font-semibold mb-4">⭐ Early Access</p>
                                 )}
 
                                 {/* Features */}
@@ -568,6 +568,15 @@ export default function PricingPage() {
                 })}
             </div>
 
+            <div className="max-w-5xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="text-sm text-slate-500 font-medium">🔄 Cancel anytime. No questions asked.</div>
+                <div className="text-sm text-slate-500 font-medium">🔒 Your data is always yours. Export anytime.</div>
+                <div className="text-sm text-slate-500 font-medium">📞 Founder support on WhatsApp directly.</div>
+            </div>
+            <p className="mt-4 text-center text-sm italic text-slate-400">
+                Prices in INR. GST applicable. Annual plans billed once per year.
+            </p>
+
             {/* ── Social Proof ── */}
             <div className="max-w-3xl mx-auto px-4 mt-10">
                 <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
@@ -575,9 +584,9 @@ export default function PricingPage() {
                         <span className="text-2xl">🏆</span>
                     </div>
                     <div>
-                        <p className="font-black text-slate-900 mb-0.5">Trusted by doctors across Maharashtra</p>
+                        <p className="font-black text-slate-900 mb-0.5">Founder's Plan is open</p>
                         <p className="text-sm text-slate-500 font-medium">
-                            "NirogOS cut my prescription time from 5 minutes to 30 seconds. My patients get a professional digital prescription on WhatsApp instantly." — Dr. Rahul M., Pune
+                            Professional is free for 3 months for the first 50 clinics, then locked at ₹599/month forever for founder clinics.
                         </p>
                     </div>
                 </div>

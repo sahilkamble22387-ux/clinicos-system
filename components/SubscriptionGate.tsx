@@ -5,7 +5,7 @@ import { Lock, CheckCircle, Clock, WifiOff, X } from 'lucide-react';
 // ── YOUR DETAILS ────────────────────────────────────────────────────────────
 const YOUR_UPI_ID = 'sahilkamble22387-1@oksbi';
 const YOUR_UPI_NAME = 'NirogOS';
-const YOUR_PHONE = '+91 99999 99999';
+const YOUR_PHONE = '+91 76204 22387';
 const YOUR_WHATSAPP_URL = 'https://wa.me/917620422387';
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -13,26 +13,26 @@ const PLANS = [
     {
         id: 'basic',
         name: 'Basic',
-        price: 999,
+        price: 499,
         period: 'month',
-        features: ['1 Doctor', 'Unlimited Patients', 'Front Desk', 'Analytics'],
+        features: ['Front Desk', 'Doctor Portal', 'Medical Records', 'Ideal for smaller clinics'],
         color: 'from-blue-500 to-blue-600',
     },
     {
-        id: 'pro',
-        name: 'Pro',
-        price: 1999,
+        id: 'professional',
+        name: 'Professional',
+        price: 999,
         period: 'month',
         popular: true,
-        features: ['3 Doctors', 'QR Check-In', 'Advanced Analytics', 'Medical Records'],
+        features: ['Unlimited patients', 'QR Check-In', 'WhatsApp prescriptions', 'Best for growing clinics'],
         color: 'from-violet-500 to-purple-600',
     },
     {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 4999,
+        id: 'premium',
+        name: 'Premium',
+        price: 1499,
         period: 'month',
-        features: ['Unlimited Doctors', 'Custom Branding', 'Data Export', 'Priority Support'],
+        features: ['Everything in Professional', 'Advanced analytics', 'Priority support', 'Founder onboarding'],
         color: 'from-slate-700 to-slate-900',
     },
 ];

@@ -102,7 +102,7 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
     const loadData = async () => {
         setLoading(true);
         try {
-            const [pendingInvite, linkRows] = await Promise.all([
+            const [pendingInvite, linkRows, directRows, defaultSetting] = await Promise.all([
                 (supabase as any)
                     .from('pharmacy_invites')
                     .select('id, token, status, expires_at, created_at')
@@ -117,6 +117,16 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
                     .eq('clinic_id', clinicId)
                     .order('is_primary', { ascending: false })
                     .order('created_at', { ascending: false }),
+                (supabase as any)
+                    .from('pharmacies')
+                    .select('id, clinic_id, name, phone, city, is_verified, created_at')
+                    .eq('clinic_id', clinicId)
+                    .order('created_at', { ascending: false }),
+                (supabase as any)
+                    .from('clinic_settings')
+                    .select('value')
+                    .eq('key', `clinic:${clinicId}:default_pharmacy_id`)
+                    .maybeSingle(),
             ]);
 
             const existingInvite = pendingInvite.data;
@@ -139,13 +149,32 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
                     createdAt: row.created_at,
                 })) as LinkedPharmacyCard[];
 
+                const directLinkedRows = ((directRows.data ?? []) as any[]);
+                const defaultPharmacyId = typeof defaultSetting.data?.value === 'string' ? defaultSetting.data.value : null;
+                const existingPharmacyIds = new Set(cards.map(card => card.pharmacyId));
+
+                directLinkedRows.forEach((row) => {
+                    if (existingPharmacyIds.has(row.id)) return;
+                    cards.push({
+                        linkId: row.id,
+                        pharmacyId: row.id,
+                        name: row.name ?? 'Pharmacy',
+                        phone: row.phone ?? null,
+                        city: row.city ?? null,
+                        linkStatus: 'active',
+                        isPrimary: row.id === defaultPharmacyId,
+                        contactStatus: row.is_verified ? 'active' : 'pending',
+                        createdAt: row.created_at ?? new Date().toISOString(),
+                    });
+                });
+
                 setUsingLegacyMode(false);
                 setLinkedPharmacies(cards.filter(card => card.linkStatus !== 'pending'));
                 setPendingRequests(cards.filter(card => card.linkStatus === 'pending'));
                 return;
             }
 
-            const [pharmaciesRes, profilesRes, defaultSetting] = await Promise.all([
+            const [pharmaciesRes, profilesRes, fallbackDefaultSetting] = await Promise.all([
                 (supabase as any)
                     .from('pharmacies')
                     .select('id, clinic_id, name, phone, city, is_verified, created_at')
@@ -193,7 +222,7 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
                 });
             });
 
-            const defaultPharmacyId = typeof defaultSetting.data?.value === 'string' ? defaultSetting.data.value : null;
+            const defaultPharmacyId = typeof fallbackDefaultSetting.data?.value === 'string' ? fallbackDefaultSetting.data.value : null;
             const cards = Array.from(byId.values()).map(card => ({
                 ...card,
                 isPrimary: card.pharmacyId === defaultPharmacyId,

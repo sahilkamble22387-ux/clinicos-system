@@ -40,7 +40,7 @@ export const pricingTiers: PricingTier[] = [
     {
         id: 'professional',
         name: 'Professional',
-        price: 2499,
+        price: 999,
         currency: '₹',
         interval: 'month',
         description: 'Everything you need to run a growing practice efficiently.',
@@ -48,7 +48,7 @@ export const pricingTiers: PricingTier[] = [
         highlighted: true,
         theme: 'primary',
         features: [
-            { name: 'Up to 500 patients/month', included: true },
+            { name: 'Unlimited patients/month', included: true },
             { name: 'Basic patient records', included: true },
             { name: 'Priority email & chat support', included: true },
             { name: 'Manual check-in', included: true },
@@ -63,7 +63,7 @@ export const pricingTiers: PricingTier[] = [
     {
         id: 'premium',
         name: 'Premium',
-        price: 4999,
+        price: 1499,
         currency: '₹',
         interval: 'month',
         description: 'Advanced capabilities for high-volume clinics and hospitals.',
@@ -91,7 +91,7 @@ export const pricingTiers: PricingTier[] = [
 export const faqs = [
     {
         question: "How does the free trial work?",
-        answer: "You get full access to the Professional tier for 14 days. No credit card required. You can upgrade, downgrade, or cancel at any time during the trial."
+        answer: "You get full access to the Professional tier for 30 days. No credit card required. You can upgrade, downgrade, or cancel at any time during the trial."
     },
     {
         question: "Can I change my plan later?",
@@ -103,7 +103,7 @@ export const faqs = [
     },
     {
         question: "Do you offer discounts for annual billing?",
-        answer: "Yes! If you choose to be billed annually rather than monthly, you receive a 20% discount across all our pricing tiers."
+        answer: "Yes. Annual billing is discounted by 17% compared with paying monthly."
     },
     {
         question: "Is my patients' data secure?",

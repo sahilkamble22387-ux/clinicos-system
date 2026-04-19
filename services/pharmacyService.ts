@@ -59,9 +59,24 @@ async function persistPharmacyFromAuthMetadata(userId?: string): Promise<boolean
     const pharmacy = readPharmacySignupMetadata(user);
     if (!pharmacy) return false;
 
-    const clinicId = typeof pharmacy.clinic_id === 'string' && pharmacy.clinic_id.trim()
+    let clinicId = typeof pharmacy.clinic_id === 'string' && pharmacy.clinic_id.trim()
         ? pharmacy.clinic_id.trim()
         : null;
+
+    const inviteToken = pharmacy.invite_token?.trim() || null;
+    if (inviteToken) {
+        const { data: inviteRow, error: inviteLookupError } = await (supabase as any)
+            .from('pharmacy_invites')
+            .select('clinic_id, status')
+            .eq('token', inviteToken)
+            .maybeSingle();
+
+        if (inviteLookupError) {
+            console.warn('[pharmacyService] Could not resolve invite token:', inviteLookupError);
+        } else if (inviteRow?.clinic_id) {
+            clinicId = inviteRow.clinic_id;
+        }
+    }
 
     const { error: pharmacyError } = await (supabase as any)
         .from('pharmacies')
@@ -93,7 +108,6 @@ async function persistPharmacyFromAuthMetadata(userId?: string): Promise<boolean
 
     if (profileError) throw profileError;
 
-    const inviteToken = pharmacy.invite_token?.trim();
     if (inviteToken) {
         const { error: inviteError } = await (supabase as any)
             .from('pharmacy_invites')
@@ -103,6 +117,43 @@ async function persistPharmacyFromAuthMetadata(userId?: string): Promise<boolean
 
         if (inviteError) {
             console.warn('[pharmacyService] Failed to mark invite as used:', inviteError);
+        }
+    }
+
+    if (clinicId) {
+        try {
+            const linksTable = (supabase as any).from('pharmacy_clinic_links');
+            const { data: existingLink, error: existingLinkError } = await linksTable
+                .select('id, status')
+                .eq('clinic_id', clinicId)
+                .eq('pharmacy_id', user.id)
+                .maybeSingle();
+
+            if (existingLinkError) {
+                console.warn('[pharmacyService] Could not look up pharmacy_clinic_links row:', existingLinkError);
+            } else if (existingLink?.id) {
+                const { error: activateLinkError } = await linksTable
+                    .update({ status: 'active', updated_at: new Date().toISOString() })
+                    .eq('id', existingLink.id);
+
+                if (activateLinkError) {
+                    console.warn('[pharmacyService] Could not activate pharmacy_clinic_links row:', activateLinkError);
+                }
+            } else {
+                const { error: insertLinkError } = await linksTable
+                    .insert({
+                        clinic_id: clinicId,
+                        pharmacy_id: user.id,
+                        status: 'active',
+                        is_primary: false,
+                    });
+
+                if (insertLinkError) {
+                    console.warn('[pharmacyService] Could not create pharmacy_clinic_links row:', insertLinkError);
+                }
+            }
+        } catch (error) {
+            console.warn('[pharmacyService] Link-table sync skipped:', error);
         }
     }
 

@@ -66,6 +66,17 @@ interface AdminPlanRow {
     updated_at?: string | null;
 }
 
+interface AdminPharmacyLinkRow {
+    id: string;
+    clinic_id: string;
+    pharmacy_id: string;
+    status: string | null;
+    is_primary: boolean | null;
+    created_at: string | null;
+    clinics?: { name?: string | null } | null;
+    pharmacies?: { name?: string | null; phone?: string | null; city?: string | null } | null;
+}
+
 interface EnrichedPatient extends AdminPatientRow {
     clinic_name: string;
     last_visit_at: string | null;
@@ -192,6 +203,7 @@ const AdminDashboard: React.FC = () => {
     const [patients, setPatients] = useState<EnrichedPatient[]>([]);
     const [subscriptions, setSubscriptions] = useState<EnrichedSubscription[]>([]);
     const [plans, setPlans] = useState<AdminPlanRow[]>([]);
+    const [pharmacyLinks, setPharmacyLinks] = useState<AdminPharmacyLinkRow[]>([]);
     const [planDrafts, setPlanDrafts] = useState<Record<string, { name: string; price: string; features: string }>>({});
     const [stats, setStats] = useState<AdminSystemStats>({ totalClinics: 0, totalPatients: 0, totalPrescriptions: 0 });
 
@@ -215,13 +227,14 @@ const AdminDashboard: React.FC = () => {
         setPlansError('');
 
         try {
-            const [clinicsRes, patientsRes, recordsRes, subscriptionsRes, prescriptionCountRes, plansRes] = await Promise.all([
+            const [clinicsRes, patientsRes, recordsRes, subscriptionsRes, prescriptionCountRes, plansRes, pharmacyLinksRes] = await Promise.all([
                 adminDb.from('clinics').select('id, name, doctor_name, clinic_email, clinic_name_override, created_at').order('created_at', { ascending: false }),
                 adminDb.from('patients').select('id, full_name, phone, clinic_id, status, created_at').order('created_at', { ascending: false }),
                 adminDb.from('medical_records').select('id, patient_id, clinic_id, created_at').order('created_at', { ascending: false }),
                 adminDb.from('subscriptions').select('id, clinic_id, plan_name, status, trial_ends_at, subscription_starts_at, subscription_ends_at, amount_paid, is_paid, is_locked').order('trial_ends_at', { ascending: true }),
                 adminDb.from('prescriptions').select('id', { count: 'exact', head: true }),
                 adminDb.from('plans').select('id, name, price, features, created_at, updated_at').order('created_at', { ascending: false }),
+                adminDb.from('pharmacy_clinic_links').select('id, clinic_id, pharmacy_id, status, is_primary, created_at, clinics(name), pharmacies(name, phone, city)').order('created_at', { ascending: false }),
             ]);
 
             if (clinicsRes.error) throw clinicsRes.error;
@@ -229,6 +242,12 @@ const AdminDashboard: React.FC = () => {
             if (recordsRes.error) throw recordsRes.error;
             if (subscriptionsRes.error) throw subscriptionsRes.error;
             if (prescriptionCountRes.error) throw prescriptionCountRes.error;
+            if (pharmacyLinksRes.error) {
+                console.warn('Admin pharmacy links load failed:', pharmacyLinksRes.error);
+                setPharmacyLinks([]);
+            } else {
+                setPharmacyLinks((pharmacyLinksRes.data ?? []) as AdminPharmacyLinkRow[]);
+            }
 
             if (plansRes.error) {
                 setPlans([]);
@@ -474,6 +493,26 @@ const AdminDashboard: React.FC = () => {
 
         setPlans(current => current.map(plan => plan.id === planId ? { ...plan, ...payload } : plan));
         toast.success('Plan saved.');
+    };
+
+    const updatePharmacyLinkStatus = async (linkId: string, status: string) => {
+        if (!adminDb) return;
+
+        const previous = pharmacyLinks;
+        setPharmacyLinks(current => current.map(link => link.id === linkId ? { ...link, status } : link));
+
+        const { error } = await adminDb
+            .from('pharmacy_clinic_links')
+            .update({ status } as any)
+            .eq('id', linkId);
+
+        if (error) {
+            setPharmacyLinks(previous);
+            toast.error(`Could not update pharmacy link: ${error.message}`);
+            return;
+        }
+
+        toast.success('Pharmacy link updated.');
     };
 
     const addPlan = async () => {
@@ -977,6 +1016,50 @@ const AdminDashboard: React.FC = () => {
                                     </button>
                                 </section>
                             </div>
+
+                            <section className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h2 className="text-lg font-black text-slate-900">Pharmacy Links</h2>
+                                        <p className="mt-1 text-sm text-slate-500">Review invite-linked and requested pharmacy connections across clinics.</p>
+                                    </div>
+                                    <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">
+                                        {pharmacyLinks.length} total
+                                    </span>
+                                </div>
+
+                                <div className="mt-5 space-y-3">
+                                    {pharmacyLinks.length === 0 ? (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                                            No pharmacy links found.
+                                        </div>
+                                    ) : pharmacyLinks.map(link => (
+                                        <div key={link.id} className="grid gap-4 rounded-[24px] border border-slate-200 bg-slate-50 p-4 xl:grid-cols-[1fr_1fr_180px_120px_120px] xl:items-center">
+                                            <div>
+                                                <p className="font-black text-slate-900">{link.clinics?.name || 'Unknown clinic'}</p>
+                                                <p className="text-xs text-slate-500">{link.clinic_id}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-900">{link.pharmacies?.name || 'Unknown pharmacy'}</p>
+                                                <p className="text-xs text-slate-500">{[link.pharmacies?.phone, link.pharmacies?.city].filter(Boolean).join(' · ') || link.pharmacy_id}</p>
+                                            </div>
+                                            <div>
+                                                <select
+                                                    value={link.status ?? 'pending'}
+                                                    onChange={event => void updatePharmacyLinkStatus(link.id, event.target.value)}
+                                                    className={`rounded-xl px-3 py-2 text-xs font-bold capitalize outline-none ${statusPillClass(link.status)}`}
+                                                >
+                                                    {['pending', 'active', 'approved', 'cancelled'].map(option => (
+                                                        <option key={option} value={option}>{option}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="text-sm text-slate-600">{link.is_primary ? 'Primary' : 'Secondary'}</div>
+                                            <div className="text-sm text-slate-600">{formatDateTime(link.created_at)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
                         </div>
                     )}
                 </main>

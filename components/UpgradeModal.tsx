@@ -13,29 +13,29 @@ const PLANS = [
     {
         id: 'basic',
         name: 'Basic',
-        price: 999,
+        price: 499,
         color: 'from-blue-500 to-blue-600',
         ring: 'ring-blue-500/30',
-        features: ['Front Desk', 'Doctor Portal', 'Medical Records', '1 Doctor'],
-        locked: ['Analytics', 'QR Check-In', 'Reports', 'Data Export'],
+        features: ['Front Desk', 'Doctor Portal', 'Medical Records', 'Core clinic tools'],
+        locked: ['QR Check-In', 'WhatsApp Prescriptions', 'Analytics', 'Data Export'],
     },
     {
-        id: 'pro',
-        name: 'Pro',
-        price: 1999,
+        id: 'professional',
+        name: 'Professional',
+        price: 999,
         popular: true,
         color: 'from-violet-500 to-purple-600',
         ring: 'ring-violet-500/40',
-        features: ['Everything in Basic', 'Analytics Hub', 'QR Check-In', 'Download Reports', '3 Doctors'],
+        features: ['Everything in Basic', 'QR Check-In', 'WhatsApp Prescriptions', 'Unlimited Patients'],
         locked: ['Data Export'],
     },
     {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 4999,
+        id: 'premium',
+        name: 'Premium',
+        price: 1499,
         color: 'from-slate-600 to-slate-800',
         ring: 'ring-slate-500/30',
-        features: ['Everything in Pro', 'Unlimited Doctors', 'Data Export', 'Priority Support', 'Custom Branding'],
+        features: ['Everything in Professional', 'Advanced Analytics', 'Priority Support', 'Founder Onboarding'],
         locked: [],
     },
 ]
@@ -51,7 +51,7 @@ interface UpgradeModalProps {
 
 export function UpgradeModal({ isOpen, onClose, lockedFeature, clinicId, clinicName }: UpgradeModalProps) {
     const [copied, setCopied] = useState(false)
-    const [selectedPlan, setSelectedPlan] = useState('pro')
+    const [selectedPlan, setSelectedPlan] = useState('professional')
     const [step, setStep] = useState<'plans' | 'payment' | 'done'>('plans')
     const overlayRef = useRef<HTMLDivElement>(null)
 

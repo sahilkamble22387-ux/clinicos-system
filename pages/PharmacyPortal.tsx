@@ -55,6 +55,17 @@ interface PharmacyWorkspaceProfile {
     clinic_status: string | null;
 }
 
+interface PharmacyClinicLinkRow {
+    id: string;
+    clinic_id: string;
+    status: string | null;
+    is_primary: boolean | null;
+    created_at: string;
+    clinics?: {
+        name?: string | null;
+    } | null;
+}
+
 type ColumnId = Extract<PharmacyStatus, 'sent_to_pharmacy' | 'packing' | 'ready' | 'dispensed'>;
 
 type ColumnConfig = {
@@ -190,6 +201,23 @@ async function fetchLinkedClinic(pharmacyId: string, fallbackClinicId?: string |
         clinic_name: clinicQuery.data?.name ?? 'Linked clinic',
         clinic_status: null,
     };
+}
+
+async function fetchClinicLinks(pharmacyId: string) {
+    const { data, error } = await (supabase as any)
+        .from('pharmacy_clinic_links')
+        .select('id, clinic_id, status, is_primary, created_at, clinics(name)')
+        .eq('pharmacy_id', pharmacyId)
+        .in('status', ['active', 'pending', 'approved'])
+        .order('is_primary', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.warn('[PharmacyPortal] Could not load clinic links:', error);
+        return [] as PharmacyClinicLinkRow[];
+    }
+
+    return (data ?? []) as PharmacyClinicLinkRow[];
 }
 
 async function fetchPrescriptionRows(pharmacyId: string) {
@@ -385,12 +413,14 @@ const PrescriptionCard: React.FC<{
 const PharmacyPortal: React.FC = () => {
     const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
     const [profile, setProfile] = useState<PharmacyWorkspaceProfile | null>(null);
+    const [clinicLinks, setClinicLinks] = useState<PharmacyClinicLinkRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [initError, setInitError] = useState('');
     const [bellAcknowledged, setBellAcknowledged] = useState(false);
     const [mobileStage, setMobileStage] = useState<ColumnId>('sent_to_pharmacy');
     const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
     const [newIds, setNewIds] = useState<Set<string>>(new Set());
+    const [linkActionId, setLinkActionId] = useState<string | null>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
 
     const loadPrescriptions = useCallback(async (pharmacyId: string) => {
@@ -466,16 +496,19 @@ const PharmacyPortal: React.FC = () => {
                     throw new Error("Your account isn't linked to a pharmacy yet. Contact your clinic admin.");
                 }
 
-                const [pharmacyRow, linkedClinic] = await Promise.all([
+                const [pharmacyRow, linkedClinic, fetchedLinks] = await Promise.all([
                     (supabase as any)
                         .from('pharmacies')
                         .select('name')
                         .eq('id', profileData.pharmacy_id)
                         .maybeSingle(),
                     fetchLinkedClinic(profileData.pharmacy_id, profileData.clinic_id),
+                    fetchClinicLinks(profileData.pharmacy_id),
                 ]);
 
                 if (!active) return;
+
+                setClinicLinks(fetchedLinks);
 
                 setProfile({
                     pharmacy_id: profileData.pharmacy_id,
@@ -549,7 +582,47 @@ const PharmacyPortal: React.FC = () => {
         items: prescriptions.filter(item => item.pharmacy_status === column.id),
     })), [prescriptions]);
 
+    const pendingLinks = useMemo(
+        () => clinicLinks.filter(link => (link.status ?? '').toLowerCase() === 'pending'),
+        [clinicLinks],
+    );
+
     const allClear = stats.incoming === 0 && stats.packing === 0 && stats.ready === 0;
+
+    const handleLinkDecision = async (link: PharmacyClinicLinkRow, nextStatus: 'active' | 'cancelled') => {
+        setLinkActionId(link.id);
+        try {
+            const { error } = await (supabase as any)
+                .from('pharmacy_clinic_links')
+                .update({ status: nextStatus })
+                .eq('id', link.id);
+
+            if (error) throw error;
+
+            if (nextStatus === 'active' && profile?.pharmacy_id) {
+                await (supabase as any)
+                    .from('pharmacies')
+                    .update({ clinic_id: link.clinic_id })
+                    .eq('id', profile.pharmacy_id);
+            }
+
+            setClinicLinks(current => current
+                .map(item => item.id === link.id ? { ...item, status: nextStatus } : item)
+                .filter(item => (item.status ?? '').toLowerCase() !== 'cancelled'));
+
+            if (nextStatus === 'active' && profile) {
+                setProfile({
+                    ...profile,
+                    clinic_name: link.clinics?.name ?? profile.clinic_name,
+                    clinic_status: 'active',
+                });
+            }
+        } catch (error) {
+            console.error('[PharmacyPortal] Failed to update clinic link:', error);
+        } finally {
+            setLinkActionId(null);
+        }
+    };
 
     if (loading) {
         return (
@@ -638,6 +711,42 @@ const PharmacyPortal: React.FC = () => {
                     </div>
                 </div>
             </header>
+
+            {pendingLinks.length > 0 && (
+                <div className="mx-auto mt-4 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                        <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-600">Pending clinic link</p>
+                        <div className="mt-3 space-y-3">
+                            {pendingLinks.map(link => (
+                                <div key={link.id} className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-4 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <p className="text-sm font-black text-slate-900">{link.clinics?.name ?? 'Clinic request'}</p>
+                                        <p className="mt-1 text-xs text-slate-500">This clinic wants to link with your pharmacy for prescription routing.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleLinkDecision(link, 'active')}
+                                            disabled={linkActionId === link.id}
+                                            className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                                        >
+                                            {linkActionId === link.id ? <Loader2 size={14} className="animate-spin" /> : 'Accept'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleLinkDecision(link, 'cancelled')}
+                                            disabled={linkActionId === link.id}
+                                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                                        >
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white shadow-2xl shadow-indigo-100/70">

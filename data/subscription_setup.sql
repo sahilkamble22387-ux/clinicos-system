@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   is_locked               boolean NOT NULL DEFAULT false,
   is_paid                 boolean NOT NULL DEFAULT false,
   trial_starts_at         timestamptz NOT NULL DEFAULT now(),
-  trial_ends_at           timestamptz NOT NULL DEFAULT (now() + interval '5 days'),
+  trial_ends_at           timestamptz NOT NULL DEFAULT (now() + interval '30 days'),
   subscription_starts_at  timestamptz,
   subscription_ends_at    timestamptz,
   grace_period_ends_at    timestamptz,
@@ -104,7 +104,7 @@ CREATE OR REPLACE FUNCTION public.create_trial_subscription()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   INSERT INTO public.subscriptions (clinic_id, plan_name, status, trial_starts_at, trial_ends_at)
-  VALUES (NEW.id, 'trial', 'trial', now(), now() + interval '5 days')
+  VALUES (NEW.id, 'trial', 'trial', now(), now() + interval '30 days')
   ON CONFLICT DO NOTHING;
   RETURN NEW;
 END;
@@ -120,7 +120,7 @@ FOR EACH ROW EXECUTE FUNCTION public.create_trial_subscription();
 -- STEP 7: Backfill — ensure existing clinics all have a subscription row
 -- ─────────────────────────────────────────────────────────────────────────────
 INSERT INTO public.subscriptions (clinic_id, plan_name, status, trial_starts_at, trial_ends_at)
-SELECT c.id, 'trial', 'trial', now(), now() + interval '5 days'
+SELECT c.id, 'trial', 'trial', now(), now() + interval '30 days'
 FROM public.clinics c
 WHERE NOT EXISTS (
   SELECT 1 FROM public.subscriptions s WHERE s.clinic_id = c.id
@@ -135,7 +135,7 @@ WHERE NOT EXISTS (
 -- UPDATE public.subscriptions SET is_locked = true, status = 'expired', updated_at = now() WHERE clinic_id = 'CLINIC_ID_HERE';
 
 -- Activate after payment:
--- UPDATE public.subscriptions SET status = 'active', is_paid = true, is_locked = false, plan_name = 'professional', amount_paid = 2499, utr_number = 'UTR_HERE', payment_verified_at = now(), payment_verified_by = 'Sahil', subscription_starts_at = now(), subscription_ends_at = now() + interval '30 days', grace_period_ends_at = now() + interval '33 days', updated_at = now() WHERE clinic_id = 'CLINIC_ID_HERE';
+-- UPDATE public.subscriptions SET status = 'active', is_paid = true, is_locked = false, plan_name = 'professional', amount_paid = 999, utr_number = 'UTR_HERE', payment_verified_at = now(), payment_verified_by = 'Sahil', subscription_starts_at = now(), subscription_ends_at = now() + interval '30 days', grace_period_ends_at = now() + interval '33 days', updated_at = now() WHERE clinic_id = 'CLINIC_ID_HERE';
 
 -- View all subscriptions:
 SELECT
