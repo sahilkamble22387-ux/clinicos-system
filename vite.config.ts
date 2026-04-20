@@ -22,7 +22,9 @@ export default defineConfig(({ mode }) => {
                     nirog: path.resolve(__dirname, 'nirog.html'),
                 },
                 output: {
-                    // Manual chunk splitting so heavy libraries are loaded lazily
+                    // Split only isolated heavy libraries. Forcing React and the
+                    // rest of node_modules into separate shared chunks caused a
+                    // runtime circular dependency in production builds.
                     manualChunks(id) {
                         // Supabase + auth
                         if (id.includes('@supabase')) return 'supabase';
@@ -36,10 +38,6 @@ export default defineConfig(({ mode }) => {
                         if (id.includes('qrcode')) return 'qr';
                         // Framer motion
                         if (id.includes('framer-motion')) return 'animation';
-                        // React core
-                        if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react';
-                        // Everything else in node_modules → vendor
-                        if (id.includes('node_modules')) return 'vendor';
                     },
                 },
             },
