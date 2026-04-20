@@ -29,6 +29,10 @@ export interface ClinicProfile {
 
     // Onboarding gate
     onboarding_completed: boolean
+
+    // Subscription UX
+    plan_status: string | null
+    trial_banner_dismissed_until: string | null
 }
 
 export interface OnboardingFormData {

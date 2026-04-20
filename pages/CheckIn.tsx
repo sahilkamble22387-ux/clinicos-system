@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../services/db'
-import { Pill, User, Phone, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { User, Phone, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid'
 
@@ -167,14 +167,16 @@ export default function CheckIn() {
                 className="flex items-center gap-3 px-4 py-4"
                 style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
             >
-                <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <Pill className="text-white w-5 h-5" />
+                <div className="rounded-2xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
+                    <img
+                        src="/assets/logo/NirogOs.png"
+                        alt="NirogOS"
+                        className="h-7 w-auto object-contain"
+                    />
                 </div>
-                <div>
-                    <p className="font-black text-slate-900 text-sm leading-none">{clinic?.name}</p>
-                    {clinic?.doctor_name && (
-                        <p className="text-slate-400 text-xs mt-0.5">{clinic.doctor_name}</p>
-                    )}
+                <div className="min-w-0">
+                    <p className="truncate font-black text-slate-900 text-sm leading-none">{clinic?.name}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-slate-500">Official self check-in page</p>
                 </div>
             </div>
 

@@ -87,6 +87,15 @@ export interface Clinic {
   name: string;
   owner_id: string;
   created_at: string;
+  updated_at?: string | null;
+  doctor_name?: string | null;
+  clinic_name_override?: string | null;
+  clinic_email?: string | null;
+  plan_status?: string | null;
+  onboarding_completed?: boolean;
+  queue_accepting_patients?: boolean | null;
+  emergency_mode?: boolean | null;
+  trial_banner_dismissed_until?: string | null;
 }
 
 export type ViewMode = 'HOME' | 'FRONT_DESK' | 'DOCTOR' | 'ANALYTICS' | 'HISTORY' | 'SETTINGS';

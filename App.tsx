@@ -47,15 +47,16 @@ import SupportPage from './pages/SupportPage';
 import RefundPolicyPage from './pages/RefundPolicyPage';
 import RxPage from './pages/RxPage';
 import AdminDashboard from './pages/AdminDashboard';
-import { ensureDoctorClinicSetup } from './services/doctorService';
-import { syncAndFetchPharmacyProfile } from './services/pharmacyService';
+import { ensureDoctorClinicSetup, type DoctorBootstrapResult } from './services/doctorService';
+import { syncAndFetchPharmacyProfile, type PharmacyProfileRow } from './services/pharmacyService';
+import { useNotifications } from './src/hooks/useNotifications';
+import { useAppUpdate } from './src/hooks/useAppUpdate';
 
 // ── Rebrand localStorage migration ───────────────────────────────
 const legacyStorageKeys: [string, string][] = [
   ['clinicos_welcome_popup_done', 'nirogos_welcome_popup_done'],
   ['clinicos_tutorial_done_v2', 'nirogos_tutorial_done_v2'],
   ['clinicos_pending_plan', 'nirogos_pending_plan'],
-  ['clinicos_trial_banner_dismissed_until', 'nirogos_trial_banner_dismissed_until'],
 ];
 legacyStorageKeys.forEach(([oldKey, newKey]) => {
   try {
@@ -64,25 +65,60 @@ legacyStorageKeys.forEach(([oldKey, newKey]) => {
   } catch { /* ignore */ }
 });
 
-const Toast = ({ message, onClose }: { message: string; onClose: () => void }) => (
-  <div className="fixed top-4 right-4 bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 z-50 max-w-sm border border-slate-700">
-    <div className="bg-amber-500/10 p-2 rounded-lg">
-      <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+type ToastKind = 'info' | 'warning' | 'error' | 'success';
+
+type ToastState = {
+  title: string;
+  message: string;
+  type: ToastKind;
+};
+
+const TOAST_THEME: Record<ToastKind, { shell: string; iconShell: string; iconColor: string }> = {
+  info: {
+    shell: 'bg-slate-800 border-slate-700',
+    iconShell: 'bg-sky-500/10',
+    iconColor: 'text-sky-400',
+  },
+  warning: {
+    shell: 'bg-slate-800 border-amber-400/30',
+    iconShell: 'bg-amber-500/10',
+    iconColor: 'text-amber-400',
+  },
+  error: {
+    shell: 'bg-slate-800 border-rose-400/30',
+    iconShell: 'bg-rose-500/10',
+    iconColor: 'text-rose-400',
+  },
+  success: {
+    shell: 'bg-slate-800 border-emerald-400/30',
+    iconShell: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-400',
+  },
+};
+
+const Toast = ({ toast, onClose }: { toast: ToastState; onClose: () => void }) => {
+  const theme = TOAST_THEME[toast.type];
+
+  return (
+    <div className={`fixed top-4 right-4 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 z-50 max-w-sm border ${theme.shell}`}>
+      <div className={`${theme.iconShell} p-2 rounded-lg`}>
+        <svg className={`w-5 h-5 ${theme.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
+        </svg>
+      </div>
+      <div className="flex-1">
+        <h4 className="font-bold text-sm">{toast.title}</h4>
+        <p className="text-xs text-slate-300 mt-0.5">{toast.message}</p>
+      </div>
+      <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
-    <div className="flex-1">
-      <h4 className="font-bold text-sm">Notice</h4>
-      <p className="text-xs text-slate-300 mt-0.5">{message}</p>
-    </div>
-    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-);
+  );
+};
 
 const CheckinRoute: React.FC = () => {
   const { clinicId } = useParams<{ clinicId: string }>();
@@ -145,17 +181,26 @@ const DoctorApp: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastState, setToastState] = useState<ToastState | null>(null);
   const [waitingCount, setWaitingCount] = useState(0);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const { updateAvailable, dismissUpdate } = useAppUpdate();
+
+  const showToast = useCallback((title: string, message: string, type: string) => {
+    const normalizedType: ToastKind =
+      type === 'success' || type === 'error' || type === 'warning' ? type : 'info';
+    setToastState({ title, message, type: normalizedType });
+  }, []);
 
   useEffect(() => {
-    if (!toastMessage) return;
-    const t = setTimeout(() => setToastMessage(null), 5000);
+    if (!toastState) return;
+    const t = setTimeout(() => setToastState(null), 5000);
     return () => clearTimeout(t);
-  }, [toastMessage]);
+  }, [toastState]);
 
-  const fetchClinic = useCallback(async (authUser: any) => {
+  useNotifications(clinic?.id ?? null, showToast);
+
+  const fetchClinic = useCallback(async (authUser: { id?: string; user_metadata?: { role?: string } } | null) => {
     if (!authUser?.id) {
       setClinic(null);
       setLoading(false);
@@ -164,7 +209,7 @@ const DoctorApp: React.FC = () => {
 
     try {
       const metaRole = authUser?.user_metadata?.role;
-      const profile = metaRole === 'pharmacy_staff'
+      const profile: DoctorBootstrapResult | PharmacyProfileRow = metaRole === 'pharmacy_staff'
         ? await syncAndFetchPharmacyProfile(authUser.id)
         : await ensureDoctorClinicSetup(authUser);
 
@@ -173,19 +218,19 @@ const DoctorApp: React.FC = () => {
         return;
       }
 
-      if (profile?.clinic) {
+      if ('clinic' in profile && profile.clinic) {
         setClinic(profile.clinic as Clinic);
         return;
       }
 
-      setToastMessage('We could not find your clinic profile yet. Please refresh.');
+      showToast('Clinic profile missing', 'We could not find your clinic profile yet. Please refresh.', 'warning');
     } catch (err) {
       console.error('[DoctorApp] fetchClinic error:', err);
-      setToastMessage('Failed to load clinic profile. Please refresh.');
+      showToast('Clinic load failed', 'Failed to load clinic profile. Please refresh.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, showToast]);
 
   useEffect(() => {
     let active = true;
@@ -268,7 +313,7 @@ const DoctorApp: React.FC = () => {
       clinicId={clinic?.id ?? null}
       loading={loading}
       clinicProfile={clinic}
-      refreshClinicProfile={() => fetchClinic(session.user.id)}
+      refreshClinicProfile={() => fetchClinic(session.user)}
     >
       <Routes>
         {/*
@@ -282,7 +327,7 @@ const DoctorApp: React.FC = () => {
           <OnboardingGuard>
             <SubscriptionGate clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading} onSignOut={handleLogout}>
               <div className="h-screen flex overflow-hidden bg-slate-50">
-                {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
+                {toastState && <Toast toast={toastState} onClose={() => setToastState(null)} />}
 
                 {/* Desktop sidebar */}
                 <nav className="hidden md:flex w-[260px] flex-shrink-0 text-white flex-col border-r border-slate-800 h-full"
@@ -386,7 +431,9 @@ const DoctorApp: React.FC = () => {
 
                   <div className="flex-1 overflow-y-auto w-full">
                     {view === 'DOCTOR' ? (
-                      <DoctorDashboard clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} />
+                      <FeatureGate feature="doctor_portal" clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading}>
+                        <DoctorDashboard clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} />
+                      </FeatureGate>
                     ) : view === 'SETTINGS' ? (
                       <EditProfile />
                     ) : (
@@ -394,7 +441,11 @@ const DoctorApp: React.FC = () => {
                         {view === 'HOME' && <DashboardHome clinic={clinic} onNavigate={v => { setView(v); setSelectedPatient(null); }} session={session} />}
                         {view === 'FRONT_DESK' && !selectedPatient && <FrontDesk clinicId={clinic?.id ?? '00000000-0000-0000-0000-000000000000'} clinicName={clinic?.name ?? ''} onPatientClick={p => setSelectedPatient(p)} />}
                         {view === 'FRONT_DESK' && selectedPatient && <PatientDetailPage patient={selectedPatient} onBack={() => setSelectedPatient(null)} />}
-                        {view === 'ANALYTICS' && <AnalyticsDashboard clinicId={clinic?.id} />}
+                        {view === 'ANALYTICS' && (
+                          <FeatureGate feature="analytics" clinicId={clinic?.id} clinicName={clinic?.name} authResolved={!loading}>
+                            <AnalyticsDashboard clinicId={clinic?.id} />
+                          </FeatureGate>
+                        )}
                         {view === 'HISTORY' && (
                           <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
                             <PatientHistory clinic={clinic} onBack={() => setView('HOME')} />
@@ -403,6 +454,24 @@ const DoctorApp: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {updateAvailable && (
+                    <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-full border border-indigo-400 bg-indigo-600 px-6 py-3 text-white shadow-2xl">
+                      <span className="text-sm font-semibold">A new update is available</span>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="rounded-full bg-white px-4 py-1.5 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
+                      >
+                        Reload
+                      </button>
+                      <button
+                        onClick={dismissUpdate}
+                        className="text-xs text-indigo-200 underline transition-colors hover:text-white"
+                      >
+                        Later
+                      </button>
+                    </div>
+                  )}
                 </main>
 
                 <MobileBottomNav view={view} onNavigate={v => { setView(v); setSelectedPatient(null); }}

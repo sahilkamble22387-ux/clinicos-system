@@ -225,12 +225,16 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
 
     // Main form
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 pt-8 pb-6 text-center text-white">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/30">
-                        <span className="text-3xl">🏥</span>
+                    <div className="mx-auto mb-4 inline-flex rounded-2xl bg-white/95 px-4 py-2 shadow-lg">
+                        <img
+                            src="/assets/logo/NirogOs.png"
+                            alt="NirogOS"
+                            className="h-8 w-auto object-contain"
+                        />
                     </div>
                     <h1 className="text-xl font-bold">Patient Check-In</h1>
                     <p className="text-indigo-200 text-sm mt-1">{clinicName}</p>
@@ -327,4 +331,3 @@ const CheckinPage: React.FC<CheckinPageProps> = ({ clinicId }) => {
 };
 
 export default CheckinPage;
-

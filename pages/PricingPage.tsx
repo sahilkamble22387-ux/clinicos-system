@@ -2,25 +2,30 @@ import { useState, useContext, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Check, X, Copy, CheckCircle, Sparkles, MessageCircle,
-    Star, Zap, Trophy, Clock, Lock
+    Check, X, CheckCircle, Sparkles, MessageCircle,
+    Star, Zap, Clock
 } from 'lucide-react'
 import { AuthContext } from '../context/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
 import { usePendingPlan } from '../hooks/usePendingPlan'
 import { supabase } from '../services/db'
 import toast from 'react-hot-toast'
+import {
+    PLAN_PRICE_BY_ID,
+    formatPlanName,
+    normalizePlanId,
+} from '../src/constants/subscriptionPlans'
 
 // ── Pricing tiers ──────────────────────────────────────────────────
 const TIERS = [
     {
-        id: 'essential',
+        id: 'basic',
         name: 'Basic',
         badge: null as string | null,
         icon: Zap,
-        tagline: 'The Manual Digital Clinic',
-        description: 'Everything to go paperless — you stay in control of every click.',
-        monthlyPrice: 499,
+        tagline: 'The Full Clinic Starter',
+        description: 'Every core NirogOS workflow is unlocked from day one for pilot and growing clinics.',
+        monthlyPrice: PLAN_PRICE_BY_ID.basic,
         yearlyPrice: 414,
         perDay: 17,
         color: 'slate' as const,
@@ -28,13 +33,12 @@ const TIERS = [
         accentClass: 'border-slate-200',
         ctaClass: 'bg-white text-slate-900 border border-slate-300 hover:bg-slate-50',
         features: [
-            { text: 'Doctor Portal — write & save prescriptions', included: true },
-            { text: 'Front Desk — manually add patients to queue', included: true },
-            { text: 'PDF Prescription download (manual)', included: true },
-            { text: 'Full patient record history', included: true },
-            { text: 'QR Scan patient login', included: false, upgradeHint: 'Professional' },
-            { text: '1-Click WhatsApp prescription', included: false, upgradeHint: 'Professional' },
-            { text: 'Analytics dashboard', included: false, upgradeHint: 'Elite' },
+            { text: 'Doctor Portal + Front Desk access', included: true },
+            { text: 'Unlimited patients and patient history', included: true },
+            { text: 'QR check-in and WhatsApp prescriptions', included: true },
+            { text: 'Analytics dashboard and exports', included: true },
+            { text: 'No patient-data usage limit', included: true },
+            { text: 'Admin-controlled clinic management', included: true },
         ],
     },
     {
@@ -42,9 +46,9 @@ const TIERS = [
         name: 'Professional',
         badge: '⭐ Most Popular',
         icon: Star,
-        tagline: 'The Automated Clinic',
-        description: 'Save 2 hours/day. Patients check in themselves. Prescriptions send themselves.',
-        monthlyPrice: 999,
+        tagline: 'The Full Clinic Growth Plan',
+        description: 'All product access plus faster support, founder onboarding, and rollout assistance.',
+        monthlyPrice: PLAN_PRICE_BY_ID.professional,
         yearlyPrice: 829,
         perDay: 33,
         color: 'indigo' as const,
@@ -52,37 +56,12 @@ const TIERS = [
         accentClass: 'border-indigo-500 shadow-2xl shadow-indigo-100',
         ctaClass: 'bg-indigo-600 text-white hover:bg-indigo-700',
         features: [
-            { text: 'Everything in Essential', included: true },
-            { text: 'QR Scan — patients check in themselves', included: true },
-            { text: '1-Click WhatsApp prescription to patient', included: true },
-            { text: 'Live prescription web link (no PDF needed)', included: true },
-            { text: 'Priority email & chat support', included: true },
-            { text: 'Unlimited patients/month', included: true },
-            { text: 'Analytics dashboard', included: false, upgradeHint: 'Elite' },
-        ],
-    },
-    {
-        id: 'elite',
-        name: 'Premium',
-        badge: '🏆 Best Value',
-        icon: Trophy,
-        tagline: 'The Business Clinic',
-        description: 'Run your clinic like a CEO. Know your numbers. Grow with data.',
-        monthlyPrice: 1499,
-        yearlyPrice: 1244,
-        perDay: 50,
-        color: 'violet' as const,
-        highlighted: false,
-        accentClass: 'border-violet-200',
-        ctaClass: 'bg-violet-600 text-white hover:bg-violet-700',
-        features: [
-            { text: 'Everything in Professional', included: true },
-            { text: 'Full Analytics dashboard + 7-day revenue trends', included: true },
-            { text: 'Patient footfall & growth metrics', included: true },
-            { text: 'Data export (CSV/PDF)', included: true },
-            { text: 'Custom clinic branding on prescriptions', included: true },
-            { text: 'Priority Founder Support (direct WhatsApp)', included: true },
-            { text: 'Dedicated onboarding call', included: true },
+            { text: 'Everything in Basic', included: true },
+            { text: 'Priority support and faster activation help', included: true },
+            { text: 'Founder onboarding assistance', included: true },
+            { text: 'Operational guidance for rollout clinics', included: true },
+            { text: 'Unlimited patients and records', included: true },
+            { text: 'No patient-data usage limit', included: true },
         ],
     },
 ]
@@ -274,15 +253,6 @@ function UpgradeModal({
     )
 }
 
-// ── Feature locked notice ──────────────────────────────────────────
-function LockedFeatureNote({ upgradeHint }: { upgradeHint: string }) {
-    return (
-        <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">
-            {upgradeHint}
-        </span>
-    )
-}
-
 // ── Helper: determine CTA label contextually ──────────────────────
 function getCTALabel(
     tierId: string,
@@ -350,7 +320,7 @@ export default function PricingPage() {
 
     // Current plan label
     const planName = subscription?.plan_name?.toLowerCase() ?? 'trial'
-    const currentPlanId = planName
+    const currentPlanId = normalizePlanId(planName)
     const isPending = planStatus === 'pending'
 
     // Feature 1: Context-aware CTA handler
@@ -402,7 +372,7 @@ export default function PricingPage() {
             <div className="max-w-5xl mx-auto px-4 pt-14 pb-2 text-center">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-bold text-indigo-700 mb-6">
                     <Sparkles size={12} />
-                    Founder's Plan live for the first 50 clinics
+                    Founder offer live for the first 43 clinics
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
                     {user ? 'Upgrade your plan' : 'Simple, honest pricing'}
@@ -424,7 +394,7 @@ export default function PricingPage() {
                         {isPending ? '⏳' : status === 'trial' ? '⏳' : status === 'active' ? '✅' : '💡'}
                         {isPending && 'Upgrade pending — awaiting payment confirmation'}
                         {!isPending && status === 'trial' && 'Free Trial active — upgrade to keep access'}
-                        {!isPending && status === 'active' && `Your Plan: ${planName.charAt(0).toUpperCase() + planName.slice(1)} ✓`}
+                        {!isPending && status === 'active' && `Your Plan: ${formatPlanName(planName)} ✓`}
                         {!isPending && status !== 'trial' && status !== 'active' && 'Select a plan to get started'}
                     </div>
                 )}
@@ -448,7 +418,7 @@ export default function PricingPage() {
             </div>
 
             {/* ── Pricing Cards ── */}
-            <div className="max-w-5xl mx-auto px-4 mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            <div className="max-w-5xl mx-auto px-4 mt-10 grid grid-cols-1 gap-6 items-start md:grid-cols-2">
                 {TIERS.map(tier => {
                     const price = isYearly ? tier.yearlyPrice : tier.monthlyPrice
                     const originalMonthly = tier.monthlyPrice
@@ -489,12 +459,9 @@ export default function PricingPage() {
 
                             <div className="p-7 flex flex-col flex-1">
                                 {/* Header */}
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${tier.id === 'essential' ? 'bg-slate-100' :
-                                    tier.id === 'professional' ? 'bg-indigo-50' : 'bg-violet-50'
-                                    }`}>
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${tier.id === 'basic' ? 'bg-slate-100' : 'bg-indigo-50'}`}>
                                     <Icon size={24} className={
-                                        tier.id === 'essential' ? 'text-slate-600' :
-                                            tier.id === 'professional' ? 'text-indigo-600' : 'text-violet-600'
+                                        tier.id === 'basic' ? 'text-slate-600' : 'text-indigo-600'
                                     } />
                                 </div>
                                 <h3 className="text-xl font-black text-slate-900 mb-0.5">{tier.name}</h3>
@@ -522,7 +489,7 @@ export default function PricingPage() {
                                     </div>
                                 )}
                                 {tier.id === 'professional' && (
-                                    <p className="text-xs text-teal-600 font-semibold mb-4">⭐ Early Access</p>
+                                    <p className="text-xs text-teal-600 font-semibold mb-4">⭐ Founder support eligible</p>
                                 )}
 
                                 {/* Features */}
@@ -537,9 +504,6 @@ export default function PricingPage() {
                                             <span className={f.included ? 'text-slate-700 font-medium' : 'text-slate-400'}>
                                                 {f.text}
                                             </span>
-                                            {'upgradeHint' in f && !f.included && (
-                                                <LockedFeatureNote upgradeHint={f.upgradeHint!} />
-                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -586,7 +550,7 @@ export default function PricingPage() {
                     <div>
                         <p className="font-black text-slate-900 mb-0.5">Founder's Plan is open</p>
                         <p className="text-sm text-slate-500 font-medium">
-                            Professional is free for 3 months for the first 50 clinics, then locked at ₹599/month forever for founder clinics.
+                            The first 43 clinics get 3 months free on Professional, then founder clinics stay locked at ₹599/month forever.
                         </p>
                     </div>
                 </div>

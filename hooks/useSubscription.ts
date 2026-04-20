@@ -1,16 +1,19 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../services/db'
+import { normalizePlanId } from '../src/constants/subscriptionPlans'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PLAN‑TIER FEATURE MAP
 // ─────────────────────────────────────────────────────────────────────────────
 export type PlanTier =
     | 'trial'
-    | 'essential'
-    | 'professional'
-    | 'elite'
-    // Legacy tiers kept for backwards compatibility
     | 'basic'
+    | 'professional'
+    | 'founder'
+    // Legacy tiers kept for backwards compatibility
+    | 'essential'
+    | 'elite'
+    | 'premium'
     | 'pro'
     | 'enterprise'
     | 'starter'
@@ -29,31 +32,32 @@ export type FeatureKey =
     | 'analytics_dashboard'
 
 /** Maps each plan tier to the features it unlocks (Section 4 spec) */
+const ALL_FEATURES: FeatureKey[] = [
+    'front_desk',
+    'doctor_portal',
+    'analytics',
+    'qr_checkin',
+    'download_report',
+    'medical_records',
+    'advanced_analytics',
+    'data_export',
+    'whatsapp_prescription',
+    'analytics_dashboard',
+]
+
 export const PLAN_FEATURES: Record<PlanTier, FeatureKey[]> = {
-    // Trial unlocks ALL features — let users experience everything before buying
-    trial: [
-        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
-        'qr_checkin', 'whatsapp_prescription', 'analytics', 'advanced_analytics',
-        'analytics_dashboard', 'data_export',
-    ],
-    essential: [
-        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
-    ],
-    professional: [
-        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
-        'qr_checkin', 'whatsapp_prescription', 'analytics',
-    ],
-    elite: [
-        'front_desk', 'doctor_portal', 'medical_records', 'download_report',
-        'qr_checkin', 'whatsapp_prescription', 'analytics', 'advanced_analytics',
-        'analytics_dashboard', 'data_export',
-    ],
+    trial: ALL_FEATURES,
+    basic: ALL_FEATURES,
+    professional: ALL_FEATURES,
+    founder: ALL_FEATURES,
     // ── Legacy tiers (kept for backwards compatibility) ──
-    basic: ['front_desk', 'doctor_portal', 'medical_records'],
-    pro: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics'],
-    enterprise: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics', 'data_export'],
-    starter: ['front_desk', 'doctor_portal', 'medical_records'],
-    clinic_pro: ['front_desk', 'doctor_portal', 'analytics', 'qr_checkin', 'medical_records', 'download_report', 'advanced_analytics', 'data_export'],
+    essential: ALL_FEATURES,
+    elite: ALL_FEATURES,
+    premium: ALL_FEATURES,
+    pro: ALL_FEATURES,
+    enterprise: ALL_FEATURES,
+    starter: ALL_FEATURES,
+    clinic_pro: ALL_FEATURES,
 }
 
 
@@ -185,9 +189,9 @@ export function useSubscription(clinicId: string | null | undefined, authResolve
         const tier: PlanTier =
             status === 'trial'
                 ? 'trial'
-                : ((subscription.plan_name?.toLowerCase() ?? 'basic') as PlanTier)
+                : (normalizePlanId(subscription.plan_name) as PlanTier)
 
-        const allowed = PLAN_FEATURES[tier] ?? PLAN_FEATURES['basic']
+        const allowed = PLAN_FEATURES[tier] ?? PLAN_FEATURES.basic
         return allowed.includes(feature)
     }
 
@@ -225,7 +229,7 @@ function computeStatus(sub: Subscription): SubscriptionStatus {
     }
 
     // ── 4. Trial window ──
-    if (sub.status === 'trial') {
+    if (sub.status === 'trial' || sub.status === 'trialing') {
         const trialEnd = new Date(sub.trial_ends_at)
         if (trialEnd > now) return 'trial'
         return 'expired' // trial date passed
@@ -238,7 +242,7 @@ function computeStatus(sub: Subscription): SubscriptionStatus {
 
 function computeDaysLeft(sub: Subscription): number {
     const now = new Date()
-    if (sub.status === 'trial') {
+    if (sub.status === 'trial' || sub.status === 'trialing') {
         const end = new Date(sub.trial_ends_at)
         return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000))
     }

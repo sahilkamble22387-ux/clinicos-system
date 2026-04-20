@@ -80,11 +80,11 @@ export function MobileBottomNav({ view, onNavigate, waitingCount, clinic, authRe
                         </button>
                     )
 
-                    if (tab.key === 'ANALYTICS') {
+                    if (tab.key === 'ANALYTICS' || tab.key === 'DOCTOR') {
                         return (
                             <FeatureGate
                                 key={tab.key}
-                                feature="analytics"
+                                feature={tab.key === 'DOCTOR' ? 'doctor_portal' : 'analytics'}
                                 clinicId={clinic?.id}
                                 clinicName={clinic?.name}
                                 authResolved={authResolved}

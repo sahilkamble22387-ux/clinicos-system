@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSubscription } from '../hooks/useSubscription';
 import { Lock, CheckCircle, Clock, WifiOff, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/db';
+import {
+    PLAN_PRICE_BY_ID,
+    PUBLIC_PLAN_OPTIONS,
+} from '../src/constants/subscriptionPlans';
 
 // ── YOUR DETAILS ────────────────────────────────────────────────────────────
 const YOUR_UPI_ID = 'sahilkamble22387-1@oksbi';
@@ -13,29 +19,30 @@ const PLANS = [
     {
         id: 'basic',
         name: 'Basic',
-        price: 499,
+        price: PLAN_PRICE_BY_ID.basic,
         period: 'month',
-        features: ['Front Desk', 'Doctor Portal', 'Medical Records', 'Ideal for smaller clinics'],
+        popular: false,
+        features: ['Full clinic workspace access', 'Unlimited patients and records', 'QR check-in and WhatsApp prescriptions', 'Perfect for pilot clinics'],
         color: 'from-blue-500 to-blue-600',
     },
     {
         id: 'professional',
         name: 'Professional',
-        price: 999,
+        price: PLAN_PRICE_BY_ID.professional,
         period: 'month',
         popular: true,
-        features: ['Unlimited patients', 'QR Check-In', 'WhatsApp prescriptions', 'Best for growing clinics'],
+        features: ['Everything in Basic', 'Priority support and faster admin handling', 'Founder onboarding assistance', 'Best for growing clinics'],
         color: 'from-violet-500 to-purple-600',
     },
-    {
-        id: 'premium',
-        name: 'Premium',
-        price: 1499,
-        period: 'month',
-        features: ['Everything in Professional', 'Advanced analytics', 'Priority support', 'Founder onboarding'],
-        color: 'from-slate-700 to-slate-900',
-    },
-];
+] as const satisfies ReadonlyArray<{
+    id: (typeof PUBLIC_PLAN_OPTIONS)[number];
+    name: string;
+    price: number;
+    period: string;
+    features: string[];
+    color: string;
+    popular?: boolean;
+}>;
 
 interface Props {
     children: React.ReactNode;
@@ -47,8 +54,9 @@ interface Props {
 }
 
 export function SubscriptionGate({ children, clinicId, clinicName, authResolved, onSignOut }: Props) {
-    const { subscription, status, daysLeft, fetchError, isLocked, isLoading, isTrialEnding } =
+    const { subscription, status, daysLeft, fetchError, isLoading } =
         useSubscription(clinicId, authResolved);
+    const { clinicProfile, refreshClinicProfile } = useAuth();
 
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
     const [utrInput, setUtrInput] = useState('');
@@ -110,11 +118,9 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
 
     // ─────────────────────────────────────────────────────────────────────────
     // STATE 3: LOCKED — payment wall
-    // Triggered when: status === 'expired' | 'locked'
-    // ⚠️ CRITICAL FIX: isLocked is explicitly computed in the hook — checking
-    //    is_locked, status='expired', status='blocked', and fetch errors.
+    // Triggered only for explicit admin locks. Expired trials stay read-only.
     // ─────────────────────────────────────────────────────────────────────────
-    if (isLocked) {
+    if (status === 'locked') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col font-sans">
                 {/* Header */}
@@ -308,6 +314,31 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
         );
     }
 
+    if (status === 'expired') {
+        return (
+            <>
+                <div className="relative flex items-center justify-between bg-amber-500 px-4 py-3 text-sm text-white">
+                    <div className="flex items-center gap-2.5">
+                        <span className="text-base">⏳</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-black">Your 30-day trial has ended</span>
+                            <span className="hidden text-amber-100 sm:inline">
+                                Front-desk data stays visible while you finish activation.
+                            </span>
+                        </div>
+                    </div>
+                    <a
+                        href="/pricing"
+                        className="rounded-xl bg-white px-4 py-1.5 text-xs font-black text-amber-700 transition hover:bg-amber-50"
+                    >
+                        Choose a Plan →
+                    </a>
+                </div>
+                {children}
+            </>
+        );
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // STATE 4: OPEN — render children
     // Only reached when status is 'trial' or 'active' (hasAccess === true)
@@ -315,24 +346,36 @@ export function SubscriptionGate({ children, clinicId, clinicName, authResolved,
     return (
         <>
             {/* Trial banner — dismissible */}
-            {status === 'trial' && daysLeft <= 5 && (
-                <TrialBanner daysLeft={daysLeft} />
+            {status === 'trial' && (
+                <TrialBanner
+                    clinicId={clinicId}
+                    daysLeft={daysLeft}
+                    dismissedUntil={clinicProfile?.trial_banner_dismissed_until ?? null}
+                    onRefresh={refreshClinicProfile}
+                />
             )}
             {children}
         </>
     );
 }
 
-// ── Dismissible Trial Banner ────────────────────────────────────────────────
-const BANNER_DISMISSED_KEY = 'nirogos_trial_banner_dismissed_until'
-
-function TrialBanner({ daysLeft }: { daysLeft: number }) {
+function TrialBanner({
+    clinicId,
+    daysLeft,
+    dismissedUntil,
+    onRefresh,
+}: {
+    clinicId?: string | null;
+    daysLeft: number;
+    dismissedUntil: string | null;
+    onRefresh: () => Promise<void>;
+}) {
     const [visible, setVisible] = useState(false)
+    const [saving, setSaving] = useState(false)
 
     useEffect(() => {
-        if (daysLeft <= 0 || daysLeft > 5) { setVisible(false); return }
+        if (daysLeft <= 0) { setVisible(false); return }
 
-        const dismissedUntil = localStorage.getItem(BANNER_DISMISSED_KEY)
         if (dismissedUntil) {
             const until = new Date(dismissedUntil)
             if (new Date() < until) {
@@ -343,17 +386,42 @@ function TrialBanner({ daysLeft }: { daysLeft: number }) {
         setVisible(true)
     }, [daysLeft])
 
-    function handleDismiss() {
+    async function handleDismiss() {
+        if (!clinicId || saving) return
         setVisible(false)
         if (daysLeft <= 1) return // last day — never dismiss
+
         const remindDate = new Date()
-        remindDate.setDate(remindDate.getDate() + Math.min(3, daysLeft - 1))
-        localStorage.setItem(BANNER_DISMISSED_KEY, remindDate.toISOString())
+        remindDate.setDate(remindDate.getDate() + Math.min(7, daysLeft - 1))
+
+        try {
+            setSaving(true)
+            const clinicsClient = supabase as unknown as {
+                from: (table: string) => {
+                    update: (values: { trial_banner_dismissed_until: string | null }) => {
+                        eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>
+                    }
+                }
+            }
+            const { error } = await clinicsClient
+                .from('clinics')
+                .update({ trial_banner_dismissed_until: remindDate.toISOString() })
+                .eq('id', clinicId)
+
+            if (error) {
+                setVisible(true)
+                return
+            }
+
+            await onRefresh()
+        } finally {
+            setSaving(false)
+        }
     }
 
     if (!visible) return null
 
-    const isUrgent = daysLeft <= 2
+    const isUrgent = daysLeft <= 3
 
     return (
         <div
@@ -365,11 +433,11 @@ function TrialBanner({ daysLeft }: { daysLeft: number }) {
                 <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-black">
                         {daysLeft === 1
-                            ? 'Last day of your free trial!'
-                            : `Free trial · ${daysLeft} days left`}
+                            ? 'Last day of your 30-day free trial!'
+                            : `30-day free trial · ${daysLeft} days left`}
                     </span>
                     <span className={`${isUrgent ? 'text-red-100' : 'text-indigo-200'} hidden sm:inline`}>
-                        · All features unlocked
+                        · Pick Basic or Professional anytime to keep everything active
                     </span>
                 </div>
             </div>
@@ -387,12 +455,13 @@ function TrialBanner({ daysLeft }: { daysLeft: number }) {
 
                 {daysLeft > 1 && (
                     <button
-                        onClick={handleDismiss}
-                        title={`Dismiss — we'll remind you in ${Math.min(3, daysLeft - 1)} days`}
+                        onClick={() => void handleDismiss()}
+                        disabled={saving}
+                        title={`Dismiss — we'll remind you in ${Math.min(7, daysLeft - 1)} days`}
                         className={`w-7 h-7 rounded-full flex items-center justify-center transition ${isUrgent
                                 ? 'bg-red-400 hover:bg-red-300 text-white'
                                 : 'bg-indigo-500 hover:bg-indigo-400 text-white'
-                            }`}
+                            } ${saving ? 'opacity-60 cursor-wait' : ''}`}
                     >
                         <X size={14} />
                     </button>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle, Copy, Check, ExternalLink } from 'lucide-react'
 import { FEATURE_LABELS, type FeatureKey } from '../hooks/useSubscription'
+import { PLAN_PRICE_BY_ID } from '../src/constants/subscriptionPlans'
 
 // ── YOUR DETAILS ──────────────────────────────────────────────────────────────
 const UPI_ID = 'sahilkamble22387-1@oksbi'
@@ -13,29 +14,20 @@ const PLANS = [
     {
         id: 'basic',
         name: 'Basic',
-        price: 499,
+        price: PLAN_PRICE_BY_ID.basic,
         color: 'from-blue-500 to-blue-600',
         ring: 'ring-blue-500/30',
-        features: ['Front Desk', 'Doctor Portal', 'Medical Records', 'Core clinic tools'],
-        locked: ['QR Check-In', 'WhatsApp Prescriptions', 'Analytics', 'Data Export'],
+        features: ['Full clinic workspace', 'Unlimited patients and records', 'QR Check-In', 'WhatsApp Prescriptions'],
+        locked: [],
     },
     {
         id: 'professional',
         name: 'Professional',
-        price: 999,
+        price: PLAN_PRICE_BY_ID.professional,
         popular: true,
         color: 'from-violet-500 to-purple-600',
         ring: 'ring-violet-500/40',
-        features: ['Everything in Basic', 'QR Check-In', 'WhatsApp Prescriptions', 'Unlimited Patients'],
-        locked: ['Data Export'],
-    },
-    {
-        id: 'premium',
-        name: 'Premium',
-        price: 1499,
-        color: 'from-slate-600 to-slate-800',
-        ring: 'ring-slate-500/30',
-        features: ['Everything in Professional', 'Advanced Analytics', 'Priority Support', 'Founder Onboarding'],
+        features: ['Everything in Basic', 'Priority support', 'Founder onboarding help', 'Faster admin activation'],
         locked: [],
     },
 ]
