@@ -221,6 +221,7 @@ async function fetchClinicLinks(pharmacyId: string) {
 }
 
 async function fetchPrescriptionRows(pharmacyId: string) {
+    // Primary: prescriptions routed explicitly to this pharmacy_id
     const withUpdatedAt = await (supabase as any)
         .from('prescriptions')
         .select('id, clinic_id, patient_name, patient_phone, doctor_name, medicines, pharmacy_status, created_at, updated_at')
@@ -594,21 +595,35 @@ const PharmacyPortal: React.FC = () => {
         try {
             const { error } = await (supabase as any)
                 .from('pharmacy_clinic_links')
-                .update({ status: nextStatus })
+                .update({ status: nextStatus, updated_at: new Date().toISOString() })
                 .eq('id', link.id);
 
             if (error) throw error;
 
             if (nextStatus === 'active' && profile?.pharmacy_id) {
+                // ── KEY FIX: Sync pharmacies.clinic_id so prescriptions can be routed ──
+                // Without this the doctor portal's fetchDoctorPharmacyNetwork won't
+                // classify this pharmacy as "linked" and prescriptions won't flow.
                 await (supabase as any)
                     .from('pharmacies')
                     .update({ clinic_id: link.clinic_id })
                     .eq('id', profile.pharmacy_id);
+
+                // Also sync the profile so role-checks stay consistent
+                await (supabase as any)
+                    .from('profiles')
+                    .update({ clinic_id: link.clinic_id })
+                    .eq('id', profile.pharmacy_id)
+                    .eq('role', 'pharmacy_staff');
+
+                // Reload prescriptions now that we're fully linked
+                await loadPrescriptions(profile.pharmacy_id);
             }
 
-            setClinicLinks(current => current
-                .map(item => item.id === link.id ? { ...item, status: nextStatus } : item)
-                .filter(item => (item.status ?? '').toLowerCase() !== 'cancelled'));
+            setClinicLinks(current =>
+                current
+                    .map(item => item.id === link.id ? { ...item, status: nextStatus } : item)
+                    .filter(item => (item.status ?? '').toLowerCase() !== 'cancelled'));
 
             if (nextStatus === 'active' && profile) {
                 setProfile({

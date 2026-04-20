@@ -137,20 +137,24 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
             }
 
             if (!linkRows.error) {
-                const cards = ((linkRows.data ?? []) as any[]).map((row) => ({
-                    linkId: row.id,
-                    pharmacyId: row.pharmacy_id,
-                    name: row.pharmacies?.name ?? 'Pharmacy',
-                    phone: row.pharmacies?.phone ?? null,
-                    city: row.pharmacies?.city ?? null,
-                    linkStatus: row.status ?? 'pending',
-                    isPrimary: Boolean(row.is_primary),
-                    contactStatus: row.pharmacies?.is_verified ? 'active' : 'pending',
-                    createdAt: row.created_at,
-                })) as LinkedPharmacyCard[];
-
-                const directLinkedRows = ((directRows.data ?? []) as any[]);
+                const allRows = ((linkRows.data ?? []) as any[]);
                 const defaultPharmacyId = typeof defaultSetting.data?.value === 'string' ? defaultSetting.data.value : null;
+                const directLinkedRows = ((directRows.data ?? []) as any[]);
+
+                const cards = allRows
+                    .filter((row) => (row.status ?? '').toLowerCase() !== 'cancelled')
+                    .map((row) => ({
+                        linkId: row.id,
+                        pharmacyId: row.pharmacy_id,
+                        name: row.pharmacies?.name ?? 'Pharmacy',
+                        phone: row.pharmacies?.phone ?? null,
+                        city: row.pharmacies?.city ?? null,
+                        linkStatus: row.status ?? 'pending',
+                        isPrimary: Boolean(row.is_primary),
+                        contactStatus: row.pharmacies?.is_verified ? 'active' : 'pending',
+                        createdAt: row.created_at,
+                    })) as LinkedPharmacyCard[];
+
                 const existingPharmacyIds = new Set(cards.map(card => card.pharmacyId));
 
                 directLinkedRows.forEach((row) => {
@@ -169,8 +173,8 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
                 });
 
                 setUsingLegacyMode(false);
-                setLinkedPharmacies(cards.filter(card => card.linkStatus !== 'pending'));
-                setPendingRequests(cards.filter(card => card.linkStatus === 'pending'));
+                setLinkedPharmacies(cards.filter(card => !['pending', 'cancelled'].includes((card.linkStatus ?? '').toLowerCase())));
+                setPendingRequests(cards.filter(card => (card.linkStatus ?? '').toLowerCase() === 'pending'));
                 return;
             }
 
@@ -371,21 +375,33 @@ const PharmacyInvitePanel: React.FC<Props> = ({ clinicId, doctorProfileId }) => 
                 .maybeSingle();
 
             if (!existing.error && existing.data) {
-                toast('A link request already exists for this pharmacy.', { icon: 'ℹ️' });
-                return;
+                const existingStatus = (existing.data.status ?? '').toLowerCase();
+                if (existingStatus === 'cancelled') {
+                    // Re-activate a previously cancelled link
+                    const { error: reactivateError } = await (supabase as any)
+                        .from('pharmacy_clinic_links')
+                        .update({ status: 'pending', updated_at: new Date().toISOString() })
+                        .eq('id', existing.data.id);
+                    if (reactivateError) throw reactivateError;
+                    toast.success('Link request re-sent to pharmacy.');
+                } else {
+                    toast('A link request already exists for this pharmacy.', { icon: 'ℹ️' });
+                    return;
+                }
+            } else {
+                const { error } = await (supabase as any)
+                    .from('pharmacy_clinic_links')
+                    .insert({
+                        clinic_id: clinicId,
+                        pharmacy_id: pharmacy.id,
+                        status: 'pending',
+                        is_primary: false,
+                    });
+
+                if (error) throw error;
+                toast.success('Link request sent to pharmacy.');
             }
 
-            const { error } = await (supabase as any)
-                .from('pharmacy_clinic_links')
-                .insert({
-                    clinic_id: clinicId,
-                    pharmacy_id: pharmacy.id,
-                    status: 'pending',
-                    is_primary: false,
-                });
-
-            if (error) throw error;
-            toast.success('Link request sent to pharmacy.');
             setSearchTerm('');
             setSearchResults([]);
             await loadData();

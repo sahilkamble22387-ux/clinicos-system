@@ -217,6 +217,22 @@ export async function syncAndFetchPharmacyProfile(userId: string): Promise<Pharm
 }
 
 export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<DoctorPharmacyNetwork> {
+    // ── Step 1: Get linked pharmacy IDs via pharmacy_clinic_links (source of truth) ──
+    const linkedPharmacyIds = new Set<string>();
+    const { data: linkRows, error: linkError } = await (supabase as any)
+        .from('pharmacy_clinic_links')
+        .select('pharmacy_id, status, is_primary')
+        .eq('clinic_id', clinicId)
+        .in('status', ['active', 'approved']);
+
+    if (!linkError && linkRows) {
+        (linkRows as any[]).forEach((row) => linkedPharmacyIds.add(row.pharmacy_id));
+    } else {
+        // Fallback: treat pharmacies with matching clinic_id as linked
+        console.warn('[pharmacyService] pharmacy_clinic_links query failed, using legacy clinic_id fallback:', linkError);
+    }
+
+    // ── Step 2: Fetch all pharmacy directory rows ──────────────────────────────
     const { data: pharmacies, error: pharmaciesError } = await (supabase as any)
         .from('pharmacies')
         .select('id, clinic_id, owner_name, name, license_number, phone, address, city, pincode, is_verified, created_at')
@@ -237,6 +253,7 @@ export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<Doct
         all = (linkedOnly ?? []) as PharmacyDirectoryItem[];
     }
 
+    // ── Step 3: Merge pharmacy profiles into directory entries ─────────────────
     const { data: profileRows, error: profilesError } = await (supabase as any)
         .from('profiles')
         .select('id, clinic_id, full_name, pharmacy_id, role')
@@ -270,19 +287,31 @@ export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<Doct
 
     const mergedPharmacies = Array.from(merged.values());
 
+    // ── Step 4: Determine linked pharmacies using pharmacy_clinic_links ────────
+    // A pharmacy is "linked" if it appears in pharmacy_clinic_links (active/approved)
+    // OR (legacy fallback) if its clinic_id matches this clinic's id.
     const linkedPharmacies = mergedPharmacies
-        .filter(pharmacy => pharmacy.clinic_id === clinicId)
+        .filter(pharmacy =>
+            linkedPharmacyIds.has(pharmacy.id) ||
+            (!linkError && linkedPharmacyIds.size === 0 && pharmacy.clinic_id === clinicId) ||
+            (linkError && pharmacy.clinic_id === clinicId)
+        )
         .sort((a, b) => a.name.localeCompare(b.name));
+
+    const linkedPharmacyIdSet = new Set(linkedPharmacies.map(p => p.id));
 
     const directoryPharmacies = mergedPharmacies
         .sort((a, b) => {
-            if (a.clinic_id === clinicId && b.clinic_id !== clinicId) return -1;
+            const aLinked = linkedPharmacyIdSet.has(a.id);
+            const bLinked = linkedPharmacyIdSet.has(b.id);
+            if (aLinked && !bLinked) return -1;
+            if (!aLinked && bLinked) return 1;
             if (!a.clinic_id && b.clinic_id) return -1;
             if (a.clinic_id && !b.clinic_id) return 1;
-            if (a.clinic_id !== clinicId && b.clinic_id === clinicId) return 1;
             return a.name.localeCompare(b.name);
         });
 
+    // ── Step 5: Load default pharmacy preference ───────────────────────────────
     const { data: defaultSetting, error: defaultError } = await (supabase as any)
         .from('clinic_settings')
         .select('value')
@@ -293,9 +322,16 @@ export async function fetchDoctorPharmacyNetwork(clinicId: string): Promise<Doct
         console.warn('[pharmacyService] Could not load clinic default pharmacy setting:', defaultError);
     }
 
+    // Also check if there is a primary link in pharmacy_clinic_links
+    const primaryLinkRow = !linkError && linkRows
+        ? (linkRows as any[]).find(r => r.is_primary)
+        : null;
+    const primaryFromLink = primaryLinkRow?.pharmacy_id ?? null;
+
     const savedDefault = typeof defaultSetting?.value === 'string' ? defaultSetting.value : null;
-    const defaultPharmacyId = linkedPharmacies.some(pharmacy => pharmacy.id === savedDefault)
-        ? savedDefault
+    const resolvedDefault = savedDefault || primaryFromLink;
+    const defaultPharmacyId = linkedPharmacies.some(pharmacy => pharmacy.id === resolvedDefault)
+        ? resolvedDefault
         : linkedPharmacies[0]?.id ?? null;
 
     return { linkedPharmacies, directoryPharmacies, defaultPharmacyId };
@@ -323,6 +359,7 @@ export async function clearClinicDefaultPharmacy(clinicId: string): Promise<void
 }
 
 export async function linkPharmacyToClinic(clinicId: string, pharmacyId: string): Promise<void> {
+    // Update the direct FK on pharmacies
     const { error: pharmacyError } = await (supabase as any)
         .from('pharmacies')
         .update({ clinic_id: clinicId })
@@ -332,6 +369,7 @@ export async function linkPharmacyToClinic(clinicId: string, pharmacyId: string)
         console.warn('[pharmacyService] Could not update pharmacy directory row during link:', pharmacyError);
     }
 
+    // Update the profile so role-checks are consistent
     const { error: profileError } = await (supabase as any)
         .from('profiles')
         .upsert([{
@@ -342,6 +380,38 @@ export async function linkPharmacyToClinic(clinicId: string, pharmacyId: string)
         }], { onConflict: 'id' });
 
     if (profileError) throw profileError;
+
+    // ── KEY FIX: Also ensure a pharmacy_clinic_links row exists ──────────────
+    // Without this row the PharmacyPortal can't authenticate and the Doctor
+    // portal's fetchDoctorPharmacyNetwork won't see this pharmacy as "linked".
+    try {
+        const { data: existing } = await (supabase as any)
+            .from('pharmacy_clinic_links')
+            .select('id, status')
+            .eq('clinic_id', clinicId)
+            .eq('pharmacy_id', pharmacyId)
+            .maybeSingle();
+
+        if (existing?.id) {
+            // Row exists — make sure it's active
+            await (supabase as any)
+                .from('pharmacy_clinic_links')
+                .update({ status: 'active', updated_at: new Date().toISOString() })
+                .eq('id', existing.id);
+        } else {
+            // No row yet — create one as active + primary
+            await (supabase as any)
+                .from('pharmacy_clinic_links')
+                .insert({
+                    clinic_id: clinicId,
+                    pharmacy_id: pharmacyId,
+                    status: 'active',
+                    is_primary: true,
+                });
+        }
+    } catch (linkErr) {
+        console.warn('[pharmacyService] Could not upsert pharmacy_clinic_links row during link:', linkErr);
+    }
 }
 
 export async function unlinkPharmacyFromClinic(clinicId: string, pharmacyId: string): Promise<void> {
