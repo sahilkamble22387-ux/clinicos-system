@@ -1,0 +1,2170 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nirog OS (NirogOS) | Clinic Management Software for Doctors in India</title>
+    <meta name="description"
+        content="Nirog OS (NirogOS) is clinic management software for doctors in India. Manage patients, appointments, prescriptions, check-ins, analytics, and pharmacy-connected workflows in one secure system.">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="keywords"
+        content="Nirog OS, NirogOS, clinic management software, doctor software India, clinic software India, patient management system, prescription software, pharmacy integration">
+    <meta name="author" content="NirogOS">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="canonical" href="https://nirogos.in/">
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/nirogos-mark-light.svg">
+    <link rel="apple-touch-icon" href="/assets/logo/nirogos-mark-light.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nirog OS">
+    <meta property="og:title" content="Nirog OS (NirogOS) | Clinic Management Software for Doctors in India">
+    <meta property="og:description"
+        content="Clinic management software for doctors in India with patient records, prescriptions, check-ins, analytics, and pharmacy-connected workflows.">
+    <meta property="og:url" content="https://nirogos.in/">
+    <meta property="og:image" content="https://nirogos.in/assets/logo/nirogos-lockup-light.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nirog OS (NirogOS) | Clinic Management Software for Doctors in India">
+    <meta name="twitter:description"
+        content="Manage patients, prescriptions, check-ins, analytics, and pharmacy workflows with Nirog OS clinic software.">
+    <meta name="twitter:image" content="https://nirogos.in/assets/logo/nirogos-lockup-light.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Organization",
+                    "@id": "https://nirogos.in/#organization",
+                    "name": "Nirog OS",
+                    "alternateName": "NirogOS",
+                    "url": "https://nirogos.in/",
+                    "logo": "https://nirogos.in/assets/logo/nirogos-mark-light.svg",
+                    "email": "support@nirogos.in"
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": "https://nirogos.in/#website",
+                    "url": "https://nirogos.in/",
+                    "name": "Nirog OS",
+                    "alternateName": "NirogOS",
+                    "publisher": {
+                        "@id": "https://nirogos.in/#organization"
+                    }
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "@id": "https://nirogos.in/#software",
+                    "name": "Nirog OS",
+                    "alternateName": "NirogOS",
+                    "url": "https://nirogos.in/",
+                    "applicationCategory": "BusinessApplication",
+                    "operatingSystem": "Web",
+                    "description": "Clinic management software for doctors and clinics in India with patient management, digital prescriptions, check-ins, analytics, and pharmacy-connected workflows.",
+                    "publisher": {
+                        "@id": "https://nirogos.in/#organization"
+                    }
+                },
+                {
+                    "@type": "FAQPage",
+                    "@id": "https://nirogos.in/#faq",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "Who is Nirog OS built for?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Nirog OS is built for doctors, independent clinics, front-desk staff, and clinic-connected pharmacies in India."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Does Nirog OS connect clinics with pharmacies?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. Nirog OS connects clinic workflows with local pharmacy operations so prescriptions and patient handoffs move faster."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can Nirog OS help with digital prescriptions and patient records?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. Nirog OS supports patient management, records, check-ins, prescriptions, and operational workflows in one system."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Is Nirog OS designed for clinics in India?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. The platform is positioned for Indian healthcare workflows and independent doctors who want more control over their practice."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#6366F1',
+                        'accent-hover': '#4F46E5',
+                        'accent-light': '#EEF2FF',
+                        sidebar: '#0F172A',
+                        'text-primary': '#0F172A',
+                        'text-secondary': '#64748B',
+                        'surface': '#F8FAFC',
+                        'card-border': '#E2E8F0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --announcement-offset: 0px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 99px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366F1;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Scroll Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #6366F1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Hero Orbs */
+        .hero-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            animation: orbFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes orbFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(20px, -30px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-15px, 15px) scale(0.95);
+            }
+        }
+
+        /* Pulse */
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5);
+            }
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+
+        /* Flow Line Animation */
+        @keyframes flowDash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        .flow-line {
+            stroke-dasharray: 8 6;
+            animation: flowDash 0.8s linear infinite;
+        }
+
+        /* Card Hover */
+        .feature-card {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Pricing Card Hover */
+        .pricing-card {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Dashboard Mockup */
+        .mockup-shadow {
+            box-shadow: 0 40px 80px rgba(15, 23, 42, 0.18), 0 10px 30px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        /* FAQ Accordion */
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
+        }
+
+        .faq-answer.open {
+            max-height: 200px;
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Shimmer */
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .shimmer-btn {
+            background: linear-gradient(90deg, #6366F1, #8B5CF6, #6366F1);
+            background-size: 200% 100%;
+        }
+
+        .shimmer-btn:hover {
+            animation: shimmer 2s ease infinite;
+        }
+
+        /* Counter */
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Badge glow */
+        .badge-glow {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        #navbar {
+            top: var(--announcement-offset);
+        }
+
+        .hero-section {
+            padding-top: calc(5rem + var(--announcement-offset));
+        }
+
+        .announcement-bar {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+        }
+
+        .announcement-bar.is-hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ticker-shell {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ticker-track {
+            display: flex;
+            width: max-content;
+            animation: tickerScroll 42s linear infinite;
+        }
+
+        .ticker-shell:hover .ticker-track {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .ticker-separator {
+            color: #14B8A6;
+            font-weight: 900;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        @keyframes tickerScroll {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-33.3333%);
+            }
+        }
+
+        /* Brand lockups */
+        .brand-lockup {
+            display: block;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .brand-lockup-header {
+            height: 2.25rem;
+        }
+
+        .brand-lockup-footer {
+            height: 2.5rem;
+            max-width: min(11rem, 100%);
+        }
+
+        @media (min-width: 640px) {
+            .brand-lockup-header {
+                height: 2.65rem;
+            }
+
+            .brand-lockup-footer {
+                height: 2.75rem;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .hero-section {
+                padding-top: calc(6rem + var(--announcement-offset));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .reveal,
+            .reveal.visible {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+
+            .hero-orb,
+            .pulse-dot,
+            .flow-line,
+            .ticker-track,
+            .announcement-bar,
+            .mobile-menu,
+            .feature-card,
+            .pricing-card,
+            .faq-answer,
+            .faq-chevron,
+            .shimmer-btn {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-text-primary overflow-x-hidden">
+
+    <div id="topAnnouncement"
+        class="announcement-bar fixed top-0 left-0 right-0 z-[70] bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="min-h-[44px] py-2 flex items-center justify-center gap-3 pr-10 text-center relative">
+                <p class="text-xs sm:text-sm font-medium leading-relaxed">
+                    <span class="mr-1.5">🔥</span>
+                    Founder's Plan: First 50 clinics get Professional FREE for 3 months — only
+                    <span class="font-black text-amber-300">43</span>
+                    spots remaining.
+                    <a href="#founders-plan" class="ml-1.5 font-bold text-white underline underline-offset-4">
+                        Claim Your Spot →
+                    </a>
+                </p>
+                <button id="announcementClose"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-sm"
+                    aria-label="Dismiss founder plan banner">
+                    ×
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- NAVIGATION                                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20">
+                <!-- Logo -->
+                <a href="#" class="flex items-center group">
+                    <div class="group-hover:scale-[1.02] transition-transform">
+                        <img src="/assets/logo/nirogos-lockup-light.svg" alt="Nirog OS"
+                            class="brand-lockup brand-lockup-header">
+                    </div>
+                </a>
+
+                <!-- Desktop Links -->
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors">Features</a>
+                    <a href="#pipeline"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors">How It
+                        Works</a>
+                    <a href="#pricing"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors">Pricing</a>
+                    <a href="#security"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors">Security</a>
+                    <a href="#faq"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors">FAQ</a>
+                </div>
+
+                <!-- Desktop CTA -->
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="/login" target="_top"
+                        class="text-sm font-medium text-text-secondary hover:text-accent transition-colors px-4 py-2">Log
+                        In</a>
+                    <a href="/login?mode=signup" target="_top"
+                        class="text-sm font-semibold text-white bg-accent hover:bg-accent-hover px-5 py-2.5 rounded-xl transition-colors">Start
+                        Free Trial</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn"
+                    class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+                    <iconify-icon icon="lucide:menu" class="text-xl" id="menuIcon"></iconify-icon>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-0 z-[60] bg-white">
+        <div class="flex items-center justify-between h-16 px-4">
+            <a href="#" class="flex items-center">
+                <div>
+                    <img src="/assets/logo/nirogos-lockup-light.svg" alt="Nirog OS"
+                        class="brand-lockup brand-lockup-header">
+                </div>
+            </a>
+            <button id="mobileMenuClose"
+                class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+                <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+            </button>
+        </div>
+        <div class="flex flex-col px-6 pt-8 gap-1">
+            <a href="#features"
+                class="mobile-link text-lg font-medium py-3 text-text-secondary hover:text-accent transition-colors border-b border-gray-100">Features</a>
+            <a href="#pipeline"
+                class="mobile-link text-lg font-medium py-3 text-text-secondary hover:text-accent transition-colors border-b border-gray-100">How
+                It Works</a>
+            <a href="#pricing"
+                class="mobile-link text-lg font-medium py-3 text-text-secondary hover:text-accent transition-colors border-b border-gray-100">Pricing</a>
+            <a href="#security"
+                class="mobile-link text-lg font-medium py-3 text-text-secondary hover:text-accent transition-colors border-b border-gray-100">Security</a>
+            <a href="#faq"
+                class="mobile-link text-lg font-medium py-3 text-text-secondary hover:text-accent transition-colors border-b border-gray-100">FAQ</a>
+            <div class="pt-6 flex flex-col gap-3">
+                <a href="/login?mode=signup" target="_top"
+                    class="mobile-link text-center text-sm font-semibold text-white bg-accent hover:bg-accent-hover px-5 py-3 rounded-xl transition-colors">Start
+                    Free Trial</a>
+                <a href="/login" target="_top"
+                    class="mobile-link text-center text-sm font-medium text-text-secondary border border-card-border px-5 py-3 rounded-xl hover:bg-gray-50 transition-colors">Log
+                    In</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- HERO SECTION                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section
+        class="hero-section relative min-h-screen flex flex-col items-center justify-center pb-12 px-4 sm:px-6 overflow-hidden grid-bg">
+        <!-- Decorative Orbs -->
+        <div class="hero-orb w-[500px] h-[500px] bg-indigo-300/20 top-[-100px] right-[-150px]"></div>
+        <div class="hero-orb w-[400px] h-[400px] bg-violet-300/15 bottom-[10%] left-[-100px]"
+            style="animation-delay: -3s;"></div>
+        <div class="hero-orb w-[300px] h-[300px] bg-blue-300/10 top-[30%] left-[20%]" style="animation-delay: -5s;">
+        </div>
+
+        <div class="relative z-10 max-w-5xl mx-auto text-center">
+            <!-- Badge -->
+            <div
+                class="reveal inline-flex items-center gap-2 bg-white border border-card-border rounded-full px-4 py-1.5 mb-8 badge-glow">
+                <span class="w-2 h-2 bg-emerald-400 rounded-full pulse-dot"></span>
+                <span class="text-xs font-semibold text-text-secondary tracking-wide uppercase">Built Exclusively for
+                    Indian Healthcare</span>
+            </div>
+
+            <!-- Headline -->
+            <h1
+                class="reveal reveal-delay-1 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] text-sidebar mb-6">
+                Nirog OS for Your Clinic.<br>
+                <span class="gradient-text">Your Rules.</span>
+            </h1>
+
+            <!-- Subheadline -->
+            <p
+                class="reveal reveal-delay-2 text-base sm:text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
+                NirogOS is clinic management software for doctors in India. Stop losing patients to corporate apps and
+                reclaim your practice with a secure system that connects your waiting room, prescriptions, and local
+                pharmacy workflows in real time.
+            </p>
+
+            <div
+                class="reveal reveal-delay-3 inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs sm:text-sm text-text-secondary font-medium mb-6 italic">
+                <span class="inline-flex items-center gap-1.5"><span class="text-emerald-500">✅</span>No credit card
+                    required</span>
+                <span class="inline-flex items-center gap-1.5"><span class="text-emerald-500">✅</span>30-day free
+                    trial</span>
+                <span class="inline-flex items-center gap-1.5"><span class="text-emerald-500">✅</span>Setup in 2
+                    minutes</span>
+            </div>
+
+            <!-- CTAs -->
+            <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+                <a href="/login?mode=signup" target="_top"
+                    class="shimmer-btn text-white font-semibold px-8 py-4 rounded-2xl text-base shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow w-full sm:w-auto text-center">
+                    Start Free Trial
+                </a>
+                <a href="#pipeline"
+                    class="flex items-center justify-center gap-2 text-text-secondary font-semibold px-8 py-4 rounded-2xl text-base border border-card-border bg-white hover:border-accent hover:text-accent transition-colors w-full sm:w-auto">
+                    <iconify-icon icon="lucide:play-circle" class="text-lg"></iconify-icon>
+                    See How It Works
+                </a>
+            </div>
+            <p class="reveal reveal-delay-4 text-sm text-text-secondary italic mb-16">
+                ⏰ Founder's Plan ends when 50 clinics join.
+                <span class="font-black text-amber-500">43 spots left.</span>
+            </p>
+
+            <!-- Dashboard Mockup -->
+            <div class="reveal reveal-delay-4 relative">
+                <div class="mockup-shadow rounded-2xl overflow-hidden border border-card-border bg-white">
+                    <!-- Browser Frame -->
+                    <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-card-border">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        </div>
+                        <div class="flex-1 flex justify-center">
+                            <div
+                                class="bg-white border border-card-border rounded-lg px-4 py-1 text-xs text-text-secondary flex items-center gap-2">
+                                <iconify-icon icon="lucide:lock" class="text-emerald-500 text-[10px]"></iconify-icon>
+                                app.nirogos.in/dashboard
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Dashboard Content -->
+                    <div class="flex min-h-[320px] sm:min-h-[420px]">
+                        <!-- Sidebar -->
+                        <div class="hidden sm:flex flex-col w-56 bg-sidebar text-white p-4 gap-1 shrink-0">
+                            <div class="flex items-center mb-6 px-2">
+                                <img src="/assets/logo/nirogos-lockup-dark.svg" alt="Nirog OS" class="brand-lockup h-6">
+                            </div>
+                            <div class="flex items-center gap-3 px-3 py-2.5 bg-white/10 rounded-xl text-sm font-medium">
+                                <iconify-icon icon="lucide:layout-dashboard" class="text-indigo-400"></iconify-icon>
+                                Dashboard
+                            </div>
+                            <div
+                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                                <iconify-icon icon="lucide:users"></iconify-icon>
+                                Queue <span
+                                    class="ml-auto bg-accent/30 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full">5</span>
+                            </div>
+                            <div class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400">
+                                <iconify-icon icon="lucide:file-text"></iconify-icon>
+                                Prescriptions
+                            </div>
+                            <div class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400">
+                                <iconify-icon icon="lucide:pill"></iconify-icon>
+                                Pharmacy
+                            </div>
+                            <div class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400">
+                                <iconify-icon icon="lucide:bar-chart-3"></iconify-icon>
+                                Analytics
+                            </div>
+                            <div class="mt-auto flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400">
+                                <iconify-icon icon="lucide:settings"></iconify-icon>
+                                Settings
+                            </div>
+                        </div>
+                        <!-- Main Area -->
+                        <div class="flex-1 p-4 sm:p-6 bg-surface">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <p class="text-sm text-text-secondary">Good Morning,</p>
+                                    <h3 class="text-lg sm:text-xl font-bold text-sidebar">Dr. Sharma</h3>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-emerald-400 rounded-full pulse-dot"></div>
+                                    <span
+                                        class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Live</span>
+                                </div>
+                            </div>
+                            <!-- Stats Row -->
+                            <div class="grid grid-cols-3 gap-3 mb-6">
+                                <div class="bg-white border border-card-border rounded-xl p-3 sm:p-4">
+                                    <p class="text-[10px] sm:text-xs font-medium text-text-secondary mb-1">Waiting</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-amber-600">3</p>
+                                </div>
+                                <div class="bg-white border border-card-border rounded-xl p-3 sm:p-4">
+                                    <p class="text-[10px] sm:text-xs font-medium text-text-secondary mb-1">In Room</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-accent">1</p>
+                                </div>
+                                <div class="bg-white border border-card-border rounded-xl p-3 sm:p-4">
+                                    <p class="text-[10px] sm:text-xs font-medium text-text-secondary mb-1">Completed</p>
+                                    <p class="text-xl sm:text-2xl font-bold text-emerald-600">7</p>
+                                </div>
+                            </div>
+                            <!-- Queue List -->
+                            <div class="bg-white border border-card-border rounded-xl overflow-hidden">
+                                <div class="px-4 py-3 border-b border-card-border bg-gray-50/50">
+                                    <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Live
+                                        Queue</p>
+                                </div>
+                                <div class="divide-y divide-card-border">
+                                    <div class="flex items-center justify-between px-4 py-3 bg-indigo-50/50">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-bold text-accent">
+                                                RK</div>
+                                            <div>
+                                                <p class="text-sm font-semibold">Rajesh Kumar</p>
+                                                <p class="text-[10px] text-text-secondary">10:30 AM · Follow-up</p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-semibold text-accent bg-accent/10 px-2 py-1 rounded-full">IN
+                                            ROOM</span>
+                                    </div>
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-xs font-bold text-amber-700">
+                                                PM</div>
+                                            <div>
+                                                <p class="text-sm font-semibold">Priya Mehta</p>
+                                                <p class="text-[10px] text-text-secondary">10:45 AM · New Patient</p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">WAITING</span>
+                                    </div>
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-xs font-bold text-emerald-700">
+                                                AS</div>
+                                            <div>
+                                                <p class="text-sm font-semibold">Amit Singh</p>
+                                                <p class="text-[10px] text-text-secondary">11:00 AM · Follow-up</p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">WAITING</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Reflection Glow -->
+                <div
+                    class="absolute -bottom-20 left-1/2 -translate-x-1/2 w-3/4 h-40 bg-accent/10 blur-3xl rounded-full pointer-events-none">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SOCIAL PROOF TICKER                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="bg-white/80 py-3 border-y border-card-border/60">
+        <div class="ticker-shell">
+            <div class="ticker-track px-4">
+                <div class="ticker-item text-sm text-text-secondary italic pr-10">
+                    <span>Dr. Sharma, Pune — joined this week</span><span class="ticker-separator">·</span>
+                    <span>QR check-in saved 2 hrs/day at a Kothrud clinic</span><span class="ticker-separator">·</span>
+                    <span>Prescription on WhatsApp in 10 seconds</span><span class="ticker-separator">·</span>
+                    <span>Dr. Patil, Nashik — first patient checked in via QR</span><span class="ticker-separator">·</span>
+                    <span>₹33/day to run a modern clinic</span><span class="ticker-separator">·</span>
+                    <span>Dr. Desai, Aundh — "My patients love getting it on WhatsApp"</span><span class="ticker-separator">·</span>
+                    <span>No paper prescriptions since joining</span><span class="ticker-separator">·</span>
+                    <span>Setup took 4 minutes · Already live</span><span class="ticker-separator">·</span>
+                </div>
+                <div class="ticker-item text-sm text-text-secondary italic pr-10">
+                    <span>Dr. Sharma, Pune — joined this week</span><span class="ticker-separator">·</span>
+                    <span>QR check-in saved 2 hrs/day at a Kothrud clinic</span><span class="ticker-separator">·</span>
+                    <span>Prescription on WhatsApp in 10 seconds</span><span class="ticker-separator">·</span>
+                    <span>Dr. Patil, Nashik — first patient checked in via QR</span><span class="ticker-separator">·</span>
+                    <span>₹33/day to run a modern clinic</span><span class="ticker-separator">·</span>
+                    <span>Dr. Desai, Aundh — "My patients love getting it on WhatsApp"</span><span class="ticker-separator">·</span>
+                    <span>No paper prescriptions since joining</span><span class="ticker-separator">·</span>
+                    <span>Setup took 4 minutes · Already live</span><span class="ticker-separator">·</span>
+                </div>
+                <div class="ticker-item text-sm text-text-secondary italic pr-10">
+                    <span>Dr. Sharma, Pune — joined this week</span><span class="ticker-separator">·</span>
+                    <span>QR check-in saved 2 hrs/day at a Kothrud clinic</span><span class="ticker-separator">·</span>
+                    <span>Prescription on WhatsApp in 10 seconds</span><span class="ticker-separator">·</span>
+                    <span>Dr. Patil, Nashik — first patient checked in via QR</span><span class="ticker-separator">·</span>
+                    <span>₹33/day to run a modern clinic</span><span class="ticker-separator">·</span>
+                    <span>Dr. Desai, Aundh — "My patients love getting it on WhatsApp"</span><span class="ticker-separator">·</span>
+                    <span>No paper prescriptions since joining</span><span class="ticker-separator">·</span>
+                    <span>Setup took 4 minutes · Already live</span><span class="ticker-separator">·</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- STATS BAR                                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="relative py-16 sm:py-20 bg-white border-y border-card-border">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="flex justify-center">
+                <div
+                    class="reveal inline-flex flex-wrap items-center justify-center gap-2 bg-teal-50 border border-teal-100 rounded-full px-5 py-2.5 text-center badge-glow">
+                    <span class="text-base">🚀</span>
+                    <span class="text-xs sm:text-sm font-semibold text-teal-700">
+                        Currently in Early Access · Pune, Maharashtra · Accepting First 50 Clinics
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PROBLEM SECTION                             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 bg-sidebar text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.03]"
+            style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');">
+        </div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-4">The Problem</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+                    The Chaos You Know<br><span class="text-indigo-400">Too Well</span>
+                </h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Pain 1 -->
+                <div
+                    class="reveal reveal-delay-1 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 hover:bg-white/[0.08] transition-colors">
+                    <div class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-5">
+                        <iconify-icon icon="lucide:users-round" class="text-red-400 text-2xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">Crowded Waiting Rooms</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Patients crammed into tiny spaces, no idea when
+                        their turn comes. Receptionists shouting names over the noise. A stressful start to every
+                        consultation.</p>
+                </div>
+                <!-- Pain 2 -->
+                <div
+                    class="reveal reveal-delay-2 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 hover:bg-white/[0.08] transition-colors">
+                    <div class="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-5">
+                        <iconify-icon icon="lucide:file-pen-line" class="text-amber-400 text-2xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">Illegible Prescriptions</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Hasty handwriting leads to dispensing errors. No
+                        digital trail. Patients lose paper prescriptions and come back asking for duplicates. Wasted
+                        time for everyone.</p>
+                </div>
+                <!-- Pain 3 -->
+                <div
+                    class="reveal reveal-delay-3 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 hover:bg-white/[0.08] transition-colors">
+                    <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-5">
+                        <iconify-icon icon="lucide:building-2" class="text-purple-400 text-2xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">Corporate Hijacking</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Many digital healthcare platforms redirect
+                        patients to their own or partnered online pharmacies, reducing local chemist business and
+                        limiting your control over the patient's care journey.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LOSS FRAMING                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 bg-white relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-teal-600 mb-4">The Real Cost of
+                    Waiting</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-sidebar mb-4">
+                    Every Day You Wait, <span class="gradient-text">You Lose This</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-text-secondary max-w-2xl mx-auto">
+                    Here's what paper prescriptions and manual check-ins actually cost you.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="reveal bg-white border border-rose-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+                    <p class="text-4xl sm:text-5xl font-extrabold text-rose-500 mb-3">2 hrs</p>
+                    <h3 class="text-lg font-bold text-sidebar mb-3">lost every day to paperwork &amp; manual check-in
+                    </h3>
+                    <p class="text-sm text-text-secondary leading-relaxed">That's 60 hours a month. 720 hours a year.
+                        What would you do with 720 extra hours?</p>
+                </div>
+                <div class="reveal reveal-delay-1 bg-white border border-amber-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+                    <p class="text-4xl sm:text-5xl font-extrabold text-amber-500 mb-3">₹0</p>
+                    <h3 class="text-lg font-bold text-sidebar mb-3">earned from patients who switch to online
+                        pharmacies</h3>
+                    <p class="text-sm text-text-secondary leading-relaxed">When prescriptions go digital on corporate
+                        apps, your local chemist loses. So do you.</p>
+                </div>
+                <div class="reveal reveal-delay-2 bg-white border border-violet-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+                    <p class="text-4xl sm:text-5xl font-extrabold text-violet-500 mb-3">3x</p>
+                    <h3 class="text-lg font-bold text-sidebar mb-3">more likely patients return to digitally-connected
+                        clinics</h3>
+                    <p class="text-sm text-text-secondary leading-relaxed">Patients who get WhatsApp prescriptions
+                        remember your clinic. Patients who get paper forget.</p>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <p class="reveal text-lg font-semibold text-sidebar mb-5">Stop losing. Start with NirogOS free for 30
+                    days.</p>
+                <a href="/login?mode=signup" target="_top"
+                    class="reveal reveal-delay-1 inline-flex items-center justify-center shimmer-btn text-white font-semibold px-8 py-4 rounded-2xl text-base shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow">
+                    Start Free Trial →
+                </a>
+                <p class="reveal reveal-delay-2 text-sm text-text-secondary mt-4">No card. No setup fee. 2 minutes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FEATURES SECTION                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="features" class="py-20 sm:py-28 relative grid-bg">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">Core Features</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-sidebar">
+                    Built for How You<br><span class="gradient-text">Actually Work</span>
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Feature 1: Scan & Wait -->
+                <div
+                    class="reveal feature-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                    </div>
+                    <div class="relative">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:scan-line" class="text-accent text-2xl"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-sidebar">Scan & Wait</h3>
+                                <p class="text-xs text-accent font-semibold">Patient Check-in</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-text-secondary leading-relaxed mb-6">Patients walk in, scan a QR code,
+                            and are instantly added to the live queue. No more reception desk bottlenecks. No more
+                            scribbling names in a register.</p>
+                        <!-- Mini QR Visual -->
+                        <div class="flex items-center gap-4 bg-surface rounded-xl p-4 border border-card-border">
+                            <div class="w-16 h-16 bg-sidebar rounded-lg flex items-center justify-center shrink-0">
+                                <iconify-icon icon="lucide:qr-code" class="text-white text-3xl"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-sidebar">Scan to Check In</p>
+                                <p class="text-xs text-text-secondary">Dr. Sharma's Clinic · Room 3</p>
+                                <div class="flex items-center gap-1 mt-1.5">
+                                    <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot"></div>
+                                    <span class="text-[10px] font-medium text-emerald-600">3 in queue · ~25 min
+                                        wait</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Command Center -->
+                <div
+                    class="reveal reveal-delay-1 feature-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-40 h-40 bg-violet-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                    </div>
+                    <div class="relative">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:layout-dashboard"
+                                    class="text-violet-600 text-2xl"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-sidebar">The Command Center</h3>
+                                <p class="text-xs text-violet-600 font-semibold">Doctor Dashboard</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-text-secondary leading-relaxed mb-6">A sleek, live Kanban board showing
+                            who's waiting, who's next, and full patient history. One tap to start consultation, one tap
+                            to finish. Zero friction.</p>
+                        <!-- Mini Kanban Visual -->
+                        <div class="flex gap-2">
+                            <div class="flex-1 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                                <p class="text-[10px] font-bold text-amber-700 uppercase mb-2">Waiting</p>
+                                <div class="space-y-1.5">
+                                    <div
+                                        class="bg-white rounded-md px-2 py-1.5 text-[11px] font-medium text-sidebar shadow-sm">
+                                        Priya M.</div>
+                                    <div
+                                        class="bg-white rounded-md px-2 py-1.5 text-[11px] font-medium text-sidebar shadow-sm">
+                                        Amit S.</div>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-indigo-50 border border-indigo-200 rounded-lg p-2.5">
+                                <p class="text-[10px] font-bold text-indigo-700 uppercase mb-2">In Room</p>
+                                <div class="space-y-1.5">
+                                    <div
+                                        class="bg-white rounded-md px-2 py-1.5 text-[11px] font-medium text-sidebar shadow-sm border-l-2 border-indigo-500">
+                                        Rajesh K.</div>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                                <p class="text-[10px] font-bold text-emerald-700 uppercase mb-2">Done</p>
+                                <div class="space-y-1.5">
+                                    <div
+                                        class="bg-white rounded-md px-2 py-1.5 text-[11px] font-medium text-text-secondary shadow-sm line-through">
+                                        Sunita D.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 3: WhatsApp Prescriptions -->
+                <div
+                    class="reveal feature-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-40 h-40 bg-emerald-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                    </div>
+                    <div class="relative">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:message-circle"
+                                    class="text-emerald-600 text-2xl"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-sidebar">Instant WhatsApp Rx</h3>
+                                <p class="text-xs text-emerald-600 font-semibold">Digital Prescriptions</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-text-secondary leading-relaxed mb-6">Generate digital prescriptions in 10
+                            seconds. A professional PDF is instantly sent to the patient's WhatsApp. Legible,
+                            accessible, and impossible to lose.</p>
+                        <!-- WhatsApp Message Visual -->
+                        <div class="bg-[#e5ddd5] rounded-xl p-3 space-y-2" style="background: #ece5dd;">
+                            <div
+                                class="max-w-[80%] ml-auto bg-[#dcf8c6] rounded-lg rounded-tr-none px-3 py-2 shadow-sm">
+                                <p class="text-[11px] font-semibold text-sidebar">Dr. Sharma's Clinic</p>
+                                <p class="text-[10px] text-sidebar mt-1">📋 Your prescription is ready!</p>
+                                <div class="flex items-center gap-1 mt-1.5 bg-white/70 rounded px-1.5 py-1">
+                                    <iconify-icon icon="lucide:file-text" class="text-red-500 text-xs"></iconify-icon>
+                                    <span class="text-[9px] font-medium text-sidebar">Rx_RajeshK_2024.pdf</span>
+                                </div>
+                                <p class="text-[9px] text-gray-500 text-right mt-1">10:32 AM ✓✓</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 4: Magic Pipeline -->
+                <div
+                    class="reveal reveal-delay-1 feature-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                    </div>
+                    <div class="relative">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:pipeline" class="text-blue-600 text-2xl"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-sidebar">The Magic Pipeline</h3>
+                                <p class="text-xs text-blue-600 font-semibold">Pharmacy Sync</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-text-secondary leading-relaxed mb-6">The killer feature. When you hit
+                            "Save Prescription," it instantly pings the local pharmacist's iPad. Medicines are packed
+                            before the patient even walks down the stairs.</p>
+                        <!-- Pipeline Flow Visual -->
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 text-center">
+                                <iconify-icon icon="lucide:stethoscope" class="text-indigo-600 text-lg"></iconify-icon>
+                                <p class="text-[9px] font-bold text-indigo-700 mt-1">DOCTOR</p>
+                            </div>
+                            <div class="shrink-0">
+                                <svg width="24" height="12" viewBox="0 0 24 12">
+                                    <path d="M0 6h20m-4-4l4 4-4 4" stroke="#6366F1" stroke-width="2" fill="none"
+                                        class="flow-line" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-center">
+                                <iconify-icon icon="lucide:pill" class="text-emerald-600 text-lg"></iconify-icon>
+                                <p class="text-[9px] font-bold text-emerald-700 mt-1">PHARMACY</p>
+                            </div>
+                            <div class="shrink-0">
+                                <svg width="24" height="12" viewBox="0 0 24 12">
+                                    <path d="M0 6h20m-4-4l4 4-4 4" stroke="#10B981" stroke-width="2" fill="none"
+                                        class="flow-line" stroke-linecap="round" stroke-linejoin="round"
+                                        style="animation-delay: 0.4s;" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-center">
+                                <iconify-icon icon="lucide:package-check" class="text-amber-600 text-lg"></iconify-icon>
+                                <p class="text-[9px] font-bold text-amber-700 mt-1">READY!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PIPELINE DEEP DIVE                          -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="pipeline" class="py-20 sm:py-28 bg-white relative overflow-hidden">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">How It Works</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-sidebar mb-4">
+                    From Stethoscope to<br><span class="gradient-text">Medicine Bag in Seconds</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-text-secondary max-w-2xl mx-auto">Your
+                    prescription reaches the pharmacist before your patient reaches the stairs. Here's the magic, step
+                    by step.</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="relative">
+                <!-- Connecting Line (desktop) -->
+                <div
+                    class="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-200 via-violet-200 to-emerald-200 -translate-y-1/2 z-0">
+                </div>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+                    <!-- Step 1 -->
+                    <div
+                        class="reveal feature-card bg-white border border-card-border rounded-2xl p-6 text-center relative">
+                        <div
+                            class="absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-accent/30">
+                            1</div>
+                        <div
+                            class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 mt-3">
+                            <iconify-icon icon="lucide:user-check" class="text-accent text-3xl"></iconify-icon>
+                        </div>
+                        <h3 class="text-base font-bold text-sidebar mb-2">Patient Scans QR</h3>
+                        <p class="text-sm text-text-secondary leading-relaxed">Walks in, scans the QR code on the wall.
+                            Automatically added to the live queue. Takes 3 seconds.</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div
+                        class="reveal reveal-delay-1 feature-card bg-white border border-card-border rounded-2xl p-6 text-center relative">
+                        <div
+                            class="absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-violet-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-violet-500/30">
+                            2</div>
+                        <div
+                            class="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4 mt-3">
+                            <iconify-icon icon="lucide:monitor" class="text-violet-600 text-3xl"></iconify-icon>
+                        </div>
+                        <h3 class="text-base font-bold text-sidebar mb-2">Doctor Consults</h3>
+                        <p class="text-sm text-text-secondary leading-relaxed">See the queue in real time. Call next
+                            patient with one tap. Access full history. Generate prescription in seconds.</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div
+                        class="reveal reveal-delay-2 feature-card bg-white border border-card-border rounded-2xl p-6 text-center relative">
+                        <div
+                            class="absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-emerald-500/30">
+                            3</div>
+                        <div
+                            class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 mt-3">
+                            <iconify-icon icon="lucide:send" class="text-emerald-600 text-3xl"></iconify-icon>
+                        </div>
+                        <h3 class="text-base font-bold text-sidebar mb-2">Rx Sent Instantly</h3>
+                        <p class="text-sm text-text-secondary leading-relaxed">Prescription PDF lands on patient's
+                            WhatsApp and simultaneously pings the local pharmacist's portal. Zero delay.</p>
+                    </div>
+                    <!-- Step 4 -->
+                    <div
+                        class="reveal reveal-delay-3 feature-card bg-white border border-card-border rounded-2xl p-6 text-center relative">
+                        <div
+                            class="absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-amber-500/30">
+                            4</div>
+                        <div
+                            class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4 mt-3">
+                            <iconify-icon icon="lucide:package-check" class="text-amber-600 text-3xl"></iconify-icon>
+                        </div>
+                        <h3 class="text-base font-bold text-sidebar mb-2">Medicines Ready</h3>
+                        <p class="text-sm text-text-secondary leading-relaxed">Pharmacist packs the order while the
+                            patient walks downstairs. Pick up and go. The loop is closed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TESTIMONIALS                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 bg-surface relative grid-bg">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">Testimonials</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-sidebar mb-4">
+                    What Doctors Are <span class="gradient-text">Saying</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base text-text-secondary max-w-2xl mx-auto">
+                    We're just getting started. These are real words from our early doctors.
+                </p>
+            </div>
+            <div class="max-w-2xl mx-auto">
+                <div class="reveal feature-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 shadow-sm">
+                    <div class="text-amber-400 text-xl tracking-[0.25em] mb-4">★★★★★</div>
+                    <p class="text-sm text-text-secondary leading-relaxed mb-6">"Be one of our first doctors in Pune.
+                        Your experience shapes this product."</p>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-11 h-11 bg-teal-500 rounded-full flex items-center justify-center text-base font-bold text-white">
+                            ?</div>
+                        <div>
+                            <p class="text-sm font-bold text-sidebar">Dr. [Your Name Here]</p>
+                            <p class="text-xs text-text-secondary">General Physician, Pune</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-1 mt-6 rounded-2xl border border-teal-100 bg-teal-50 p-6 sm:p-8">
+                    <h3 class="text-xl font-bold text-sidebar mb-2">Used NirogOS? Share Your Experience.</h3>
+                    <p class="text-sm text-text-secondary leading-relaxed mb-5">Your feedback helps other doctors
+                        discover a better way to run their clinic.</p>
+                    <a href="https://wa.me/917620422387?text=Hi%2C%20I%27d%20like%20to%20share%20my%20NirogOS%20experience"
+                        target="_blank"
+                        class="inline-flex items-center justify-center shimmer-btn text-white font-semibold px-6 py-3 rounded-2xl text-sm shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow">
+                        Share Your Story on WhatsApp →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PRICING SECTION                             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="pricing" class="py-20 sm:py-28 bg-white relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-12">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">Pricing</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-sidebar mb-4">
+                    Simple, Transparent <span class="gradient-text">Pricing</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-text-secondary max-w-xl mx-auto mb-6">30-day
+                    free trial. No credit card required. Cancel anytime.</p>
+                <div
+                    class="reveal reveal-delay-2 inline-flex flex-wrap items-center justify-center gap-2 bg-accent-light border border-indigo-200 rounded-full px-4 py-2 mb-8">
+                    <span class="text-sm">🎉</span>
+                    <span class="text-xs sm:text-sm font-semibold text-accent">Founder's Plan available — Professional
+                        FREE for 3 months for first 50 clinics</span>
+                    <a href="#founders-plan" class="text-xs sm:text-sm font-bold text-accent underline underline-offset-4">Learn
+                        more →</a>
+                </div>
+
+                <!-- Billing Toggle -->
+                <div
+                    class="reveal reveal-delay-3 inline-flex items-center gap-3 bg-surface border border-card-border rounded-full px-2 py-1.5">
+                    <button id="monthlyBtn"
+                        class="text-sm font-semibold px-5 py-2 rounded-full transition-all bg-accent text-white">Monthly</button>
+                    <button id="annualBtn"
+                        class="text-sm font-semibold px-5 py-2 rounded-full transition-all text-text-secondary hover:text-sidebar">Annual
+                        <span class="text-xs text-emerald-600 font-bold">-17%</span></button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-3xl mx-auto">
+                <!-- Basic -->
+                <div
+                    class="reveal pricing-card bg-white border border-card-border rounded-2xl p-6 sm:p-8 flex flex-col">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-sidebar mb-1">Basic</h3>
+                        <p class="text-sm text-text-secondary">Essential tools for small clinics just getting started.
+                        </p>
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-4xl font-extrabold text-sidebar price-amount" data-monthly="499"
+                                data-annual="414">₹499</span>
+                            <span class="text-sm text-text-secondary">/month</span>
+                        </div>
+                        <p class="text-xs text-text-secondary mt-1 annual-note hidden">Billed annually at <span
+                                class="annual-total font-semibold">₹4,968</span>/year</p>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1">
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-emerald-500 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-text-secondary">Up to 50 patients/month</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-emerald-500 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-text-secondary">Basic patient records</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-emerald-500 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-text-secondary">Email support</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-emerald-500 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-text-secondary">Manual check-in only</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:x"
+                                class="text-gray-300 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-gray-400">QR code check-in system</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:x"
+                                class="text-gray-300 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-gray-400">Advanced patient analytics</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:x"
+                                class="text-gray-300 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-gray-400">Doctor portal access</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:x"
+                                class="text-gray-300 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-gray-400">API access for integrations</span></li>
+                    </ul>
+                    <a href="/login?mode=signup" target="_top"
+                        class="block text-center text-sm font-semibold py-3.5 rounded-xl border-2 border-card-border text-sidebar hover:border-accent hover:text-accent transition-colors">Get
+                        Started</a>
+                </div>
+
+                <!-- Professional -->
+                <div
+                    class="reveal reveal-delay-1 pricing-card bg-sidebar text-white rounded-2xl p-6 sm:p-8 flex flex-col relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none">
+                    </div>
+                    <div class="absolute top-4 right-4">
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-wider bg-accent text-white px-3 py-1.5 rounded-full">Most
+                            Popular</span>
+                    </div>
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold mb-1">Professional</h3>
+                        <p class="text-sm text-slate-400">Everything you need to run a growing practice efficiently.</p>
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-4xl font-extrabold price-amount" data-monthly="999"
+                                data-annual="829">₹999</span>
+                            <span class="text-sm text-slate-400">/month</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1 annual-note hidden">Billed annually at <span
+                                class="annual-total font-semibold text-slate-400">₹9,948</span>/year</p>
+                        <p class="text-xs text-teal-300 font-semibold mt-3">⭐ Early Access</p>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1">
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Unlimited patients/month</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Basic patient records</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Priority email & chat support</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Manual check-in</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">QR code check-in system</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Advanced patient analytics</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Doctor portal access</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Monthly reports</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:check"
+                                class="text-indigo-400 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-300">Custom clinic branding</span></li>
+                        <li class="flex items-start gap-2.5"><iconify-icon icon="lucide:x"
+                                class="text-slate-600 text-lg mt-0.5 shrink-0"></iconify-icon><span
+                                class="text-sm text-slate-600">API access for integrations</span></li>
+                    </ul>
+                    <a href="/login?mode=signup" target="_top"
+                        class="block text-center text-sm font-semibold py-3.5 rounded-xl bg-accent hover:bg-accent-hover text-white transition-colors shadow-lg shadow-accent/30">Start
+                        Free Trial</a>
+                </div>
+
+            </div>
+            <div class="grid md:grid-cols-3 gap-5 mt-10 text-center">
+                <div class="reveal text-sm text-text-secondary font-medium flex items-center justify-center gap-2">🔄
+                    <span>Cancel anytime. No questions asked.</span></div>
+                <div class="reveal reveal-delay-1 text-sm text-text-secondary font-medium flex items-center justify-center gap-2">
+                    🔒 <span>Your data is always yours. Export anytime.</span></div>
+                <div class="reveal reveal-delay-2 text-sm text-text-secondary font-medium flex items-center justify-center gap-2">
+                    📞 <span>Founder support on WhatsApp directly.</span></div>
+            </div>
+            <p class="reveal reveal-delay-3 text-center text-sm text-text-secondary italic mt-6">Prices in INR. GST
+                applicable. Annual plans billed once per year.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FOUNDER'S PLAN                              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="founders-plan" class="py-20 sm:py-28 bg-sidebar text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.03]"
+            style="background-image: linear-gradient(rgba(99,102,241,0.24) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.24) 1px, transparent 1px); background-size: 44px 44px;">
+        </div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-4">Founder's Plan
+                </p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight mb-4">
+                    For the First <span class="gradient-text">50 Clinics</span> Only
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+                    We're in pilot phase. We want 50 real doctors to shape this product with us. In return, you get
+                    Professional free for 3 months — then locked at ₹599/month forever. No one else will ever get this
+                    price.
+                </p>
+            </div>
+
+            <div class="reveal reveal-delay-2 rounded-3xl border border-indigo-400/30 bg-white/5 p-6 sm:p-8 shadow-[0_0_50px_rgba(99,102,241,0.12)]">
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-7">
+                        <p class="text-2xl font-bold text-white mb-1">🏆 Founder's Plan</p>
+                        <p class="text-sm font-semibold text-indigo-300 mb-6">Professional tier. Pilot pricing.</p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">QR patient check-in</span></li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">1-click WhatsApp prescriptions</span></li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Live prescription web link</span></li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Unlimited patients/month</span></li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Full patient history &amp; records</span></li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Priority founder support (direct WhatsApp)</span>
+                            </li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Dedicated onboarding call with the founder</span>
+                            </li>
+                            <li class="flex items-start gap-2.5"><span class="text-teal-300">✅</span><span
+                                    class="text-sm text-slate-200">Your feedback shapes the roadmap</span></li>
+                        </ul>
+                        <div class="space-y-2">
+                            <p class="text-2xl font-bold text-slate-500 line-through">₹1,999/month</p>
+                            <p class="text-3xl sm:text-4xl font-extrabold text-teal-300">FREE for 3 months</p>
+                            <p class="text-sm text-slate-300">then ₹599/month locked forever</p>
+                            <p class="text-xs text-slate-500 italic">(others will pay ₹999/month)</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl border border-white/10 bg-slate-950/40 p-6 sm:p-7">
+                        <h3 class="text-2xl font-bold text-white mb-2">Reserve Your Spot</h3>
+                        <p class="text-sm text-slate-400 mb-6">Takes 30 seconds. No payment needed.</p>
+                        <div class="text-center rounded-2xl border border-white/10 bg-white/5 px-4 py-5 mb-6">
+                            <p class="text-5xl font-extrabold text-white">43</p>
+                            <p class="text-sm text-slate-400 mt-2">spots remaining out of 50</p>
+                            <div class="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
+                                <div class="h-full w-[14%] bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400 rounded-full">
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">7/50 filled</p>
+                        </div>
+                        <a href="https://wa.me/917620422387?text=Hi%2C%20I%20want%20to%20claim%20the%20Founder%27s%20Plan%20for%20NirogOS.%20I%20am%20a%20doctor%20in%20%5BCity%5D."
+                            target="_blank"
+                            class="w-full inline-flex items-center justify-center shimmer-btn text-white font-semibold px-6 py-4 rounded-2xl text-base shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow">
+                            Claim Founder's Plan on WhatsApp →
+                        </a>
+                        <p class="text-sm text-slate-400 mt-4">You'll get a reply within 2 hours. We set everything up
+                            for you.</p>
+                        <div class="space-y-2 mt-5 text-sm text-slate-300">
+                            <p>🔒 No credit card ever needed</p>
+                            <p>📞 Founder sets up your clinic personally</p>
+                            <p>♾️ ₹599/month locked. Forever.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 mt-8">
+                <div class="reveal rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+                    <p class="text-2xl mb-3">⏰</p>
+                    <h3 class="text-lg font-bold mb-3">Why free for 3 months?</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">We want you to fall in love with NirogOS before
+                        you pay a rupee. 3 months is enough to make it indispensable.</p>
+                </div>
+                <div class="reveal reveal-delay-1 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+                    <p class="text-2xl mb-3">🤝</p>
+                    <h3 class="text-lg font-bold mb-3">Why only 50 clinics?</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">We give every founder doctor personal onboarding
+                        and support. We can only do that for 50. After that, it's self-serve.</p>
+                </div>
+                <div class="reveal reveal-delay-2 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+                    <p class="text-2xl mb-3">🔒</p>
+                    <h3 class="text-lg font-bold mb-3">Why ₹599 forever?</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">You trusted us early. We lock your price
+                        permanently as a thank you. The price will never increase for you.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- COMPARISON TABLE                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 bg-white relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">Why NirogOS</p>
+                <h2
+                    class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-sidebar mb-4">
+                    The Honest <span class="gradient-text">Comparison</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-text-secondary max-w-2xl mx-auto">We built
+                    this for solo Indian doctors. Not hospitals. Not corporates.</p>
+            </div>
+
+            <div class="reveal overflow-hidden rounded-3xl border border-card-border shadow-lg shadow-slate-200/70">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr class="bg-sidebar text-white text-left">
+                                <th class="px-5 py-4 text-sm font-black">Feature</th>
+                                <th class="px-5 py-4 text-sm font-black bg-emerald-950/40">
+                                    <div class="flex flex-col">
+                                        <span>✅ NirogOS</span>
+                                        <span
+                                            class="mt-2 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">Best
+                                            for you</span>
+                                    </div>
+                                </th>
+                                <th class="px-5 py-4 text-sm font-black">Practo ❌</th>
+                                <th class="px-5 py-4 text-sm font-black">Paper + WhatsApp ❌</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="bg-white">
+                                <td class="px-5 py-4 font-semibold text-sidebar">Built for solo doctors</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ Yes</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No (hospitals)</td>
+                                <td class="px-5 py-4 text-emerald-700 font-semibold">✅ Sort of</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-5 py-4 font-semibold text-sidebar">WhatsApp prescription</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ 1 click</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No</td>
+                                <td class="px-5 py-4 text-amber-600 font-semibold">⚠️ Manual</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-5 py-4 font-semibold text-sidebar">QR patient check-in</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ Automatic</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-5 py-4 font-semibold text-sidebar">Local pharmacy sync</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ Real-time</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ Redirects online</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-5 py-4 font-semibold text-sidebar">Patient data stays with you</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ Always</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ Their platform</td>
+                                <td class="px-5 py-4 text-emerald-700 font-semibold">✅ Yes</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-5 py-4 font-semibold text-sidebar">Price per month</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ ₹999</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ ₹3,000+</td>
+                                <td class="px-5 py-4 text-emerald-700 font-semibold">✅ ₹0</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="px-5 py-4 font-semibold text-sidebar">Setup time</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ 2 minutes</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ Days/weeks</td>
+                                <td class="px-5 py-4 text-emerald-700 font-semibold">✅ None</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-5 py-4 font-semibold text-sidebar">DPDP Compliant</td>
+                                <td class="px-5 py-4 bg-emerald-50 text-emerald-700 font-semibold">✅ Yes</td>
+                                <td class="px-5 py-4 text-amber-600 font-semibold">⚠️ Partial</td>
+                                <td class="px-5 py-4 text-rose-500 font-semibold">❌ No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-center mt-10">
+                <a href="/login?mode=signup" target="_top"
+                    class="inline-flex items-center justify-center shimmer-btn text-white font-semibold px-8 py-4 rounded-2xl text-base shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow">
+                    Start Free — No Card Needed →
+                </a>
+                <p class="text-sm text-text-secondary mt-4">Join the first 50 clinics. Shape the product.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TRUST & SECURITY                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="security" class="py-20 sm:py-28 bg-sidebar text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5"
+            style="background-image: linear-gradient(rgba(99,102,241,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.1) 1px, transparent 1px); background-size: 40px 40px;">
+        </div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+            <div class="text-center mb-16">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-4">Trust & Security
+                </p>
+                <h2 class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+                    Built Like a <span class="text-indigo-400">Vault</span>
+                </h2>
+                <p class="reveal reveal-delay-2 text-base sm:text-lg text-slate-400 max-w-xl mx-auto mt-4">We are a
+                    technology provider, not a data broker. Your patients' data stays yours. Period.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div
+                    class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-center hover:bg-white/[0.08] transition-colors">
+                    <div class="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                        <iconify-icon icon="lucide:shield-check" class="text-indigo-400 text-3xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">100% DPDP Compliant</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Built specifically for India's new Digital
+                        Personal Data Protection Act. Full compliance, zero guesswork.</p>
+                </div>
+                <div
+                    class="reveal reveal-delay-1 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-center hover:bg-white/[0.08] transition-colors">
+                    <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                        <iconify-icon icon="lucide:user-lock" class="text-emerald-400 text-3xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">Invite-Only Pharmacy Network</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Fake stores cannot access the data. Pharmacies
+                        must be manually invited by the clinic owner. Your network, your control.</p>
+                </div>
+                <div
+                    class="reveal reveal-delay-2 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-center hover:bg-white/[0.08] transition-colors">
+                    <div class="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                        <iconify-icon icon="lucide:lock-keyhole" class="text-amber-400 text-3xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3">256-bit Encryption</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed">Built on Next.js and Supabase (PostgreSQL) with
+                        256-bit encryption at rest and in transit. Bank-grade security for health data.</p>
+                </div>
+            </div>
+
+            <!-- Tech Stack Badges -->
+            <div class="reveal mt-12 flex flex-wrap items-center justify-center gap-4">
+                <span
+                    class="text-xs font-medium text-slate-500 bg-white/5 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2">
+                    <iconify-icon icon="lucide:code-2" class="text-sm"></iconify-icon> Next.js
+                </span>
+                <span
+                    class="text-xs font-medium text-slate-500 bg-white/5 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2">
+                    <iconify-icon icon="lucide:database" class="text-sm"></iconify-icon> Supabase / PostgreSQL
+                </span>
+                <span
+                    class="text-xs font-medium text-slate-500 bg-white/5 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2">
+                    <iconify-icon icon="lucide:cloud" class="text-sm"></iconify-icon> Secure Cloud Infrastructure
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FAQ SECTION                                 -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section id="faq" class="py-20 sm:py-28 bg-surface relative grid-bg">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6">
+            <div class="text-center mb-12">
+                <p class="reveal text-xs font-semibold uppercase tracking-widest text-accent mb-4">FAQ</p>
+                <h2 class="reveal reveal-delay-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-sidebar">
+                    Frequently Asked <span class="gradient-text">Questions</span>
+                </h2>
+            </div>
+
+            <div class="reveal reveal-delay-2 space-y-3" id="faqContainer">
+                <!-- FAQ 1 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">How does the free trial work?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">You get full access to the
+                            Professional tier for 30 days. No credit card required. You can upgrade, downgrade, or
+                            cancel at any time during the trial.</p>
+                    </div>
+                </div>
+                <!-- FAQ 2 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">Can I change my plan later?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">Absolutely. You can upgrade or
+                            downgrade your plan at any time from your billing dashboard. Changes take effect on your
+                            next billing cycle.</p>
+                    </div>
+                </div>
+                <!-- FAQ 3 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">What happens if I exceed my patient
+                            limit?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">We won't interrupt your service. We
+                            will notify you when you reach 90% of your limit. If you exceed it, we'll automatically
+                            upgrade you to the next tier for the following month.</p>
+                    </div>
+                </div>
+                <!-- FAQ 4 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">Do you offer discounts for annual
+                            billing?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">Yes! If you choose to be billed
+                            annually rather than monthly, you receive a 20% discount across all our pricing tiers.</p>
+                    </div>
+                </div>
+                <!-- FAQ 5 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">Is my patients' data secure?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">Security is our top priority. All
+                            data is encrypted at rest and in transit with 256-bit encryption. We comply with India's
+                            DPDP Act and perform regular security audits. We are a technology provider, not a data
+                            broker.</p>
+                    </div>
+                </div>
+                <!-- FAQ 6 -->
+                <div class="faq-item bg-white border border-card-border rounded-xl overflow-hidden">
+                    <button
+                        class="faq-btn w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/50 transition-colors"
+                        onclick="toggleFaq(this)">
+                        <span class="text-sm font-semibold text-sidebar pr-4">What kind of support is included?</span>
+                        <iconify-icon icon="lucide:chevron-down"
+                            class="faq-chevron text-text-secondary text-lg shrink-0"></iconify-icon>
+                    </button>
+                    <div class="faq-answer px-5">
+                        <p class="text-sm text-text-secondary leading-relaxed pb-5">All plans include email support. The Professional plan adds priority chat support and a dedicated onboarding call with the founder.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FINAL CTA                                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="py-20 sm:py-28 bg-white relative overflow-hidden">
+        <div class="absolute inset-0 grid-bg"></div>
+        <div class="hero-orb w-[400px] h-[400px] bg-indigo-200/20 top-[20%] right-[-100px]"></div>
+        <div class="hero-orb w-[300px] h-[300px] bg-violet-200/15 bottom-[10%] left-[-80px]"
+            style="animation-delay: -4s;"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
+            <div class="reveal">
+                <div
+                    class="inline-flex items-center gap-2 bg-accent-light border border-indigo-200 rounded-full px-4 py-1.5 mb-8">
+                    <iconify-icon icon="lucide:sparkles" class="text-accent text-sm"></iconify-icon>
+                    <span class="text-xs font-semibold text-accent">30-Day Free Trial · No Credit Card</span>
+                </div>
+            </div>
+            <h2
+                class="reveal reveal-delay-1 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-sidebar leading-tight mb-6">
+                Ready to Take Back<br><span class="gradient-text">Your Practice?</span>
+            </h2>
+            <p class="reveal reveal-delay-2 text-base sm:text-lg text-text-secondary max-w-xl mx-auto mb-10">Join
+                independent Indian doctors who've said goodbye to chaos and corporate middlemen. Your clinic. Your
+                patients. Your pharmacy.</p>
+            <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/login?mode=signup" target="_top"
+                    class="shimmer-btn text-white font-semibold px-10 py-4 rounded-2xl text-base shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-shadow w-full sm:w-auto text-center">
+                    Start Your Free Trial
+                </a>
+                <a href="https://wa.me/917620422387" target="_blank"
+                    class="flex items-center justify-center gap-2 text-text-secondary font-semibold px-8 py-4 rounded-2xl text-base border border-card-border bg-white hover:border-emerald-400 hover:text-emerald-600 transition-colors w-full sm:w-auto">
+                    <iconify-icon icon="lucide:message-circle" class="text-lg"></iconify-icon>
+                    Talk to Us on WhatsApp
+                </a>
+            </div>
+            <div
+                class="reveal reveal-delay-4 mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm text-text-secondary font-medium">
+                <span>🏥 Built in Pune</span>
+                <span>🇮🇳 Made for India</span>
+                <span>🔒 DPDP Compliant</span>
+                <span>💬 WhatsApp Support</span>
+                <span>⭐ Founder Access Open</span>
+            </div>
+            <div
+                class="reveal reveal-delay-4 mt-8 max-w-xl mx-auto rounded-2xl border border-indigo-200 bg-sidebar text-white px-5 py-5 shadow-lg shadow-indigo-100/20">
+                <p class="text-sm font-bold">🏆 Founder's Plan — 7 of 50 spots claimed</p>
+                <div class="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full w-[14%] bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400 rounded-full">
+                    </div>
+                </div>
+                <p class="text-sm text-slate-300 mt-3">Once full, Professional goes to ₹999/month. No exceptions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FOOTER                                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <footer class="bg-sidebar text-white pt-16 pb-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                <!-- Brand -->
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center mb-4">
+                        <img src="/assets/logo/nirogos-lockup-dark.svg" alt="Nirog OS"
+                            class="brand-lockup brand-lockup-footer">
+                    </div>
+                    <p class="text-sm text-slate-400 leading-relaxed mb-4">Automation for a Healthy, Hassle-Free
+                        Practice. Built exclusively for the Indian healthcare ecosystem.</p>
+                    <div class="flex items-center gap-3">
+                        <a href="#"
+                            class="w-9 h-9 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <iconify-icon icon="lucide:twitter" class="text-slate-400 text-sm"></iconify-icon>
+                        </a>
+                        <a href="#"
+                            class="w-9 h-9 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <iconify-icon icon="lucide:linkedin" class="text-slate-400 text-sm"></iconify-icon>
+                        </a>
+                        <a href="#"
+                            class="w-9 h-9 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <iconify-icon icon="lucide:instagram" class="text-slate-400 text-sm"></iconify-icon>
+                        </a>
+                    </div>
+                </div>
+                <!-- Product -->
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Product</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#features"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#pricing"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="#pipeline" class="text-sm text-slate-400 hover:text-white transition-colors">How It
+                                Works</a></li>
+                        <li><a href="#" class="text-sm text-slate-400 hover:text-white transition-colors">Changelog</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Company -->
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Company</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#" class="text-sm text-slate-400 hover:text-white transition-colors">About Us</a>
+                        </li>
+                        <li><a href="#" class="text-sm text-slate-400 hover:text-white transition-colors">Careers</a>
+                        </li>
+                        <li><a href="#" class="text-sm text-slate-400 hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="/support" target="_top"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Legal -->
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">Legal</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="/privacy" target="_top"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Privacy
+                                Policy</a></li>
+                        <li><a href="/terms" target="_top"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Terms of
+                                Service</a></li>
+                        <li><a href="/refund-policy" target="_top"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Refund
+                                Policy</a></li>
+                        <li><a href="#security"
+                                class="text-sm text-slate-400 hover:text-white transition-colors">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-xs text-slate-500">© 2024 NirogOS. All rights reserved. Made with ❤️ in India.</p>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full pulse-dot"></div>
+                    <span class="text-xs text-slate-500">All systems operational</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FLOATING CTA (Mobile)                       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="floatingCta"
+        class="fixed bottom-6 left-4 right-4 z-40 md:hidden opacity-0 translate-y-4 transition-all duration-500 pointer-events-none">
+        <a href="/login?mode=signup" target="_top"
+            class="block text-center text-sm font-semibold text-white bg-accent hover:bg-accent-hover px-6 py-4 rounded-2xl shadow-xl shadow-accent/30">
+            Start Free Trial — 30 Days Free
+        </a>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- JAVASCRIPT                                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script>
+        const ANNOUNCEMENT_DISMISSED_KEY = 'nirogos_founders_banner_dismissed';
+
+        // ── Scroll Reveal ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // ── Founder Banner ──
+        const topAnnouncement = document.getElementById('topAnnouncement');
+        const announcementClose = document.getElementById('announcementClose');
+
+        function syncAnnouncementOffset() {
+            const isVisible = topAnnouncement && !topAnnouncement.classList.contains('is-hidden');
+            const announcementHeight = isVisible ? topAnnouncement.offsetHeight : 0;
+            document.documentElement.style.setProperty('--announcement-offset', `${announcementHeight}px`);
+        }
+
+        if (topAnnouncement) {
+            if (localStorage.getItem(ANNOUNCEMENT_DISMISSED_KEY) === 'true') {
+                topAnnouncement.classList.add('is-hidden');
+            }
+
+            syncAnnouncementOffset();
+            window.addEventListener('resize', syncAnnouncementOffset);
+
+            announcementClose?.addEventListener('click', () => {
+                topAnnouncement.classList.add('is-hidden');
+                localStorage.setItem(ANNOUNCEMENT_DISMISSED_KEY, 'true');
+                syncAnnouncementOffset();
+            });
+        }
+
+        // ── Navbar Background ──
+        const navbar = document.getElementById('navbar');
+
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+
+            if (navbar && currentScroll > 50) {
+                navbar.style.backgroundColor = 'rgba(248, 250, 252, 0.9)';
+                navbar.style.backdropFilter = 'blur(20px)';
+                navbar.style.borderBottom = '1px solid #E2E8F0';
+            } else if (navbar) {
+                navbar.style.backgroundColor = 'transparent';
+                navbar.style.backdropFilter = 'none';
+                navbar.style.borderBottom = '1px solid transparent';
+            }
+        });
+
+        // ── Mobile Menu ──
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        mobileMenuBtn?.addEventListener('click', () => {
+            mobileMenu?.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        });
+
+        mobileMenuClose?.addEventListener('click', () => {
+            mobileMenu?.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu?.classList.remove('open');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // ── Pricing Toggle ──
+        const monthlyBtn = document.getElementById('monthlyBtn');
+        const annualBtn = document.getElementById('annualBtn');
+        let isAnnual = false;
+
+        monthlyBtn?.addEventListener('click', () => {
+            isAnnual = false;
+            monthlyBtn.classList.add('bg-accent', 'text-white');
+            monthlyBtn.classList.remove('text-text-secondary');
+            annualBtn.classList.remove('bg-accent', 'text-white');
+            annualBtn.classList.add('text-text-secondary');
+            updatePricing();
+        });
+
+        annualBtn?.addEventListener('click', () => {
+            isAnnual = true;
+            annualBtn.classList.add('bg-accent', 'text-white');
+            annualBtn.classList.remove('text-text-secondary');
+            monthlyBtn.classList.remove('bg-accent', 'text-white');
+            monthlyBtn.classList.add('text-text-secondary');
+            updatePricing();
+        });
+
+        function updatePricing() {
+            document.querySelectorAll('.price-amount').forEach(el => {
+                const monthly = el.dataset.monthly;
+                const annual = el.dataset.annual;
+                const price = isAnnual ? annual : monthly;
+                el.textContent = '₹' + Number(price).toLocaleString('en-IN');
+            });
+
+            document.querySelectorAll('.annual-note').forEach(el => {
+                if (isAnnual) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        // ── FAQ Accordion ──
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            const answer = item.querySelector('.faq-answer');
+            const chevron = item.querySelector('.faq-chevron');
+            const isOpen = answer.classList.contains('open');
+
+            // Close all
+            document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+            document.querySelectorAll('.faq-chevron').forEach(c => c.classList.remove('open'));
+
+            // Open clicked if was closed
+            if (!isOpen) {
+                answer.classList.add('open');
+                chevron.classList.add('open');
+            }
+        }
+
+        // ── Counter Animation ──
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = parseInt(el.dataset.target);
+                    if (target) {
+                        animateCounter(el, target);
+                        counterObserver.unobserve(el);
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+            counterObserver.observe(el);
+        });
+
+        function animateCounter(el, target) {
+            const duration = 2000;
+            const start = performance.now();
+
+            function update(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 4);
+                const current = Math.floor(eased * target);
+
+                if (target >= 1000) {
+                    el.textContent = current.toLocaleString('en-IN') + '+';
+                } else {
+                    el.textContent = current.toLocaleString('en-IN') + '+';
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // ── Floating CTA (Mobile) ──
+        const floatingCta = document.getElementById('floatingCta');
+
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 600) {
+                floatingCta.style.opacity = '1';
+                floatingCta.style.transform = 'translateY(0)';
+                floatingCta.style.pointerEvents = 'auto';
+            } else {
+                floatingCta.style.opacity = '0';
+                floatingCta.style.transform = 'translateY(16px)';
+                floatingCta.style.pointerEvents = 'none';
+            }
+        });
+
+        // ── Smooth Scroll for anchor links ──
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                e.preventDefault();
+                const target = document.querySelector(targetId);
+                if (target) {
+                    const announcementOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--announcement-offset')) || 0;
+                    const navHeight = navbar?.offsetHeight ?? 80;
+                    const offset = announcementOffset + navHeight + 12;
+                    const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

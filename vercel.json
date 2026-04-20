@@ -1,0 +1,27 @@
+{
+    "headers": [
+        {
+            "source": "/version.json",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-store"
+                }
+            ]
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/supabase-proxy/:path*",
+            "destination": "https://sthuukrqzldurvzrgmah.supabase.co/:path*"
+        },
+        {
+            "source": "/",
+            "destination": "/nirog.html"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

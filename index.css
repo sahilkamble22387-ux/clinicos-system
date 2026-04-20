@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   NIROGOS — PREMIUM LIGHT PALETTE (Single Mode)
+   All surfaces use a crisp, consistent light theme.
+   No dark mode — visual consistency is guaranteed.
+═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Backgrounds */
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --sidebar: #0F172A;
+
+  /* Borders */
+  --border: #E2E8F0;
+
+  /* Typography */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+
+  /* Accent */
+  --accent: #6366F1;
+  --accent-hover: #4F46E5;
+
+  /* Shadows */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+
+  /* Font */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* ── Safe area insets (iPhone notch / dynamic island / home indicator) ── */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* ── Global Base ── */
+html {
+  background-color: #F8FAFC;
+}
+
+body {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
+
+/* ── Utilities ── */
+.glass-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(12px);
+}
+
+/* ── Mobile: prevent horizontal scroll ── */
+html,
+body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Mobile: remove tap highlight ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* ── Mobile: better touch scrolling in containers ── */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── Mobile bottom nav safe area helper ── */
+.bottom-nav {
+  padding-bottom: calc(var(--sab) + 8px);
+}
+
+/* ── Mobile: Input zoom prevention on iOS ──
+   font-size must be >= 16px to prevent auto-zoom when tapping inputs */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
