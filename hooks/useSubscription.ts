@@ -168,6 +168,36 @@ export function useSubscription(clinicId: string | null | undefined, authResolve
         fetchSubscription()
     }, [fetchSubscription])
 
+    useEffect(() => {
+        if (!authResolved || !clinicId) return
+
+        const channel = supabase
+            .channel(`subscription-${clinicId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'subscriptions',
+                filter: `clinic_id=eq.${clinicId}`,
+            }, (payload) => {
+                const next = payload.new as Subscription | null
+
+                if (!next) {
+                    void fetchSubscription()
+                    return
+                }
+
+                setSubscription(next)
+                setFetchError(null)
+                setStatus(computeStatus(next))
+                setDaysLeft(computeDaysLeft(next))
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [authResolved, clinicId, fetchSubscription])
+
     // ─────────────────────────────────────────────────────────────────────────
     // DERIVED BOOLEANS
     // hasAccess is FALSE while loading or on error — never fail open

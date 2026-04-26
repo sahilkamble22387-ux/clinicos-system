@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { AppLoader } from './components/AppLoader';
 import { ViewMode, Clinic } from './types';
 import FrontDesk from './components/FrontDesk/FrontDesk';
@@ -19,7 +19,7 @@ import LoginPage from './components/LoginPage';
 import AnalyticsDashboard from './components/Analytics/AnalyticsDashboard';
 import DashboardHome from './components/DashboardHome';
 import PatientHistory from './components/PatientHistory';
-import CheckinPage from './components/CheckinPage';
+import CheckIn from './pages/CheckIn';
 import QRModal from './components/QRModal';
 import {
   Users, UserRound, BarChart3, Home,
@@ -120,17 +120,12 @@ const Toast = ({ toast, onClose }: { toast: ToastState; onClose: () => void }) =
   );
 };
 
-const CheckinRoute: React.FC = () => {
-  const { clinicId } = useParams<{ clinicId: string }>();
-  return <CheckinPage clinicId={clinicId ?? ''} />;
-};
-
 // ── App shell — pure routing, zero hooks ──────────────────────────
 const App: React.FC = () => (
   <LogoProvider>
     <Routes>
       {/* Public kiosk — no auth needed */}
-      <Route path="/checkin/:clinicId" element={<CheckinRoute />} />
+      <Route path="/checkin/:clinicId" element={<CheckIn />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/pharmacy-login" element={<Navigate to="/login?portal=pharmacy" replace />} />
       <Route path="/terms" element={<TermsPage />} />

@@ -2,15 +2,18 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
     User, Building2, PenLine, Save, Upload, X,
     CheckCircle, Loader2, AlertCircle, Eye, EyeOff,
-    Phone, MapPin, Mail, Clock, Award, RefreshCw, Stamp,
-    ChevronRight, Store,
+    Phone, Mail, Clock, Award, RefreshCw, Stamp,
+    ChevronRight, Store, CreditCard, CalendarClock, ShieldCheck,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../services/db'
 import { useAuth } from '../context/AuthContext'
 import { compressSignatureToBase64, signatureToImgSrc, getSignatureSizeKB } from '../utils/signatureCompressor'
 import { QUALIFICATION_PRESETS, SPECIALIZATION_OPTIONS, ClinicProfile } from '../types/clinic'
 import toast from 'react-hot-toast'
 import PharmacyInvitePanel from '../components/Doctor/PharmacyInvitePanel'
+import { useSubscription } from '../hooks/useSubscription'
+import { formatPlanName, normalizePlanId, PLAN_PRICE_BY_ID } from '../src/constants/subscriptionPlans'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Section — numbered card with colored accent bar
@@ -137,7 +140,15 @@ function StyledSelect({ value, onChange, children }: {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function EditProfile() {
-    const { clinicId, refreshClinicProfile, user } = useAuth()
+    const { clinicId, refreshClinicProfile, user, loading: authLoading } = useAuth()
+    const {
+        subscription,
+        status: subscriptionStatus,
+        daysLeft,
+        fetchError: subscriptionError,
+        refetch: refetchSubscription,
+        isLoading: subscriptionLoading,
+    } = useSubscription(clinicId, !authLoading)
 
     const [profile, setProfile] = useState<Partial<ClinicProfile>>({})
     const [loading, setLoading] = useState(true)
@@ -337,6 +348,65 @@ export default function EditProfile() {
         profile.clinic_name_override, profile.phone_number, profile.clinic_address,
     ]
     const completionPct = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100)
+    const currentPlanId = normalizePlanId(subscription?.plan_name)
+    const currentPlanName = formatPlanName(subscription?.plan_name)
+    const planPrice = PLAN_PRICE_BY_ID[currentPlanId]
+    const effectiveEndDate =
+        subscription?.subscription_ends_at ??
+        subscription?.grace_period_ends_at ??
+        subscription?.trial_ends_at ??
+        null
+    const effectiveStartDate = subscription?.subscription_starts_at ?? subscription?.trial_starts_at ?? null
+    const statusTone = subscriptionStatus === 'active'
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : subscriptionStatus === 'trial'
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : subscriptionStatus === 'loading'
+                ? 'bg-slate-100 text-slate-500 border-slate-200'
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+    const statusLabel = subscriptionStatus === 'active'
+        ? 'Active'
+        : subscriptionStatus === 'trial'
+            ? 'Trial'
+            : subscriptionStatus === 'locked'
+                ? 'Locked'
+                : subscriptionStatus === 'expired'
+                    ? 'Expired'
+                    : subscriptionStatus === 'error'
+                        ? 'Unavailable'
+                        : 'Checking'
+    const endLabel = subscriptionStatus === 'trial'
+        ? 'Trial ends'
+        : subscriptionStatus === 'active'
+            ? 'Plan valid till'
+            : 'Access updated'
+    const includedFeatures = [
+        'Doctor portal',
+        'Front desk',
+        'QR check-in',
+        'Analytics dashboard',
+    ]
+    const formatDateTime = (value: string | null | undefined) => {
+        if (!value) return 'Not available'
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return 'Not available'
+        return date.toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+    }
+    const planMessage = subscriptionStatus === 'trial'
+        ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left in your trial`
+        : subscriptionStatus === 'active'
+            ? effectiveEndDate
+                ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left on this plan`
+                : 'Your clinic access is active'
+            : subscriptionStatus === 'loading'
+                ? 'Checking your subscription details'
+                : 'Your access needs attention'
 
     return (
         <div className="min-h-full bg-slate-50">
@@ -728,9 +798,121 @@ export default function EditProfile() {
                     <input type="file" ref={stampInputRef} accept="image/*" className="hidden" onChange={handleStampUpload} />
                 </Section>
 
-                {/* ═══ 5: Pharmacy Integration ═══ */}
+                {/* ═══ 5: Subscription ═══ */}
+                <Section index={5} icon={CreditCard} title="Current Plan"
+                    subtitle="See your plan, billing status, and access window" accent="#2563eb">
+                    <div className="space-y-4">
+                        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                            <div className="p-5 bg-gradient-to-r from-sky-50 via-white to-indigo-50 border-b border-slate-100">
+                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-xl font-black text-slate-900">{currentPlanName}</p>
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-black ${statusTone}`}>
+                                                <ShieldCheck size={12} />
+                                                {statusLabel}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-slate-500 mt-1">{planMessage}</p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => void refetchSubscription()}
+                                            disabled={subscriptionLoading}
+                                            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 transition disabled:opacity-60"
+                                        >
+                                            <RefreshCw size={14} className={subscriptionLoading ? 'animate-spin' : ''} />
+                                            Refresh
+                                        </button>
+                                        <Link
+                                            to="/pricing"
+                                            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 text-sm font-bold text-white hover:bg-indigo-700 transition"
+                                        >
+                                            View Plans
+                                            <ChevronRight size={14} />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Monthly price</p>
+                                    <p className="text-lg font-black text-slate-900 mt-1">
+                                        {planPrice === 0 ? 'Free' : `₹${planPrice}/month`}
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">{endLabel}</p>
+                                    <p className="text-sm font-black text-slate-900 mt-1">{formatDateTime(effectiveEndDate)}</p>
+                                </div>
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Started on</p>
+                                    <p className="text-sm font-black text-slate-900 mt-1">{formatDateTime(effectiveStartDate)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <CalendarClock size={16} className="text-indigo-500" />
+                                    <p className="text-sm font-black text-slate-800">Plan timeline</p>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-slate-500 font-semibold">Current plan</span>
+                                        <span className="text-slate-900 font-black">{currentPlanName}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-slate-500 font-semibold">Billing status</span>
+                                        <span className="text-slate-900 font-black">{statusLabel}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-slate-500 font-semibold">Days remaining</span>
+                                        <span className="text-slate-900 font-black">{daysLeft}</span>
+                                    </div>
+                                    {subscription?.amount_paid != null && (
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-slate-500 font-semibold">Last recorded payment</span>
+                                            <span className="text-slate-900 font-black">₹{subscription.amount_paid}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-black text-slate-800 mb-3">Included with this plan</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {includedFeatures.map(feature => (
+                                        <span
+                                            key={feature}
+                                            className="px-3 py-1.5 rounded-full border border-indigo-100 bg-indigo-50 text-xs font-bold text-indigo-700"
+                                        >
+                                            {feature}
+                                        </span>
+                                    ))}
+                                </div>
+                                {subscription?.admin_notes && (
+                                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800">
+                                        {subscription.admin_notes}
+                                    </div>
+                                )}
+                                {subscriptionError && (
+                                    <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700">
+                                        {subscriptionError}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </Section>
+
+                {/* ═══ 6: Pharmacy Integration ═══ */}
                 {clinicId && user && (
-                    <Section index={5} icon={Store} title="Pharmacy Linking"
+                    <Section index={6} icon={Store} title="Pharmacy Linking"
                         subtitle="Manage linked pharmacies, send requests, and keep a primary destination" accent="#f59e0b">
                         <PharmacyInvitePanel clinicId={clinicId} doctorProfileId={user.id} />
                     </Section>

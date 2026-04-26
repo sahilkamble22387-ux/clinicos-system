@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Clock, User, ClipboardList, History, FileText, Send,
   Sparkles, Eye, Banknote, Activity, Heart, Thermometer,
@@ -103,6 +103,7 @@ const VitalsRiskBanner: React.FC<{ result: VitalsRiskResult }> = ({ result }) =>
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [queue, setQueue] = useState<Visit[]>([]);
   const { clinicProfile, profile } = useAuth();
+  const queueRefreshTimeoutRef = useRef<number | null>(null);
 
   const WELCOME_DONE_KEY = 'nirogos_welcome_popup_done';
   const [showWelcome, setShowWelcome] = useState(false);
@@ -145,7 +146,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
 
   const vitalsRisk: VitalsRiskResult = analyzeVitals(vitalsForm);
 
-  const fetchQueue = async () => {
+  const fetchQueue = useCallback(async () => {
     const { data: appointments, error } = await (supabase as any)
       .from('appointments')
       .select('id, patient_id, created_at')
@@ -157,6 +158,17 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
       console.error('Error fetching queue:', error);
       return;
     }
+
+    const baseQueue = (appointments ?? []).map((item: any) => ({
+      id: item.id,
+      patientId: item.patient_id,
+      arrivalTime: item.created_at,
+      status: VisitStatus.WAITING,
+      patientName: 'Loading patient...',
+      source: null,
+    }));
+
+    setQueue(baseQueue);
 
     const patientIds = Array.from(
       new Set((appointments ?? []).map((item: any) => item.patient_id).filter(Boolean))
@@ -193,16 +205,43 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         source: patient?.source ?? null,
       };
     }));
-  };
+  }, [clinicId]);
+
+  const scheduleQueueRefresh = useCallback(() => {
+    if (queueRefreshTimeoutRef.current) {
+      window.clearTimeout(queueRefreshTimeoutRef.current);
+    }
+
+    queueRefreshTimeoutRef.current = window.setTimeout(() => {
+      queueRefreshTimeoutRef.current = null;
+      void fetchQueue();
+    }, 120);
+  }, [fetchQueue]);
 
   useEffect(() => {
-    fetchQueue();
-    const subscription = (supabase as any).channel('doctor-queue-all')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, fetchQueue)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, fetchQueue)
+    void fetchQueue();
+    const subscription = (supabase as any).channel(`doctor-queue-${clinicId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'appointments',
+        filter: `clinic_id=eq.${clinicId}`,
+      }, scheduleQueueRefresh)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'patients',
+        filter: `clinic_id=eq.${clinicId}`,
+      }, scheduleQueueRefresh)
       .subscribe();
-    return () => { (supabase as any).removeChannel(subscription); };
-  }, [clinicId]);
+    return () => {
+      if (queueRefreshTimeoutRef.current) {
+        window.clearTimeout(queueRefreshTimeoutRef.current);
+        queueRefreshTimeoutRef.current = null;
+      }
+      (supabase as any).removeChannel(subscription);
+    };
+  }, [clinicId, fetchQueue, scheduleQueueRefresh]);
 
   const refreshPharmacyNetwork = async () => {
     setLoadingPharmacies(true);
