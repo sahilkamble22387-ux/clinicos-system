@@ -76,7 +76,6 @@ export default function CheckIn() {
         phone: '',
         age: '',
         gender: '',
-        chief_complaint: '',
     })
     const [submitting, setSubmitting] = useState(false)
     const [patientPosition, setPatientPosition] = useState<number>(0)
@@ -352,7 +351,6 @@ export default function CheckIn() {
                         patient_id: patientId,
                         clinic_id: clinicId,
                         status: 'waiting',
-                        chief_complaint: form.chief_complaint.trim() || null,
                     })
                     .select('id, created_at')
                     .single()
@@ -544,15 +542,11 @@ export default function CheckIn() {
 
                                     <div>
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                                            Reason for Visit <span className="text-slate-300 font-normal normal-case">(optional)</span>
+                                            Reason for Visit
                                         </label>
-                                        <input
-                                            style={{ fontSize: '16px' }}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-medium focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none"
-                                            placeholder="e.g. Fever, Cough, Checkup..."
-                                            value={form.chief_complaint}
-                                            onChange={e => setForm(f => ({ ...f, chief_complaint: e.target.value }))}
-                                        />
+                                        <div className="w-full px-4 py-3.5 bg-slate-100 border border-slate-200 rounded-2xl text-slate-500 text-sm font-medium">
+                                            Tell the doctor your symptoms after check-in. This field is hidden until the clinic database supports it.
+                                        </div>
                                     </div>
                                 </div>
 

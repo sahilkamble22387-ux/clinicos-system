@@ -191,7 +191,6 @@ export interface Database {
           patient_id: string;
           clinic_id: string;
           status: string;
-          chief_complaint: string | null;
           bp_systolic: number | null;
           bp_diastolic: number | null;
           heart_rate: number | null;
@@ -207,7 +206,6 @@ export interface Database {
           patient_id: string;
           clinic_id: string;
           status?: string;
-          chief_complaint?: string | null;
           bp_systolic?: number | null;
           bp_diastolic?: number | null;
           heart_rate?: number | null;
@@ -223,7 +221,6 @@ export interface Database {
           patient_id?: string;
           clinic_id?: string;
           status?: string;
-          chief_complaint?: string | null;
           bp_systolic?: number | null;
           bp_diastolic?: number | null;
           heart_rate?: number | null;
