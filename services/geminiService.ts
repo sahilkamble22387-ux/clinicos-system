@@ -1,54 +1,48 @@
+export const getSmartSearchFilters = async (_query: string) => null;
 
-import { GoogleGenAI } from "@google/genai";
-import { Patient, Visit } from "../types";
+export const summarizePatientHistory = async (frontDeskId?: string | null) => {
+  if (!frontDeskId) return 'Summary unavailable.';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
-export const getSmartSearchFilters = async (query: string) => {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Parse this patient search query: "${query}". 
-      Return a JSON object identifying if the user specified: name, phone, gender, or age range.
-      Example: { "name": "John", "gender": "Male" }`,
-      config: {
-        responseMimeType: "application/json"
-      }
+    const response = await fetch('/api/ai/case-summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ frontDeskId }),
     });
-    return JSON.parse(response.text || '{}');
+
+    if (!response.ok) {
+      throw new Error('Case summary unavailable');
+    }
+
+    const data = await response.json();
+    return data.summary || 'Summary unavailable.';
   } catch (error) {
-    console.error("Gemini Search Error:", error);
-    return null;
+    console.error('AI Summarization Error:', error);
+    return 'Summary unavailable.';
   }
 };
 
-export const summarizePatientHistory = async (history: { visit: Visit, diagnosis?: string }[]) => {
+export const generateClinicalSuggestions = async (symptoms: string, clinicId?: string) => {
   try {
-    const textHistory = history.map(h => `Date: ${h.visit.arrivalTime}, Diagnosis: ${h.diagnosis || 'N/A'}`).join('\n');
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Summarize this patient's medical history in 2-3 concise bullet points for a doctor: \n${textHistory}`,
+    const response = await fetch('/api/ai/clinical-suggestions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(clinicId ? { 'x-clinic-id': clinicId } : {}),
+      },
+      body: JSON.stringify({ symptoms }),
     });
-    return response.text;
-  } catch (error) {
-    console.error("Gemini Summarization Error:", error);
-    return "Summary unavailable.";
-  }
-};
 
-export const generateClinicalSuggestions = async (symptoms: string) => {
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Based on these clinical notes/symptoms: "${symptoms}", suggest 3 potential diagnoses and standard treatment protocols for an Indian context. 
-      Format as a JSON array of objects with 'diagnosis' and 'protocol' keys. 
-      Keep it brief.
-      Example: [{"diagnosis": "Viral Fever", "protocol": "Paracetamol 650mg, Hydration"}]`,
-      config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '[]');
+    if (!response.ok) {
+      throw new Error('Clinical suggestions unavailable');
+    }
+
+    const data = await response.json();
+    return Array.isArray(data.suggestions) ? data.suggestions : [];
   } catch (error) {
-    console.error("Gemini Suggestion Error:", error);
+    console.error('AI Suggestion Error:', error);
     return [];
   }
 };

@@ -24,6 +24,9 @@ export interface Patient {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  frontDeskId?: string | null;
+  allergies?: string[] | null;
+  chiefComplaint?: string | null;
 }
 
 export interface Visit {

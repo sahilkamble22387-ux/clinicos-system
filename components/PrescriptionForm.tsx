@@ -7,6 +7,7 @@ import {
 import { supabase } from '../services/db'
 import { MEDICINE_DB } from '../lib/medicine-database'
 import toast from 'react-hot-toast'
+import DrugConflictAlert from './ai/DrugConflictAlert'
 
 // ── Types ──────────────────────────────────────────────────────────
 export interface PrescriptionLine {
@@ -37,6 +38,9 @@ interface PrescriptionFormProps {
     clinicId: string
     lines: PrescriptionLine[]
     onChange: (lines: PrescriptionLine[]) => void
+    knownConditions?: string[]
+    allergies?: string[]
+    existingMedications?: string[]
 }
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -356,6 +360,10 @@ function PrescriptionLineCard({
     line,
     index,
     isExpanded,
+    clinicId,
+    knownConditions,
+    allergies,
+    existingMedications,
     onExpand,
     onUpdate,
     onRemove,
@@ -364,6 +372,10 @@ function PrescriptionLineCard({
     line: PrescriptionLine
     index: number
     isExpanded: boolean
+    clinicId: string
+    knownConditions: string[]
+    allergies: string[]
+    existingMedications: string[]
     onExpand: () => void
     onUpdate: (updates: Partial<PrescriptionLine>) => void
     onRemove: () => void
@@ -582,6 +594,16 @@ function PrescriptionLineCard({
                                 />
                             </div>
 
+                            {line.medicine_name.trim().length >= 2 && (
+                                <DrugConflictAlert
+                                    newDrug={line.medicine_name}
+                                    existingMedications={existingMedications}
+                                    knownConditions={knownConditions}
+                                    allergies={allergies}
+                                    clinicId={clinicId}
+                                />
+                            )}
+
                             {/* Save / Cancel */}
                             <div className="flex gap-2">
                                 <button
@@ -608,7 +630,7 @@ function PrescriptionLineCard({
 }
 
 // ── Main PrescriptionForm ─────────────────────────────────────────
-export function PrescriptionForm({ clinicId, lines, onChange }: PrescriptionFormProps) {
+export function PrescriptionForm({ clinicId, lines, onChange, knownConditions = [], allergies = [], existingMedications = [] }: PrescriptionFormProps) {
     // Which card index is expanded (accordion: only one at a time)
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const listEndRef = useRef<HTMLDivElement>(null)
@@ -688,9 +710,16 @@ export function PrescriptionForm({ clinicId, lines, onChange }: PrescriptionForm
                     {lines.map((line, i) => (
                         <PrescriptionLineCard
                             key={line.id}
+                            clinicId={clinicId}
                             line={line}
                             index={i}
                             isExpanded={expandedId === line.id}
+                            knownConditions={knownConditions}
+                            allergies={allergies}
+                            existingMedications={[
+                                ...existingMedications,
+                                ...lines.filter((entry) => entry.id !== line.id).map((entry) => entry.medicine_name).filter(Boolean),
+                            ]}
                             onExpand={() => handleExpand(line.id)}
                             onUpdate={updates => updateLine(line.id, updates)}
                             onRemove={() => removeLine(line.id)}
@@ -741,4 +770,3 @@ export function PrescriptionForm({ clinicId, lines, onChange }: PrescriptionForm
         </div>
     )
 }
-

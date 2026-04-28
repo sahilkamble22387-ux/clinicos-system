@@ -3,7 +3,10 @@ import {
   Clock, User, ClipboardList, History, FileText, Send,
   Sparkles, Eye, Banknote, Activity, Heart, Thermometer,
   Stethoscope, Save, X, MessageCircle, Download, Loader2,
-  ShieldAlert, AlertTriangle, Info, Store,
+  ShieldAlert, AlertTriangle, Info, Store, ChevronLeft,
+  ChevronRight, Mic, MicOff, CheckCircle2, PanelLeftClose,
+  PanelLeftOpen, Smartphone, Link2, CheckSquare, Square,
+  Pill, ArrowRight, Check, RefreshCw,
 } from 'lucide-react';
 import { downloadPrescriptionAndPrompt, PrescriptionForWhatsApp } from '../../services/whatsappPrescription';
 import { PrescriptionForm, PrescriptionLine } from '../PrescriptionForm';
@@ -22,6 +25,23 @@ import WelcomePopup from '../WelcomePopup';
 
 interface DoctorDashboardProps {
   clinicId: string;
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Could not read audio blob'));
+        return;
+      }
+      const [, base64 = ''] = result.split(',');
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read audio blob'));
+    reader.readAsDataURL(blob);
+  });
 }
 
 const VitalInput: React.FC<{
@@ -62,9 +82,9 @@ const LEVEL_STYLES = {
 } satisfies Record<RiskLevel, object>;
 
 const LEVEL_LABELS: Record<RiskLevel, string> = {
-  critical: '🚨 Critical Vitals Alert',
-  warning: '⚠️ Vitals Warning',
-  info: 'ℹ️ Vitals Note',
+  critical: 'Critical Vitals Alert',
+  warning: 'Vitals Warning',
+  info: 'Vitals Note',
 };
 
 type PharmacyRoutingMode = 'default' | 'manual' | 'none';
@@ -128,6 +148,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [diagnosis, setDiagnosis] = useState('');
   const [prescription, setPrescription] = useState<PrescriptionLine[]>([]);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [loadingAiSummary, setLoadingAiSummary] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [consultationFee, setConsultationFee] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'UPI' | 'Card' | 'Insurance'>('Cash');
@@ -144,7 +165,30 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   const [pharmacyRoutingMode, setPharmacyRoutingMode] = useState<PharmacyRoutingMode>('default');
   const [selectedPharmacyId, setSelectedPharmacyId] = useState('');
 
+  // Consultation mode state
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
+  const [consultTab, setConsultTab] = useState<'scribble' | 'soap' | 'rx'>('scribble');
+  const [soapNote, setSoapNote] = useState('');
+  const [transcript, setTranscript] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completeActions, setCompleteActions] = useState({ whatsapp: false, pdf: false, pharmacy: false });
+  const [completing, setCompleting] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+
   const vitalsRisk: VitalsRiskResult = analyzeVitals(vitalsForm);
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
 
   const fetchQueue = useCallback(async () => {
     const { data: appointments, error } = await (supabase as any)
@@ -349,6 +393,10 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
   };
 
   const resetConsultationWorkspace = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     setActiveVisit(null);
     setActivePatient(null);
     setVitalsLoaded(false);
@@ -368,6 +416,7 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
       const patient: Patient = {
         id: pData.id, name: pData.full_name, gender: pData.gender as any,
         dob: pData.dob, phone: pData.phone, address: pData.address, createdAt: pData.created_at,
+        frontDeskId: pData.front_desk_id ?? null,
       };
       const { data: records } = await (supabase as any).from('medical_records').select('*')
         .eq('patient_id', patient.id).order('created_at', { ascending: false });
@@ -381,6 +430,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         temperature_f: apptData?.temperature_f?.toString() || '',
       });
       setVitalsLoaded(true);
+      setQueueCollapsed(true);
+      setConsultTab('scribble');
     }
   };
 
@@ -559,22 +610,225 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     } finally { setSendingWA(false); }
   };
 
-  const generateAISummary = async () => {
-    if (!activePatient || history.length === 0) { setAiSummary('No history available.'); return; }
-    setLoadingSummary(true);
-    const summary = await summarizePatientHistory(
-      history.map(h => ({ visit: { ...h, arrivalTime: h.created_at, status: 'completed' } as any, diagnosis: h.diagnosis }))
-    );
+  const generateAISummary = useCallback(async (frontDeskId?: string | null, hasHistory = history.length > 0) => {
+    if (!frontDeskId || !hasHistory) {
+      setAiSummary('No history available.');
+      return;
+    }
+
+    setLoadingAiSummary(true);
+    const summary = await summarizePatientHistory(frontDeskId);
     setAiSummary(summary || 'Unable to generate summary.');
-    setLoadingSummary(false);
-  };
+    setLoadingAiSummary(false);
+  }, [history.length]);
 
   const handleSmartSuggest = async () => {
     if (!notes) { toast.error('Enter some clinical notes/symptoms first.'); return; }
     setLoadingSuggestions(true);
-    const suggestions = await generateClinicalSuggestions(notes);
+    const suggestions = await generateClinicalSuggestions(notes, clinicId);
     setAiSuggestions(suggestions);
     setLoadingSuggestions(false);
+  };
+
+  useEffect(() => {
+    if (!activePatient) return;
+    void generateAISummary(activePatient.frontDeskId, history.length > 0);
+  }, [activePatient, history.length, generateAISummary]);
+
+  const generateSOAP = async () => {
+    const sourceText = transcript.trim() || notes.trim();
+    if (!sourceText) { toast.error('Add transcript or notes first'); return; }
+    setLoadingSummary(true);
+    try {
+      const response = await fetch('/api/ai/soap-note', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-clinic-id': clinicId,
+        },
+        body: JSON.stringify({
+          transcript: sourceText,
+          visitId: activeVisit?.id,
+          frontDeskId: activePatient?.frontDeskId ?? undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('SOAP unavailable');
+      }
+
+      const data = await response.json();
+      const soap = data.soap ?? {};
+      const nextSoapNote = [
+        'Subjective',
+        soap.subjective ?? '',
+        '',
+        'Objective',
+        soap.objective ?? '',
+        '',
+        'Assessment',
+        soap.assessment ?? '',
+        '',
+        'Plan',
+        soap.plan ?? '',
+      ].join('\n');
+
+      setSoapNote(nextSoapNote);
+      if (soap.assessment && !diagnosis.trim()) {
+        setDiagnosis(soap.assessment);
+      }
+      setConsultTab('soap');
+      toast.success('SOAP note generated');
+    } catch (error) {
+      console.error('SOAP generation failed:', error);
+      toast.error('AI SOAP is unavailable right now.');
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
+  const stopRecordingTracks = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    mediaRecorderRef.current = null;
+  };
+
+  const handleRecordToggle = async () => {
+    if (isTranscribing) return;
+
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast.error('Audio recording is not supported in this browser.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      recordedChunksRef.current = [];
+
+      const mimeTypeCandidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+      const mimeType = mimeTypeCandidates.find((candidate) => MediaRecorder.isTypeSupported(candidate));
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        stopRecordingTracks();
+        setIsRecording(false);
+        setIsTranscribing(false);
+        toast.error('Recording failed.');
+      };
+
+      recorder.onstop = async () => {
+        setIsRecording(false);
+        const chunks = recordedChunksRef.current;
+        recordedChunksRef.current = [];
+        stopRecordingTracks();
+
+        if (!chunks.length) return;
+
+        setIsTranscribing(true);
+        try {
+          const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+          const audioBase64 = await blobToBase64(audioBlob);
+          const response = await fetch('/api/ai/transcribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-clinic-id': clinicId,
+            },
+            body: JSON.stringify({
+              audioBase64,
+              mimeType: audioBlob.type || 'audio/webm',
+              filename: `voice-note-${Date.now()}.webm`,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Transcription unavailable');
+          }
+
+          const data = await response.json();
+          if (data.transcript) {
+            setTranscript((current) => current ? `${current.trim()}\n${data.transcript}` : data.transcript);
+            toast.success('Transcript added.');
+          } else {
+            toast.error('No transcript returned.');
+          }
+        } catch (error) {
+          console.error('Transcription failed:', error);
+          toast.error('Could not transcribe audio.');
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Microphone access failed:', error);
+      stopRecordingTracks();
+      setIsRecording(false);
+      toast.error('Microphone permission is required to record.');
+    }
+  };
+
+  const handleCompleteVisit = async () => {
+    if (!activeVisit || !activePatient) return;
+    if (!diagnosis.trim()) { toast.error('Please enter a diagnosis first'); return; }
+    if (prescription.length === 0) { toast.error('Add at least one medicine first'); return; }
+    setCompleting(true);
+    try {
+      const doctorName = clinicProfile?.doctor_name ?? profile?.full_name ?? 'Doctor';
+      const medicalRecord = await createMedicalRecord(activePatient);
+      const result = await savePrescriptionAndGetLink({
+        clinicId, patientId: activePatient.id, patientName: activePatient.name,
+        patientPhone: activePatient.phone,
+        patientAge: activePatient.dob ? (new Date().getFullYear() - new Date(activePatient.dob).getFullYear()).toString() : null,
+        patientGender: activePatient.gender,
+        clinicName: clinicProfile?.clinic_name_override ?? (clinicProfile as any)?.name ?? 'Clinic',
+        doctorName, doctorQualification: getDoctorQualification(),
+        doctorRegistrationNo: clinicProfile?.registration_number ?? null,
+        clinicAddress: clinicProfile?.clinic_address ?? null,
+        clinicPhone: clinicProfile?.phone_number ?? null,
+        doctorSignatureBase64: clinicProfile?.signature_base64 ?? null,
+        medicalRecordId: medicalRecord.id,
+        targetPharmacyId: completeActions.pharmacy ? resolvedPharmacyId : null,
+        diagnosis, doctorNotes: notes, feeCollected: consultationFee, paymentMethod,
+        medicines: prescription, vitals: getVitalsPayload(),
+      });
+      if (!result.success) throw new Error(result.error || 'Failed to save');
+      await finalizeConsultation(activeVisit.id, activePatient.id);
+      if (completeActions.whatsapp && activePatient.phone && result.publicUrl) {
+        openWhatsAppWithPrescription(activePatient.phone, activePatient.name,
+          clinicProfile?.clinic_name_override ?? (clinicProfile as any)?.name ?? 'Clinic',
+          doctorName, result.publicUrl);
+      }
+      if (completeActions.pdf) {
+        const data = await buildPrescriptionData();
+        if (data) await downloadPrescriptionAndPrompt(data);
+      }
+      toast.success('Visit completed!');
+      setShowCompleteModal(false);
+      resetConsultationWorkspace();
+      setQueueCollapsed(false);
+      setSoapNote('');
+      setTranscript('');
+      setConsultTab('scribble');
+      fetchQueue();
+    } catch (err: any) {
+      toast.error('Failed: ' + err.message);
+    } finally { setCompleting(false); }
   };
 
   const hasVitals = vitalsForm.bp_systolic || vitalsForm.heart_rate || vitalsForm.temperature_f || vitalsForm.weight_kg;
@@ -583,17 +837,48 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
     <>
       <div className="flex h-full flex-col md:flex-row">
 
-        {/* ── Queue Sidebar ── */}
-        <aside className={`w-full md:w-[340px] flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col h-full md:max-h-full ${activeVisit ? 'hidden md:flex' : 'flex'}`}>
+        {/* ── Queue Sidebar (collapsible) ── */}
+        <aside className={`flex-shrink-0 bg-white border-r border-slate-200 flex flex-col h-full transition-all duration-300 ease-in-out
+          ${activeVisit && queueCollapsed ? 'w-[56px]' : 'w-full md:w-[300px]'}
+          ${activeVisit ? 'hidden md:flex' : 'flex'}`}>
+
+          {/* Collapsed indicator */}
+          {activeVisit && queueCollapsed ? (
+            <div className="flex flex-col items-center py-4 gap-4 flex-1">
+              <button onClick={() => setQueueCollapsed(false)}
+                className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition">
+                <PanelLeftOpen size={16} />
+              </button>
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                <span className="text-xs font-black text-amber-700">{queue.length}</span>
+              </div>
+              <div className="flex flex-col gap-1 mt-2">
+                {queue.slice(0, 4).map((v, i) => (
+                  <div key={v.id} className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+                    <User size={12} className="text-slate-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
           <div className="px-4 py-3 border-b border-slate-200">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h2 className="text-base font-bold text-slate-900">Patient Queue</h2>
                 <p className="text-xs text-slate-500">{queue.length} waiting</p>
               </div>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${queue.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                {queue.length > 0 ? 'Active' : 'Clear'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${queue.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                  {queue.length > 0 ? 'Active' : 'Clear'}
+                </span>
+                {activeVisit && (
+                  <button onClick={() => setQueueCollapsed(true)}
+                    className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                    <PanelLeftClose size={14} />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="mt-1" data-tour="queue-buttons">
               <EmergencyQueueControls clinicId={clinicId} />
@@ -617,15 +902,18 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                 <div key={visit.id}>
                   <QueueItem visit={visit} onClick={() => startConsultation(visit)} />
                   <div className="px-3 pb-1 flex items-center gap-2">
-                    {visit.source === 'QR_Checkin' && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded-full">📱 QR Check-In</span>}
-                    {visit.source === 'Front_Desk' && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-full">🖥 Front Desk</span>}
+                {visit.source === 'QR_Checkin' && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded-full"><Smartphone size={9} /> QR</span>}
+                    {visit.source === 'Front_Desk' && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-full"><User size={9} /> Desk</span>}
                     <WaitTime createdAt={visit.arrivalTime} />
                   </div>
                 </div>
               ))
             )}
           </div>
+            </>
+          )}
         </aside>
+
 
         {/* ── Consultation Workspace ── */}
         <main className={`flex-1 overflow-y-auto bg-slate-50 ${activeVisit ? 'fixed inset-0 z-50 md:relative md:z-auto md:inset-auto pb-20 md:pb-0' : 'hidden md:block'}`}>
@@ -686,17 +974,64 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                       className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 text-slate-900 placeholder:text-slate-400 font-medium" />
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" data-tour="medicine-search">
-                    <label className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3"><ClipboardList size={15} className="text-violet-500" /> Prescription</label>
-                    <PrescriptionForm clinicId={clinicId} lines={prescription} onChange={setPrescription} />
+                  {/* Tabbed Consultation Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="flex border-b border-slate-200">
+                      {(['scribble', 'soap', 'rx'] as const).map(tab => {
+                        const labels = { scribble: 'Scribble', soap: 'SOAP Note', rx: 'Prescription' };
+                        const icons = { scribble: <Mic size={13} />, soap: <Sparkles size={13} />, rx: <Pill size={13} /> };
+                        return (
+                          <button key={tab} onClick={() => setConsultTab(tab)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold transition ${consultTab === tab ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-500' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            {icons[tab]}{labels[tab]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="p-4">
+                      {consultTab === 'scribble' && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-500 font-semibold">Notes or transcript</span>
+                          <button onClick={handleRecordToggle} disabled={isTranscribing}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition disabled:opacity-60 ${isRecording ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                              {isTranscribing ? <><Loader2 size={11} className="animate-spin" /> Transcribing</> : isRecording ? <><MicOff size={11} /> Stop</> : <><Mic size={11} /> Record</>}
+                            </button>
+                          </div>
+                          <textarea style={{ fontSize: '16px' }} value={transcript} onChange={e => setTranscript(e.target.value)}
+                            placeholder="Paste or type visit transcript..." rows={4}
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400 font-medium resize-none" />
+                          <textarea style={{ fontSize: '16px' }} value={notes} onChange={e => setNotes(e.target.value)}
+                            placeholder="Doctor's internal notes..." rows={3}
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400 font-medium resize-none" />
+                          <button onClick={generateSOAP} disabled={loadingSummary}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition disabled:opacity-60">
+                            {loadingSummary ? <><Loader2 size={14} className="animate-spin" /> Generating…</> : <><Sparkles size={14} /> Generate SOAP Note</>}
+                          </button>
+                        </div>
+                      )}
+                      {consultTab === 'soap' && (
+                        <div className="space-y-3">
+                          {soapNote ? (
+                            <textarea value={soapNote} onChange={e => setSoapNote(e.target.value)} rows={12}
+                              className="w-full p-3 bg-indigo-50 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 text-indigo-900 font-medium text-sm resize-none" />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                              <Sparkles size={28} className="text-indigo-300" />
+                              <p className="text-sm text-slate-500">No SOAP note yet.<br />Go to <strong>Scribble</strong> tab and click Generate SOAP.</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {consultTab === 'rx' && (
+                        <div data-tour="medicine-search">
+                          <PrescriptionForm clinicId={clinicId} lines={prescription} onChange={setPrescription} />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                    <label className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3"><FileText size={15} className="text-slate-400" /> Clinical Notes</label>
-                    <textarea style={{ fontSize: '16px' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Doctor's internal notes..."
-                      className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[90px] text-slate-900 placeholder:text-slate-400 font-medium resize-none" />
-                  </div>
-
+                  {/* Billing */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                     <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Banknote size={15} className="text-emerald-500" /> Billing</h4>
                     <div className="grid grid-cols-2 gap-3">
@@ -716,153 +1051,66 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                          <Store size={15} className="text-amber-500" />
-                          Pharmacy Routing
-                        </h4>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Auto-send to your linked pharmacy, pick another signed-in pharmacy, or keep this digital only.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={refreshPharmacyNetwork}
-                        className="text-xs font-bold text-slate-500 hover:text-slate-900"
-                      >
-                        Refresh
-                      </button>
+                  {/* ── Pharmacy Routing (Fix 3) ── */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Store size={14} className="text-amber-500" /> Pharmacy</h4>
+                      <button onClick={refreshPharmacyNetwork} className="text-slate-400 hover:text-slate-700 transition"><RefreshCw size={13} /></button>
                     </div>
-
                     {loadingPharmacies ? (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Loader2 size={13} className="animate-spin" />
-                        Loading pharmacy directory...
-                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-400"><Loader2 size={12} className="animate-spin" /> Loading...</div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="grid grid-cols-1 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setPharmacyRoutingMode(defaultPharmacy ? 'default' : (directoryPharmacies.length > 0 ? 'manual' : 'none'))}
-                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'default'
-                              ? 'border-indigo-300 bg-indigo-50'
-                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                              } ${!defaultPharmacy ? 'opacity-60' : ''}`}
-                            disabled={!defaultPharmacy && directoryPharmacies.length === 0}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-wider text-slate-400">Primary</p>
-                                <p className="text-sm font-bold text-slate-900">
-                                  {defaultPharmacy ? defaultPharmacy.name : 'No primary pharmacy linked'}
-                                </p>
-                              </div>
-                              {defaultPharmacy && (
-                                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
-                                  Auto route
-                                </span>
-                              )}
-                            </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={() => {
+                            if (defaultPharmacy) {
+                              setPharmacyRoutingMode('default');
+                              return;
+                            }
+                            if (directoryPharmacies.length > 0) {
+                              setPharmacyRoutingMode('manual');
+                              toast('No primary pharmacy linked. Choose a store instead.');
+                              return;
+                            }
+                            setPharmacyRoutingMode('none');
+                            toast('No linked pharmacy is available yet.');
+                          }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${pharmacyRoutingMode === 'default' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                            {defaultPharmacy ? <CheckCircle2 size={11} /> : <X size={11} />}
+                            {defaultPharmacy ? defaultPharmacy.name : 'No Primary'}
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setPharmacyRoutingMode('manual')}
-                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'manual'
-                              ? 'border-amber-300 bg-amber-50'
-                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                              } ${directoryPharmacies.length === 0 ? 'opacity-60' : ''}`}
-                            disabled={directoryPharmacies.length === 0}
-                          >
-                            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Manual</p>
-                            <p className="text-sm font-bold text-slate-900">
-                              {selectedPharmacy ? `Send this visit to ${selectedPharmacy.name}` : 'Choose from signed-in pharmacies'}
-                            </p>
+                          <button type="button" onClick={() => {
+                            if (directoryPharmacies.length === 0) {
+                              toast('No signed-in pharmacies are available yet.');
+                              return;
+                            }
+                            setPharmacyRoutingMode('manual');
+                          }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${pharmacyRoutingMode === 'manual' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                            <Store size={11} /> Select Store
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setPharmacyRoutingMode('none')}
-                            className={`rounded-xl border px-3.5 py-3 text-left transition ${pharmacyRoutingMode === 'none'
-                              ? 'border-slate-300 bg-slate-100'
-                              : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                              }`}
-                          >
-                            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Patient only</p>
-                            <p className="text-sm font-bold text-slate-900">Keep this as a digital prescription without pharmacy routing</p>
+                          <button type="button" onClick={() => setPharmacyRoutingMode('none')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${pharmacyRoutingMode === 'none' ? 'bg-slate-200 border-slate-400 text-slate-700' : 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                            <Smartphone size={11} /> Patient Only
                           </button>
                         </div>
-
                         {pharmacyRoutingMode === 'manual' && directoryPharmacies.length > 0 && (
-                          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">
-                              Send To Pharmacy
-                            </label>
-                            <select
-                              value={selectedPharmacyId}
-                              onChange={(e) => setSelectedPharmacyId(e.target.value)}
-                              className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 font-medium"
-                            >
-                              {directoryPharmacies.map((pharmacy) => {
-                                const suffix = pharmacy.clinic_id === clinicId
-                                  ? 'Linked to this clinic'
-                                  : pharmacy.clinic_id
-                                    ? 'Linked to another clinic'
-                                    : 'Signed in, not linked yet';
-                                return (
-                                  <option key={pharmacy.id} value={pharmacy.id}>
-                                    {pharmacy.name} · {suffix}
-                                  </option>
-                                );
-                              })}
-                            </select>
-                            {selectedPharmacy && (
-                              <p className="text-xs text-slate-500 mt-2">
-                                {selectedPharmacy.phone || selectedPharmacy.city || 'Signed-in pharmacy account'}.
-                              </p>
-                            )}
-                          </div>
+                          <select value={selectedPharmacyId} onChange={e => setSelectedPharmacyId(e.target.value)}
+                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20">
+                            {directoryPharmacies.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          </select>
                         )}
-
-                        <div className="flex flex-wrap gap-2 text-[11px]">
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold">
-                            {linkedPharmacies.length} linked
-                          </span>
-                          <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold">
-                            {directoryPharmacies.length} signed-in pharmacies
-                          </span>
-                          {resolvedPharmacy && (
-                            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-bold">
-                              This visit routes to {resolvedPharmacy.name}
-                            </span>
-                          )}
-                        </div>
+                        {resolvedPharmacy && <div className="flex items-center gap-1.5 text-xs text-amber-700 font-semibold"><ArrowRight size={11} /> Routes to {resolvedPharmacy.name}</div>}
                       </div>
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="space-y-2.5 pb-4" data-tour="send-prescription">
-                    <button onClick={completeVisit} disabled={sending}
-                      className="w-full bg-slate-900 hover:bg-black text-white py-4 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 transition">
-                      {sending ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Save size={16} /> {resolvedPharmacy ? 'Save & Route Prescription' : 'Save Consultation'} · ₹{consultationFee}</>}
+                  {/* ── Complete Visit button (Fix 4) ── */}
+                  <div className="pb-4" data-tour="send-prescription">
+                    <button onClick={() => setShowCompleteModal(true)}
+                      className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white py-4 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 transition">
+                      <CheckCircle2 size={16} /> Complete Visit · ₹{consultationFee}
                     </button>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button onClick={handleDownloadPDF} disabled={generatingPDF}
-                        className="flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm disabled:opacity-60 transition shadow-sm shadow-indigo-200">
-                        {generatingPDF ? <><Loader2 size={14} className="animate-spin" /> Generating…</> : <><Download size={14} /> Download PDF</>}
-                      </button>
-                      <button onClick={handleSendWhatsApp} disabled={sendingWA}
-                        className="flex items-center justify-center gap-2 py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm disabled:opacity-60 transition shadow-sm shadow-green-200">
-                        {sendingWA ? <><Loader2 size={14} className="animate-spin" /> Sending…</> : <><MessageCircle size={14} /> WhatsApp</>}
-                      </button>
-                    </div>
-                    <p className="text-center text-slate-400 text-[10px] font-semibold tracking-wider uppercase">
-                      Save → clinical record locked in &nbsp;·&nbsp; WhatsApp → patient gets the live prescription link
-                    </p>
                   </div>
                 </div>
 
@@ -914,8 +1162,8 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm"><History className="text-indigo-500" size={16} /> Medical History</h3>
-                      <button onClick={generateAISummary} disabled={loadingSummary} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg">
-                        <Sparkles size={16} className={loadingSummary ? 'animate-pulse' : ''} />
+                      <button onClick={() => void generateAISummary(activePatient?.frontDeskId, history.length > 0)} disabled={loadingAiSummary} className="text-indigo-600 p-2 hover:bg-indigo-50 rounded-lg">
+                        <Sparkles size={16} className={loadingAiSummary ? 'animate-pulse' : ''} />
                       </button>
                     </div>
                     {aiSummary && <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl"><div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1">AI Summary</div><p className="text-sm text-indigo-900 leading-relaxed">{aiSummary}</p></div>}
@@ -942,6 +1190,46 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ clinicId }) => {
         </main>
       </div>
 
+      {/* ── Complete Visit Modal (Fix 4) ── */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCompleteModal(false)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center">
+                <CheckCircle2 size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-black text-slate-900 text-base">Complete Visit</h3>
+                <p className="text-xs text-slate-500">What would you like to do after saving?</p>
+              </div>
+              <button onClick={() => setShowCompleteModal(false)} className="ml-auto text-slate-400 hover:text-slate-700"><X size={18} /></button>
+            </div>
+            <div className="space-y-2 mb-5">
+              {([
+                { key: 'whatsapp', label: 'Send via WhatsApp', icon: <MessageCircle size={15} className="text-green-600" />, sub: activePatient?.phone || 'No phone' },
+                { key: 'pdf', label: 'Download PDF', icon: <Download size={15} className="text-indigo-600" />, sub: 'Prescription PDF' },
+                { key: 'pharmacy', label: 'Route to Pharmacy', icon: <Store size={15} className="text-amber-600" />, sub: resolvedPharmacy?.name || 'No pharmacy selected' },
+              ] as const).map(({ key, label, icon, sub }) => (
+                <button key={key} onClick={() => setCompleteActions(a => ({ ...a, [key]: !a[key] }))}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition text-left ${completeActions[key] ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}>
+                  <div className="w-8 h-8 bg-white rounded-xl border border-slate-200 flex items-center justify-center flex-shrink-0">{icon}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-900">{label}</div>
+                    <div className="text-xs text-slate-500">{sub}</div>
+                  </div>
+                  {completeActions[key] ? <CheckSquare size={18} className="text-indigo-600 flex-shrink-0" /> : <Square size={18} className="text-slate-300 flex-shrink-0" />}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleCompleteVisit} disabled={completing}
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition disabled:opacity-60">
+              {completing ? <><Loader2 size={16} className="animate-spin" /> Completing…</> : <><Check size={16} /> Confirm & Complete</>}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showWelcome && (
         <WelcomePopup
           doctorName={clinicProfile?.doctor_name ?? profile?.full_name ?? 'Doctor'}
@@ -964,7 +1252,7 @@ function WaitTime({ createdAt }: { createdAt: string }) {
     return () => clearInterval(iv);
   }, [createdAt]);
   const color = mins < 15 ? 'text-green-600' : mins < 30 ? 'text-yellow-600' : 'text-red-600';
-  return <span className={`text-[10px] font-bold ${color}`}>⏱ {mins}m wait</span>;
+  return <span className={`text-[10px] font-bold flex items-center gap-0.5 ${color}`}><Clock size={9} /> {mins}m</span>;
 }
 
 export default DoctorDashboard;
